@@ -44,7 +44,7 @@ public class Client {
                         throw new RuntimeException(e);
                     }
                 }
-                case 3 -> System.out.println("Bye Bye");
+                case 3 -> System.out.println("Bye Bye!");
                 default -> System.out.println("Invalid Choice!");
             }
         } while(choice != 3);
@@ -59,7 +59,8 @@ public class Client {
             try {
                 Response responded = (Response) response.readObject();
                 user = responseHandler.loginResponse(responded);
-                user.homePage();
+                if (user != null)
+                    user.homePage();
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }

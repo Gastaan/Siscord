@@ -13,6 +13,17 @@ public class ResponseHandler {
         }
     }
     public Boolean signUpResponse(Response responded) {
-
+        String description = responded.getDescription();
+        if(description.equals("valid")) {
+            System.out.println("Signed up successfully!");
+            return true;
+        }
+        else {
+            if(description.equals("username exists"))
+                System.out.println("Username exists!");
+            else
+                System.out.println("Invalid!");
+            return false;
+        }
     }
 }

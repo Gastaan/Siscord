@@ -9,6 +9,8 @@ import server.responses.Response;
 import java.io.*;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ClientHandler implements Runnable{
     private static HashMap<User, String> users;
@@ -46,7 +48,7 @@ public class ClientHandler implements Runnable{
         if(requested.getType() == ReqType.LOGIN)
             login(requested);
         else if(requested.getType() == ReqType.SIGN_UP) {
-            signUP();
+            signUP(requested);
         }
     }
     private void login(Request info) {
@@ -74,6 +76,29 @@ public class ClientHandler implements Runnable{
         String username = description.substring(0, description.indexOf(" "));
         String password = description.substring(description.indexOf(" ") + 1, description.lastIndexOf(" "));
         String mail = description.substring(description.lastIndexOf(" ") + 1);
+        try {
+            response.writeObject(new Response(ResType.SIGNUP,   checkRegex(username, password, mail), null ));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private String checkRegex(String username, String password, String mail) {
+        String usernameRegex = "[a-zA-Z0-9]{6,}";
+        String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9]{8,}$";
+        String mailRegex = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
+        if(searchClient(username) != null) {
+            if(match(username, usernameRegex) && match(password, passwordRegex) && match(mail, mailRegex))
+                return "valid";
+            else
+                return "not valid";
+        }
+        else
+            return "username exists";
+    }
+    private Boolean match(String text, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(text);
+        return matcher.matches();
     }
     private User searchClient(String username) {
         for(User user : users.keySet())
