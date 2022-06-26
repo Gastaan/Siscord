@@ -1,5 +1,6 @@
 package client;
 
+import user.User;
 import server.responses.Response;
 
 public class ResponseHandler {

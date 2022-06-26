@@ -2,7 +2,7 @@ package server;
 
 import client.requests.Request;
 import client.requests.ReqType;
-import client.*;
+import user.User;
 import server.responses.ResType;
 import server.responses.Response;
 

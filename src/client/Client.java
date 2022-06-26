@@ -2,6 +2,7 @@ package client;
 
 import client.requests.ReqType;
 import client.requests.Request;
+import user.User;
 import server.responses.Response;
 
 import java.io.IOException;
