@@ -2,12 +2,12 @@ package server.responses;
 
 import java.io.Serializable;
 
- public class Response implements Serializable {
+ public class Response <T extends Serializable> implements Serializable {
     private ResType resType;
     private String description;
-    private Object responded;
+    private T responded;
 
-    public Response(ResType resType, String description, Object respond) {
+    public Response(ResType resType, String description, T respond) {
         this.resType = resType;
         this.description = description;
         this.responded = respond;
@@ -21,7 +21,7 @@ import java.io.Serializable;
         return description;
     }
 
-    public Object getResponded() {
+    public T getResponded() {
         return responded;
     }
 }

@@ -22,6 +22,7 @@ public class Client {
             serverConnection = new Socket("localhost", 404);
              request = new ObjectOutputStream(serverConnection.getOutputStream());
              response = new ObjectInputStream(serverConnection.getInputStream());
+            responseHandler = new ResponseHandler();
              //getResponse();
         } catch (IOException e) {
             System.out.println("Can not connect to server!");
@@ -38,9 +39,7 @@ public class Client {
                 case 2 -> {
                     try {
                         signUp();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (ClassNotFoundException e) {
+                    } catch (IOException | ClassNotFoundException e) {
                         throw new RuntimeException(e);
                     }
                 }
@@ -60,7 +59,7 @@ public class Client {
                 Response responded = (Response) response.readObject();
                 user = responseHandler.loginResponse(responded);
                 if (user != null)
-                    user.homePage();
+                    homePage();
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
@@ -69,31 +68,55 @@ public class Client {
         }
     }
     private  void signUp() throws IOException, ClassNotFoundException {
-        String username, password, mail = "";
+        String username, password, mail, phoneNumber = "";
         int choice;
-        do {
+        A :  do {
+            System.out.println("Back to the main page ?\n1-yes\n2-no");
+            do {
+                choice = scanner.nextInt();
+                switch (choice) {
+                    case 1 :
+                        break A;
+                    case 2 :
+                        System.out.println("Ok");
+                        break;
+                    default:
+                        System.out.println("Invalid Option!");
+                }
+            } while (choice > 2 || choice < 1);
             System.out.println("Enter username: ");
                 username = scanner.next();
             System.out.println("Enter password: ");
                 password = scanner.next();
+            System.out.println("Enter mail: ");
+                mail = scanner.next();
             do {
-                System.out.println("Do you want to enter your password ?\n1-Yes\n2-No");
+                System.out.println("Do you want to enter your phoneNumber ?\n1-Yes\n2-No");
                 choice = scanner.nextInt();
                 switch (choice) {
-                    case 1 -> mail = scanner.next();
-                    case 2 -> {
-                        System.out.println("Ok");
-                        break;
-                    }
+                    case 1 -> phoneNumber = scanner.next();
+                    case 2 -> System.out.println("Ok");
                     default -> System.out.println("Invalid choice!");
                 }
             } while (choice < 1 || choice > 2);
-            request.writeObject(new Request(ReqType.LOGIN,   username + " " + password + " "  + mail));
-        } while (!responseHandler.signUpResponse((Response) response.readObject()));
+            request.writeObject(new Request(ReqType.SIGN_UP,   username + " " + password + " "  + mail + " " + phoneNumber));
+        } while ((user = responseHandler.signUpResponse((Response) response.readObject())) == null);
+        if(user != null)
+            homePage();
+    }
+    private void homePage() {
+        int choice;
+        do {
+            System.out.println("1- private chats\n2- servers\n3- new private chat\n4- friends status\n5- add friend\n6- remove friend\n7- setting\n8- exit");
+            choice = scanner.nextInt();
+            switch (choice) {
+
+            }
+        } while (choice != 8);
+        user = null;
     }
     public static void main(String[] args) {
         Client client = new Client();
         client.start();
     }
-
 }

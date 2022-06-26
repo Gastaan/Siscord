@@ -1,19 +1,28 @@
 package client;
 
 import java.io.File;
+import java.io.Serializable;
+
 enum UserStatus{
     ONLINE,
     IDLE,
     DO_NOT_DISTURB,
     INVISIBLE
 }
-public class User {
+public class User implements Serializable {
     private String username;
     private String email;
     private String phoneNumber; // optional
     private File Profile; //optional
+
     public String getUsername() {
         return username;
+    }
+
+    public User(String username, String email, String phoneNumber) {
+        this.username = username;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
     }
     //Friend Request ( requests save in server  and user get it from server )
     //Block
@@ -26,7 +35,4 @@ public class User {
     //6 _ change server name 7_ see chat history 8_ pin a message
     // members can react (like _ dislike _ lol )
     // send and download files
-    public void homePage() {
-
-    }
 }
