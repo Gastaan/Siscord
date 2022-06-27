@@ -1,8 +1,12 @@
 package server;
 
+import client.requests.LoginRequest;
 import client.requests.Request;
 import client.requests.ReqType;
+import client.requests.SignUpRequest;
 import server.data.UserData;
+import server.responses.LoginResponse;
+import server.responses.LoginStatus;
 import socialserver.SocialServer;
 import user.User;
 import server.responses.ResType;
@@ -18,7 +22,7 @@ import java.util.regex.Pattern;
 public class ClientHandler implements Runnable{
     private static HashMap<User, String> users;
     private static HashMap<User, UserData> userData;
-    private static HashSet<SocialServer> socialServers = new HashSet<>();
+    private static final HashSet<SocialServer> socialServers = new HashSet<>();
     private final Socket socket;
     private ObjectInputStream request;
     private ObjectOutputStream response;
@@ -52,18 +56,19 @@ public class ClientHandler implements Runnable{
     }
     private void giveResponse(Request requested) {
         if(requested.getType() == ReqType.LOGIN)
-            login(requested);
+            login((LoginRequest) requested);
         else if(requested.getType() == ReqType.SIGN_UP) {
-            signUP(requested);
+            signUP((SignUpRequest)requested);
         }
     }
-    private void login(Request info) {
-        String username = info.getDescription().substring(0, info.getDescription().indexOf(" "));
-        String password = info.getDescription().substring(info.getDescription().indexOf(" ") + 1);
+    private void login(LoginRequest info) {
+        String username, password;
+        username = info.getUsername();
+        password = info.getPassword();
         User loginClient = searchClient(username);
         if(loginClient == null || !users.get(loginClient).equals(password)) {
             try {
-                response.writeObject(new Response(ResType.LOGIN, "failed", null));
+                response.writeObject(new LoginResponse(LoginStatus.FAILURE, null));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -71,19 +76,18 @@ public class ClientHandler implements Runnable{
         else {
             System.out.println("Welcome Back!");
             try {
-                response.writeObject(new Response(ResType.LOGIN, "passed", loginClient)); //**************************//
+                response.writeObject(new LoginResponse(LoginStatus.SUCCESS, loginClient));
             } catch (IOException e) {
                 System.out.println("Damn!(login)");
             }
         }
     }
-    private void signUP(Request info) {
-        String description = info.getDescription();
-        String username = description.substring(0, description.indexOf(" "));
-        String part = description.substring(description.indexOf(" ") + 1);
-        String password = part.substring(0, part.indexOf(" "));
-        String mail = part.substring(part.indexOf(" ") + 1, part.lastIndexOf(" "));
-        String phoneNumber = part.substring(part.lastIndexOf(" ") + 1);
+    private void signUP(SignUpRequest info) {
+        String username , password , mail, phoneNumber;
+        username = info.getUsername();
+        password = info.getPassword();
+        mail = info.getMail();
+        phoneNumber = info.getPhoneNumber();
         try {
             String checking = checkRegex(username, password, mail, phoneNumber);
             User newUser = null;

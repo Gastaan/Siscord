@@ -2,20 +2,15 @@ package client.requests;
 
 import java.io.Serializable;
 
-public class Request implements Serializable {
-    private ReqType type;
-    private String description;
+abstract public class Request implements Serializable {
+    protected ReqType type;
 
-    public Request(ReqType type, String description) {
+
+    public Request(ReqType type) {
         this.type = type;
-        this.description = description;
     }
 
     public ReqType getType() {
         return type;
-    }
-
-    public String getDescription() {
-        return description;
     }
 }

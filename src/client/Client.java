@@ -1,9 +1,10 @@
 package client;
 
-import client.requests.ReqType;
-import client.requests.Request;
+import client.requests.LoginRequest;
+import client.requests.SignUpRequest;
+import server.responses.LoginResponse;
+import server.responses.SignUpResponse;
 import user.User;
-import server.responses.Response;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -55,9 +56,9 @@ public class Client {
         System.out.println("Enter your password: ");
         String password = scanner.next();
         try {
-            request.writeObject(new Request(ReqType.LOGIN,   username + " " + password));
+            request.writeObject(new LoginRequest(username, password));
             try {
-                Response responded = (Response) response.readObject();
+                LoginResponse responded = (LoginResponse) response.readObject();
                 user = responseHandler.loginResponse(responded);
                 if (user != null)
                     homePage();
@@ -100,8 +101,8 @@ public class Client {
                     default -> System.out.println("Invalid choice!");
                 }
             } while (choice < 1 || choice > 2);
-            request.writeObject(new Request(ReqType.SIGN_UP,   username + " " + password + " "  + mail + " " + phoneNumber));
-        } while ((user = responseHandler.signUpResponse((Response) response.readObject())) == null);
+            request.writeObject(new SignUpRequest(username, password, mail, phoneNumber));
+        } while ((user = responseHandler.signUpResponse((SignUpResponse) response.readObject())) == null);
         if(user != null)
             homePage();
     }
