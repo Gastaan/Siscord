@@ -3,11 +3,6 @@ package shared.user.data.message;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.HashMap;
-enum Reacts {
-    LIKE,
-    DISLIKE,
-    LOL
-}
 
 abstract public class Message implements Serializable {
     protected String writer;

@@ -1,19 +1,19 @@
 package client;
 
-import shared.requests.ChatRequest;
-import shared.requests.LoginRequest;
-import shared.requests.PrivateChatListRequest;
-import shared.requests.SignUpRequest;
+import shared.requests.*;
 import shared.responses.ChatResponse;
 import shared.responses.PrivateChatListResponse;
 import shared.responses.login.LoginResponse;
 import shared.responses.signup.SignUpResponse;
 import shared.user.User;
+import shared.user.data.message.Message;
+import shared.user.data.message.Reacts;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Client {
@@ -129,15 +129,15 @@ public class Client {
         } while (choice != 8);
         user = null;
     }
-    private void chatPage(int size) {
+    private void chatPage(ArrayList<Message> messages, String chatsName) {
         int choice;
         do {
             System.out.println("1-sendMessage\n2-React\n3-back to the main page");
             choice = scanner.nextInt();
             switch (choice) {
                 case 1 -> sendMessage();
-                case 2 -> react(size);
-                case 3 -> homePage();
+                case 2 -> react(messages, chatsName);
+                case 3 -> System.out.println("Ok!");
                 default -> System.out.println("Invalid Choice!");
             }
         } while (choice < 1 || choice > 3);
@@ -145,8 +145,8 @@ public class Client {
     private void sendMessage() {
 
     }
-    private void react(int size) {
-        int choice;
+    private void react(ArrayList<Message> messages, String chatsName) {
+        int choice, size = messages.size();
         do {
                 System.out.println("Which message ?" + 1 + "-" + size);
                 choice = scanner.nextInt();
@@ -158,7 +158,21 @@ public class Client {
             System.out.println("1-like\n2-dislike\n3-lol\n4-back to the main page");
             choice = scanner.nextInt();
         }while (choice < 1 || choice > 4);
-
+        Reacts react;
+        switch (choice) {
+            case 1 -> react = Reacts.LIKE;
+            case 2 -> react = Reacts.DISLIKE;
+            case 3 -> react = Reacts.LOL;
+            default -> {
+                System.out.println("Ok!");
+                return;
+            }
+        }
+        try {
+            request.writeObject(new ReactRequest(user, chatsName, messages.get(choice - 1), react));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
     private void privateChats() {
         System.out.println("Private chats: ");
@@ -171,7 +185,7 @@ public class Client {
                 request.writeObject(new ChatRequest (user.getUsername() , chatList.getChatNames().get(choice - 1)));
                 ChatResponse chat = (ChatResponse) response.readObject();
                 responseHandler.chatResponse(chat);
-                chatPage(chat.getMessages().size());
+                chatPage(chat.getMessages() , chatList.getChatNames().get(choice - 1));
             }
 
         } catch (IOException | ClassNotFoundException e) {

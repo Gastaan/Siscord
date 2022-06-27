@@ -51,4 +51,11 @@ public class UserData implements Serializable {
         }
         return chatNames;
     }
+    public ArrayList<String> getFriendsStatus(User user) {
+        ArrayList<String> friendsStatus = new ArrayList<>();
+        for(User friend : friends.get(user)) {
+            friendsStatus.add(friend.getUsername() + ": " + friend.getStatus());
+        }
+        return friendsStatus;
+    }
 }

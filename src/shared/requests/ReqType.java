@@ -7,5 +7,6 @@ public enum ReqType implements Serializable {
     SIGN_UP,
     PRIVATE_CHAT,
     PRIVATE_CHAT_LIST,
-    CHAT_REQUEST
+    CHAT_REQUEST,
+    REACT
 }

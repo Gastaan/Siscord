@@ -14,6 +14,7 @@ public class User implements Serializable {
     private String email;
     private String phoneNumber; // optional
     private File Profile; //optional
+    private UserStatus status;
 
     public String getUsername() {
         return username;
@@ -24,6 +25,9 @@ public class User implements Serializable {
         this.email = email;
         this.phoneNumber = phoneNumber;
     }
+    public UserStatus getStatus() {
+        return status;
+    }
     //Friend Request ( requests save in server  and user get it from server )
     //Block
     //Get friends list with their status
@@ -33,6 +37,5 @@ public class User implements Serializable {
     // Chanel : name _ type ( voice _ text )
     //owner can give roles  : 1_ make chanel 2_ delete chanel 3_ delete member 4_limit access to a chanel 5_ block from server
     //6 _ change server name 7_ see chat history 8_ pin a message
-    // members can react (like _ dislike _ lol )
     // send and download files
 }
