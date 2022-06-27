@@ -1,11 +1,13 @@
 package client;
 
-import server.responses.PrivateChatListResponse;
-import server.responses.login.LoginResponse;
-import server.responses.login.LoginStatus;
-import server.responses.signup.SignUpResponse;
-import server.responses.signup.SignUpStatus;
-import user.User;
+import shared.responses.ChatResponse;
+import shared.responses.PrivateChatListResponse;
+import shared.responses.login.LoginResponse;
+import shared.responses.login.LoginStatus;
+import shared.responses.signup.SignUpResponse;
+import shared.responses.signup.SignUpStatus;
+import shared.user.User;
+import shared.user.data.message.Message;
 
 import java.util.Scanner;
 
@@ -35,7 +37,7 @@ public class ResponseHandler {
     }
     public int privateChatListResponse(PrivateChatListResponse response) {
         int index = 1;
-        for(String chatName : response.getChatNames()) {
+        for (String chatName : response.getChatNames()) {
             System.out.println(index + "-" + chatName);
             index++;
         }
@@ -44,7 +46,14 @@ public class ResponseHandler {
         do {
             System.out.println("Enter your choice: ");
             choice = scanner.nextInt();
-        } while(choice < 1 || choice > index + 1);
+        } while (choice < 1 || choice > index + 1);
         return choice;
+    }
+    public void chatResponse(ChatResponse chatResponse) {
+        int index = 0;
+        for(Message message : chatResponse.getMessages()) {
+            index++;
+            System.out.println(index + "-" + message);
+        }
     }
 }

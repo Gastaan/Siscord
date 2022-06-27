@@ -1,13 +1,14 @@
 package client;
 
-import client.requests.ChatRequest;
-import client.requests.LoginRequest;
-import client.requests.PrivateChatListRequest;
-import client.requests.SignUpRequest;
-import server.responses.PrivateChatListResponse;
-import server.responses.login.LoginResponse;
-import server.responses.signup.SignUpResponse;
-import user.User;
+import shared.requests.ChatRequest;
+import shared.requests.LoginRequest;
+import shared.requests.PrivateChatListRequest;
+import shared.requests.SignUpRequest;
+import shared.responses.ChatResponse;
+import shared.responses.PrivateChatListResponse;
+import shared.responses.login.LoginResponse;
+import shared.responses.signup.SignUpResponse;
+import shared.user.User;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -128,8 +129,36 @@ public class Client {
         } while (choice != 8);
         user = null;
     }
-    private void chatPage() {
-        
+    private void chatPage(int size) {
+        int choice;
+        do {
+            System.out.println("1-sendMessage\n2-React\n3-back to the main page");
+            choice = scanner.nextInt();
+            switch (choice) {
+                case 1 -> sendMessage();
+                case 2 -> react(size);
+                case 3 -> homePage();
+                default -> System.out.println("Invalid Choice!");
+            }
+        } while (choice < 1 || choice > 3);
+    }
+    private void sendMessage() {
+
+    }
+    private void react(int size) {
+        int choice;
+        do {
+                System.out.println("Which message ?" + 1 + "-" + size);
+                choice = scanner.nextInt();
+                if(choice > size || choice < 1)
+                    System.out.println("Invalid Choice!");
+            }
+         while (choice < 1 || choice > size);
+        do {
+            System.out.println("1-like\n2-dislike\n3-lol\n4-back to the main page");
+            choice = scanner.nextInt();
+        }while (choice < 1 || choice > 4);
+
     }
     private void privateChats() {
         System.out.println("Private chats: ");
@@ -139,9 +168,10 @@ public class Client {
             PrivateChatListResponse chatList = (PrivateChatListResponse) response.readObject();
             choice = responseHandler.privateChatListResponse(chatList);
             if(choice != chatList.getCount() + 1) {
-                request.writeObject(new ChatRequest(chatList.getChatNames().get(choice - 1)));
-                
-                chatPage();
+                request.writeObject(new ChatRequest (user.getUsername() , chatList.getChatNames().get(choice - 1)));
+                ChatResponse chat = (ChatResponse) response.readObject();
+                responseHandler.chatResponse(chat);
+                chatPage(chat.getMessages().size());
             }
 
         } catch (IOException | ClassNotFoundException e) {

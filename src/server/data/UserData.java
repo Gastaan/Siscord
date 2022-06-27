@@ -1,8 +1,8 @@
 package server.data;
 
-import socialserver.SocialServer;
-import user.User;
-import user.data.message.Message;
+import shared.socialserver.SocialServer;
+import shared.user.User;
+import shared.user.data.message.Message;
 
 import java.io.Serializable;
 import java.util.ArrayList;

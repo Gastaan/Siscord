@@ -1,14 +1,15 @@
 package server;
 
-import client.requests.*;
+
 import server.data.UserData;
-import server.responses.PrivateChatListResponse;
-import server.responses.login.LoginResponse;
-import server.responses.login.LoginStatus;
-import server.responses.signup.SignUpResponse;
-import server.responses.signup.SignUpStatus;
-import socialserver.SocialServer;
-import user.User;
+import shared.requests.*;
+import shared.responses.ChatResponse;
+import shared.responses.PrivateChatListResponse;
+import shared.responses.login.LoginResponse;
+import shared.responses.login.LoginStatus;
+import shared.responses.signup.SignUpResponse;
+import shared.responses.signup.SignUpStatus;
+import shared.user.User;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -16,14 +17,12 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ClientHandler implements Runnable{
     private static HashMap<User, String> users;
     private static HashMap<User, UserData> userData;
-    private static final HashSet<SocialServer> socialServers = new HashSet<>();
     private final Socket socket;
     private ObjectInputStream request;
     private ObjectOutputStream response;
@@ -61,11 +60,23 @@ public class ClientHandler implements Runnable{
         else if(requested.getType() == ReqType.SIGN_UP) {
             signUP((SignUpRequest)requested);
         }
-        else if(requested.getType() == ReqType.PRIVATE_CHAT) {
-            privateChat((PrivateChatListRequest) requested);
+        else if(requested.getType() == ReqType.PRIVATE_CHAT_LIST) {
+            privateChatList((PrivateChatListRequest) requested);
+        }
+        else if(requested.getType() == ReqType.CHAT_REQUEST) {
+            chat((ChatRequest) requested);
         }
     }
-    private void privateChat(PrivateChatListRequest requested) {
+    private void chat(ChatRequest request) {
+        User requestedUser = searchClient(request.getRequestedUser());
+        User username = searchClient(request.getUsername());
+        try {
+            response.writeObject(new ChatResponse(userData.get(requestedUser).getPrivateChats().get(username)));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private void privateChatList(PrivateChatListRequest requested) {
         User requestedUser = searchClient(requested.getUsername());
         ArrayList<String> chatNames = userData.get(requestedUser).getPrivateChatList();
         try {
