@@ -16,7 +16,7 @@ public class UserData implements Serializable {
     private final HashSet<User> outgoingFriendRequests;
     private final HashSet<SocialServer>   servers;
     private final HashMap<User, HashSet<User>> friends;
-    //costructor
+    //constructor
     public UserData() {
         privateChats = new HashMap<>();
         blockedUsers = new HashSet<>();
@@ -25,5 +25,30 @@ public class UserData implements Serializable {
         servers = new HashSet<>();
         friends = new HashMap<>();
     }
-
+    //getters
+    public HashMap<User, ArrayList<Message>> getPrivateChats() {
+        return privateChats;
+    }
+    public HashSet<User> getBlockedUsers() {
+        return blockedUsers;
+    }
+    public HashSet<User> getIncomingFriendRequests() {
+        return incomingFriendRequests;
+    }
+    public HashSet<User> getOutgoingFriendRequests() {
+        return outgoingFriendRequests;
+    }
+    public HashSet<SocialServer> getServers() {
+        return servers;
+    }
+    public HashMap<User, HashSet<User>> getFriends() {
+        return friends;
+    }
+    public ArrayList<String> getPrivateChatList() {
+        ArrayList<String> chatNames = new ArrayList<>();
+        for(User chatName : privateChats.keySet()) {
+            chatNames.add(chatName.getUsername());
+        }
+        return chatNames;
+    }
 }

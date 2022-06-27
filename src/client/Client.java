@@ -1,7 +1,9 @@
 package client;
 
 import client.requests.LoginRequest;
+import client.requests.PrivateChatListRequest;
 import client.requests.SignUpRequest;
+import server.responses.PrivateChatListResponse;
 import server.responses.login.LoginResponse;
 import server.responses.signup.SignUpResponse;
 import user.User;
@@ -126,7 +128,14 @@ public class Client {
         user = null;
     }
     private void privateChats() {
-
+        System.out.println("Private chats: ");
+        try {
+            request.writeObject(new PrivateChatListRequest(user.getUsername()));
+            PrivateChatListResponse chatList = (PrivateChatListResponse) response.readObject();
+            responseHandler.privateChatListResponse(chatList);
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
     private void servers() {
 

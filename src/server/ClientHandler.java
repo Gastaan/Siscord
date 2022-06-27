@@ -1,10 +1,8 @@
 package server;
 
-import client.requests.LoginRequest;
-import client.requests.Request;
-import client.requests.ReqType;
-import client.requests.SignUpRequest;
+import client.requests.*;
 import server.data.UserData;
+import server.responses.PrivateChatListResponse;
 import server.responses.login.LoginResponse;
 import server.responses.login.LoginStatus;
 import server.responses.signup.SignUpResponse;
@@ -12,8 +10,11 @@ import server.responses.signup.SignUpStatus;
 import socialserver.SocialServer;
 import user.User;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.regex.Matcher;
@@ -60,6 +61,18 @@ public class ClientHandler implements Runnable{
         else if(requested.getType() == ReqType.SIGN_UP) {
             signUP((SignUpRequest)requested);
         }
+        else if(requested.getType() == ReqType.PRIVATE_CHAT) {
+            privateChat((PrivateChatListRequest) requested);
+        }
+    }
+    private void privateChat(PrivateChatListRequest requested) {
+        User requestedUser = searchClient(requested.getUsername());
+        ArrayList<String> chatNames = userData.get(requestedUser).getPrivateChatList();
+        try {
+            response.writeObject(new PrivateChatListResponse(chatNames));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
     private void login(LoginRequest info) {
         String username, password;
@@ -94,6 +107,7 @@ public class ClientHandler implements Runnable{
             if(status == SignUpStatus.VALID) {
                 newUser = new User(username, mail, phoneNumber);
                 users.put(newUser, password);
+                userData.put(newUser, new UserData());
             }
                 response.writeObject(new SignUpResponse(status, newUser ));
         } catch (IOException e) {
