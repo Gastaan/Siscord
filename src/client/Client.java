@@ -111,10 +111,39 @@ public class Client {
             System.out.println("1- private chats\n2- servers\n3- new private chat\n4- friends status\n5- add friend\n6- remove friend\n7- setting\n8- exit");
             choice = scanner.nextInt();
             switch (choice) {
-
+                case 1 -> privateChats();
+                case 2 -> servers();
+                case 3 -> newPrivateChat();
+                case 4 -> friendsStatus();
+                case 5 -> addFriend();
+                case 6 -> removeFriend();
+                case 7 -> setting();
+                case 8 -> System.out.println("Bye Bye!");
+                default -> System.out.println("Invalid Choice!");
             }
         } while (choice != 8);
         user = null;
+    }
+    private void privateChats() {
+
+    }
+    private void servers() {
+
+    }
+    private void newPrivateChat() {
+
+    }
+    private void friendsStatus() {
+
+    }
+    private void addFriend() {
+
+    }
+    private void removeFriend() {
+
+    }
+    private void setting() {
+
     }
     public static void main(String[] args) {
         Client client = new Client();

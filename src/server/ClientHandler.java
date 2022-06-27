@@ -2,20 +2,23 @@ package server;
 
 import client.requests.Request;
 import client.requests.ReqType;
+import server.data.UserData;
+import socialserver.SocialServer;
 import user.User;
 import server.responses.ResType;
 import server.responses.Response;
-import user.data.UserData;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ClientHandler implements Runnable{
     private static HashMap<User, String> users;
     private static HashMap<User, UserData> userData;
+    private static HashSet<SocialServer> socialServers = new HashSet<>();
     private final Socket socket;
     private ObjectInputStream request;
     private ObjectOutputStream response;
