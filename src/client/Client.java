@@ -2,8 +2,8 @@ package client;
 
 import client.requests.LoginRequest;
 import client.requests.SignUpRequest;
-import server.responses.LoginResponse;
-import server.responses.SignUpResponse;
+import server.responses.login.LoginResponse;
+import server.responses.signup.SignUpResponse;
 import user.User;
 
 import java.io.IOException;

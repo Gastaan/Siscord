@@ -5,12 +5,12 @@ import client.requests.Request;
 import client.requests.ReqType;
 import client.requests.SignUpRequest;
 import server.data.UserData;
-import server.responses.LoginResponse;
-import server.responses.LoginStatus;
+import server.responses.login.LoginResponse;
+import server.responses.login.LoginStatus;
+import server.responses.signup.SignUpResponse;
+import server.responses.signup.SignUpStatus;
 import socialserver.SocialServer;
 import user.User;
-import server.responses.ResType;
-import server.responses.Response;
 
 import java.io.*;
 import java.net.Socket;
@@ -89,30 +89,30 @@ public class ClientHandler implements Runnable{
         mail = info.getMail();
         phoneNumber = info.getPhoneNumber();
         try {
-            String checking = checkRegex(username, password, mail, phoneNumber);
+            SignUpStatus status = checkRegex(username, password, mail, phoneNumber);
             User newUser = null;
-            if(checking.equals("valid")) {
+            if(status == SignUpStatus.VALID) {
                 newUser = new User(username, mail, phoneNumber);
                 users.put(newUser, password);
             }
-                response.writeObject(new Response(ResType.SIGNUP,   checking, newUser ));
+                response.writeObject(new SignUpResponse(status, newUser ));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    private String checkRegex(String username, String password, String mail, String phoneNumber) {
+    private SignUpStatus checkRegex(String username, String password, String mail, String phoneNumber) {
         String usernameRegex = "[a-zA-Z0-9]{6,}";
         String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9]{8,}$";
         String mailRegex = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
         String phoneNumberRegex = " ^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$ ";
         if(searchClient(username) == null) {
             if(match(username, usernameRegex) && match(password, passwordRegex) && match(mail, mailRegex) && (match(phoneNumber, phoneNumberRegex) || phoneNumber.equals("")))
-                return "valid";
+                return SignUpStatus.VALID;
             else
-                return "not valid";
+                return SignUpStatus.INVALID;
         }
         else
-            return "username exists";
+            return SignUpStatus.DUPLICATE;
     }
     private Boolean match(String text, String regex) {
         Pattern pattern = Pattern.compile(regex);

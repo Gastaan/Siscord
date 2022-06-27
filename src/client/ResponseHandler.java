@@ -1,10 +1,9 @@
 package client;
 
-import server.responses.LoginResponse;
-import server.responses.LoginStatus;
-import server.responses.SignUpResponse;
+import server.responses.login.LoginResponse;
+import server.responses.login.LoginStatus;
+import server.responses.signup.SignUpResponse;
 import user.User;
-import server.responses.Response;
 
 public class ResponseHandler {
     public User loginResponse(LoginResponse loginResponse) {

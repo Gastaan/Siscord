@@ -1,8 +1,10 @@
-package server.responses;
+package server.responses.login;
 
+import server.responses.ResType;
+import server.responses.Response;
 import user.User;
 
-public class LoginResponse extends Response{
+public class LoginResponse extends Response {
     private final User user;
     private final LoginStatus status;
     public LoginResponse(LoginStatus status, User user) {
