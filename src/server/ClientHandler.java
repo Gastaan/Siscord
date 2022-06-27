@@ -5,6 +5,7 @@ import client.requests.ReqType;
 import user.User;
 import server.responses.ResType;
 import server.responses.Response;
+import user.data.UserData;
 
 import java.io.*;
 import java.net.Socket;
@@ -14,6 +15,7 @@ import java.util.regex.Pattern;
 
 public class ClientHandler implements Runnable{
     private static HashMap<User, String> users;
+    private static HashMap<User, UserData> userData;
     private final Socket socket;
     private ObjectInputStream request;
     private ObjectOutputStream response;
@@ -21,6 +23,7 @@ public class ClientHandler implements Runnable{
     public ClientHandler(Socket socket) {
         this.socket = socket;
         users = new HashMap<>();
+        userData = new HashMap<>();
         try {
             request = new ObjectInputStream(socket.getInputStream());
             response = new ObjectOutputStream(socket.getOutputStream());
