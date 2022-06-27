@@ -1,5 +1,6 @@
 package client;
 
+import client.requests.ChatRequest;
 import client.requests.LoginRequest;
 import client.requests.PrivateChatListRequest;
 import client.requests.SignUpRequest;
@@ -127,12 +128,22 @@ public class Client {
         } while (choice != 8);
         user = null;
     }
+    private void chatPage() {
+        
+    }
     private void privateChats() {
         System.out.println("Private chats: ");
+        int choice;
         try {
             request.writeObject(new PrivateChatListRequest(user.getUsername()));
             PrivateChatListResponse chatList = (PrivateChatListResponse) response.readObject();
-            responseHandler.privateChatListResponse(chatList);
+            choice = responseHandler.privateChatListResponse(chatList);
+            if(choice != chatList.getCount() + 1) {
+                request.writeObject(new ChatRequest(chatList.getChatNames().get(choice - 1)));
+                
+                chatPage();
+            }
+
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
