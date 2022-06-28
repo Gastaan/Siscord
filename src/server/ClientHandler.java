@@ -10,27 +10,33 @@ import shared.responses.login.LoginStatus;
 import shared.responses.signup.SignUpResponse;
 import shared.responses.signup.SignUpStatus;
 import shared.user.User;
+import shared.user.data.message.Message;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ClientHandler implements Runnable{
-    private static HashMap<User, String> users;
-    private static HashMap<User, UserData> userData;
+    //fields
+    private static ConcurrentHashMap<User, String> users;
+    private static ConcurrentHashMap<User, UserData> userData;
+    private static HashSet<Server> servers;
     private final Socket socket;
     private ObjectInputStream request;
     private ObjectOutputStream response;
+    private User servingUser;
+    //constructor
 
     public ClientHandler(Socket socket) {
         this.socket = socket;
-        users = new HashMap<>();
-        userData = new HashMap<>();
+        users = new ConcurrentHashMap<>();
+        userData = new ConcurrentHashMap<>();
         try {
             request = new ObjectInputStream(socket.getInputStream());
             response = new ObjectOutputStream(socket.getOutputStream());
@@ -39,7 +45,7 @@ public class ClientHandler implements Runnable{
             System.out.println("Damnnn!");
         }
     }
-
+    //methods
     @Override
     public void run() {
         Request requested;
@@ -57,15 +63,20 @@ public class ClientHandler implements Runnable{
     private void giveResponse(Request requested) {
         if(requested.getType() == ReqType.LOGIN)
             login((LoginRequest) requested);
-        else if(requested.getType() == ReqType.SIGN_UP) {
+        else if(requested.getType() == ReqType.SIGN_UP)
             signUP((SignUpRequest)requested);
-        }
-        else if(requested.getType() == ReqType.PRIVATE_CHAT_LIST) {
+        else if(requested.getType() == ReqType.PRIVATE_CHAT_LIST)
             privateChatList((PrivateChatListRequest) requested);
-        }
-        else if(requested.getType() == ReqType.CHAT_REQUEST) {
+        else if(requested.getType() == ReqType.CHAT_REQUEST)
             chat((ChatRequest) requested);
-        }
+        else if(requested.getType() == ReqType.PRIVATE_CHAT_REACT)
+            react((ReactRequest) requested);
+        else if(requested.getType() == ReqType.NEW_PRIVATE_CHAT)
+            newPrivateChat((NewPrivateChatRequest) requested);
+    }
+    private void newPrivateChat(NewPrivateChatRequest request) {
+        User user1 = searchClient(request.getUser1());
+        User user2 = searchClient(request.getUser2());
     }
     private void chat(ChatRequest request) {
         User requestedUser = searchClient(request.getRequestedUser());
@@ -85,6 +96,13 @@ public class ClientHandler implements Runnable{
             throw new RuntimeException(e);
         }
     }
+    private void react(ReactRequest request) {
+        User person = searchClient(request.getRequestedUsername());
+        ArrayList<Message> personMessages = userData.get(person).getPrivateChats().get(request.getRequestingUser());
+        ArrayList<Message> userMessages = userData.get(request.getRequestingUser()).getPrivateChats().get(person);
+        personMessages.get(personMessages.indexOf(request.getMessage())).addReaction(request.getReact(), request.getRequestingUser().getUsername());
+        userMessages.get(userMessages.indexOf(request.getMessage())).addReaction(request.getReact(), request.getRequestingUser().getUsername());
+    }
     private void login(LoginRequest info) {
         String username, password;
         username = info.getUsername();
@@ -101,6 +119,7 @@ public class ClientHandler implements Runnable{
             System.out.println("Welcome Back!");
             try {
                 response.writeObject(new LoginResponse(LoginStatus.SUCCESS, loginClient));
+                servingUser = loginClient;
             } catch (IOException e) {
                 System.out.println("Damn!(login)");
             }
@@ -119,6 +138,7 @@ public class ClientHandler implements Runnable{
                 newUser = new User(username, mail, phoneNumber);
                 users.put(newUser, password);
                 userData.put(newUser, new UserData());
+                servingUser = newUser;
             }
                 response.writeObject(new SignUpResponse(status, newUser ));
         } catch (IOException e) {
@@ -149,6 +169,8 @@ public class ClientHandler implements Runnable{
             if(user.getUsername().equals(username))
                 return user;
         return null;
+    }
+    private void notify(String notification) {//TODO
     }
     private void close() {
         try {

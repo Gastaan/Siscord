@@ -3,6 +3,8 @@ package client;
 import shared.requests.*;
 import shared.responses.ChatResponse;
 import shared.responses.PrivateChatListResponse;
+import shared.responses.ResType;
+import shared.responses.Response;
 import shared.responses.login.LoginResponse;
 import shared.responses.signup.SignUpResponse;
 import shared.user.User;
@@ -23,13 +25,50 @@ public class Client {
     private ObjectInputStream response;
     private ObjectOutputStream request;
     private ResponseHandler responseHandler;
+    private Thread listener;
+    private void listener() {
+        listener = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    while(serverConnection.isConnected()) {
+                        handleResponse((Response) response.readObject());
+                    }
+                }
+                catch(IOException | ClassNotFoundException e) {
+                    System.err.println("Problem occurred while listening!");
+                }
+            }
+        });
+        listener.start();
+    }
+    private void handleResponse(Response response) {
+        if(response.getResType() == ResType.SIGNUP) {
+            user = responseHandler.loginResponse((LoginResponse) response);
+            notify();
+        }
+        else if(response.getResType() == ResType.LOGIN) {
+            user = responseHandler.signUpResponse((SignUpResponse) response);
+            notify();
+        }
+        else if(response.getResType() == ResType.PRIVATE_CHAT_LIST) {
+
+        }
+        else if(response.getResType() == ResType.PRIVATE_CHAT_LIST) {
+
+        }
+        else if(response.getResType() == ResType.PRIVATE_CHAT) {
+
+        }
+
+    }
     public Client() {
         try {
-            serverConnection = new Socket("localhost", 404);
+            serverConnection = new Socket("localhost", 404); //TODO: should be changed to 3112
              request = new ObjectOutputStream(serverConnection.getOutputStream());
              response = new ObjectInputStream(serverConnection.getInputStream());
-            responseHandler = new ResponseHandler();
-             //getResponse();
+             responseHandler = new ResponseHandler();
+            listener();
         } catch (IOException e) {
             System.out.println("Can not connect to server!");
             System.exit(404);
@@ -61,15 +100,10 @@ public class Client {
         String password = scanner.next();
         try {
             request.writeObject(new LoginRequest(username, password));
-            try {
-                LoginResponse responded = (LoginResponse) response.readObject();
-                user = responseHandler.loginResponse(responded);
+            wait();
                 if (user != null)
                     homePage();
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -106,7 +140,12 @@ public class Client {
                 }
             } while (choice < 1 || choice > 2);
             request.writeObject(new SignUpRequest(username, password, mail, phoneNumber));
-        } while ((user = responseHandler.signUpResponse((SignUpResponse) response.readObject())) == null);
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        } while (user == null);
         if(user != null)
             homePage();
     }
@@ -132,17 +171,22 @@ public class Client {
     private void chatPage(ArrayList<Message> messages, String chatsName) {
         int choice;
         do {
-            System.out.println("1-sendMessage\n2-React\n3-back to the main page");
+            System.out.println("1-sendMessage\n2-React\n3-back to the main page\n4-make voice call");
             choice = scanner.nextInt();
             switch (choice) {
-                case 1 -> sendMessage();
+                case 1 -> sendMessage(messages, chatsName);
                 case 2 -> react(messages, chatsName);
                 case 3 -> System.out.println("Ok!");
                 default -> System.out.println("Invalid Choice!");
             }
         } while (choice < 1 || choice > 3);
     }
-    private void sendMessage() {
+    private void sendMessage(ArrayList<Message> messages, String chatsName) {
+        try {
+            request.writeObject(new IsTypingRequest(user, chatsName));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
     private void react(ArrayList<Message> messages, String chatsName) {
@@ -174,7 +218,7 @@ public class Client {
             throw new RuntimeException(e);
         }
     }
-    private void privateChats() {
+    private void privateChats() { //should be alive TODO
         System.out.println("Private chats: ");
         int choice;
         try {
@@ -196,7 +240,25 @@ public class Client {
 
     }
     private void newPrivateChat() {
-
+        int choice;
+        do {
+            System.out.println("1-Enter username\n2-Back to the main page");
+            choice = scanner.nextInt();
+            switch (choice) {
+                case 1 -> {
+                    System.out.println("Enter username: ");
+                    String username = scanner.next();
+                    try {
+                        request.writeObject(new NewPrivateChatRequest(user.getUsername(), username));
+                        wait();
+                    } catch (IOException | InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                case 2 -> System.out.println("Ok");
+                default -> System.out.println("Invalid Choice!");
+            }
+        } while(choice != 2);
     }
     private void friendsStatus() {
 
