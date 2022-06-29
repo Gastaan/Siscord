@@ -27,4 +27,7 @@ public class UserData implements Serializable {
         chatNames.addAll(privateChats.keySet());
         return chatNames;
     }
+    public PrivateChat getPrivateChat(String chatName) {
+        return privateChats.get(chatName);
+    }
 }

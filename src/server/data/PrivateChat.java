@@ -1,28 +1,31 @@
 package server.data;
 
+import server.ClientHandler;
 import shared.user.data.message.Message;
 
+import java.util.HashSet;
 import java.util.Vector;
 
 public class PrivateChat {
-    private Vector<Message> messages;
-    private boolean isInChat;
+    //fields
+    private final Vector<Message> messages;
+    private final HashSet<ClientHandler> inChat;
     //constructor
     public PrivateChat() {
         messages = new Vector<>();
-        isInChat = false;
+        inChat = new HashSet<>();
     }
-    //getters
+    //methods
     public Vector<Message> getMessages() {
         return messages;
-    }
-    public boolean isInChat() {
-        return isInChat;
     }
     public void addMessage(Message message) {
         messages.add(message);
     }
-    public void changeIsInChat() {
-            isInChat = !isInChat;
+    public void addInChat(ClientHandler clientHandler) {
+        inChat.add(clientHandler);
+    }
+    public void removeInChat(ClientHandler clientHandler) {
+        inChat.remove(clientHandler);
     }
 }

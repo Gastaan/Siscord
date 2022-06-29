@@ -4,6 +4,7 @@ package server;
 import server.data.UserData;
 import shared.requests.*;
 import shared.responses.ChatResponse;
+import shared.responses.Notification;
 import shared.responses.PrivateChatListResponse;
 import shared.responses.login.LoginResponse;
 import shared.responses.login.LoginStatus;
@@ -31,12 +32,15 @@ public class ClientHandler implements Runnable{
     private ObjectInputStream request;
     private ObjectOutputStream response;
     private User servingUser;
+    private ConcurrentHashMap<User, ClientHandler> onlineUsers;
     //constructor
 
     public ClientHandler(Socket socket) {
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
         this.socket = socket;
         users = new ConcurrentHashMap<>();
         userData = new ConcurrentHashMap<>();
+        onlineUsers = new ConcurrentHashMap<>();
         try {
             request = new ObjectInputStream(socket.getInputStream());
             response = new ObjectOutputStream(socket.getOutputStream());
@@ -80,9 +84,8 @@ public class ClientHandler implements Runnable{
     }
     private void chat(ChatRequest request) {
         User requestedUser = searchClient(request.getRequestedUser());
-        User username = searchClient(request.getUsername());
         try {
-            response.writeObject(new ChatResponse(userData.get(requestedUser).getPrivateChats().get(username)));
+            response.writeObject(new ChatResponse(userData.get(requestedUser).getPrivateChat(request.getUsername())));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -170,9 +173,14 @@ public class ClientHandler implements Runnable{
                 return user;
         return null;
     }
-    private void notify(String notification) {//TODO
+    private void notify(String notification) {
+        try {
+            response.writeObject(new Notification(notification));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
-    private void close() {
+    private void close() { //TODO: close connection
         try {
             if (request != null)
                 response.close();

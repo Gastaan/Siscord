@@ -22,10 +22,10 @@ public class Server {
     }
     public static void main(String[] args) {
         try {
-            Server server = new Server(new ServerSocket(404));
+            Server server = new Server(new ServerSocket(3132));
             server.startServer();
         } catch (IOException e) {
-            System.out.println("Server is under under maintenance!");
+            System.err.println("Server is under under maintenance!");
         }
     }
 }
