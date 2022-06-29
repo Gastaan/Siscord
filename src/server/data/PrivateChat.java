@@ -20,6 +20,7 @@ public class PrivateChat {
         return messages;
     }
     public void addMessage(Message message) {
+
         messages.add(message);
     }
     public void addInChat(ClientHandler clientHandler) {

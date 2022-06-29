@@ -16,10 +16,6 @@ public class FileMessage extends Message{
         this.filename = filename;
 
     }
-    //toString
-    public String toString() {
-        return  writer + " " + time+ "\n" + filename + "\n";
-    }
     //download file
     public void download() {
     try {
@@ -40,5 +36,10 @@ public class FileMessage extends Message{
         catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    //toString
+    @Override
+    public String toString() {
+        return  writer + " " + time+ "\n" + filename + "\n";
     }
 }

@@ -8,6 +8,7 @@ import shared.user.User;
 import shared.user.data.message.FileMessage;
 import shared.user.data.message.Message;
 import shared.user.data.message.Reacts;
+import shared.user.data.message.TextMessage;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -189,12 +190,29 @@ public class Client {
         } while (choice < 1 || choice > 3);
     }
     private void sendMessage(String chatsName) {
-        try {
-            request.writeObject(new IsTypingRequest(user, chatsName));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        int choice;
+        do {
+            System.out.println("1-text\n2-file\n3-back");
+            choice = scanner.nextInt();
+            switch (choice) {
+                case 1 -> {
+                    System.out.println("Enter your message: ");
+                    scanner.nextLine();
+                    String message = scanner.nextLine();
+                    Message newMessage = new TextMessage(message, user.getUsername());
+                    chat.addMessage(newMessage);
+                    System.out.println(chat.getMessages().size() + "-" + newMessage);
+                    try {
+                        request.writeObject(new NewPrivateChatMessageRequest(newMessage, user.getUsername(), chatsName));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                case 2 -> sendFileMessages();
+            }
+        } while (choice != 3);
     }
+    private void sendFileMessages() {} //TODO : send file messages
     private void downLoadFileMessages() {
         new Thread(new Runnable() {
             @Override

@@ -15,4 +15,7 @@ public class ChatResponse extends Response{
     public Vector<Message> getMessages() {
         return messages;
     }
+    public void addMessage(Message message) {
+        messages.add(message);
+    }
 }

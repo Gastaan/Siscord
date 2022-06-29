@@ -1,6 +1,7 @@
 package server;
 
 
+import server.data.PrivateChat;
 import server.data.UserData;
 import shared.requests.*;
 import shared.responses.ChatResponse;
@@ -46,7 +47,7 @@ public class ClientHandler implements Runnable{
             response = new ObjectOutputStream(socket.getOutputStream());
         }
         catch (IOException e) {
-            System.out.println("Damnnn!");
+            System.err.println("Can not connect client to client handler!");
         }
     }
     //methods
@@ -77,18 +78,12 @@ public class ClientHandler implements Runnable{
             react((ReactRequest) requested);
         else if(requested.getType() == ReqType.NEW_PRIVATE_CHAT)
             newPrivateChat((NewPrivateChatRequest) requested);
+        else if(requested.getType() == ReqType.NEW_PRIVATE_CHAT_MESSAGE)
+            sendMessage((NewPrivateChatMessageRequest) requested);
     }
-    private void newPrivateChat(NewPrivateChatRequest request) {
+    private void newPrivateChat(NewPrivateChatRequest request) { //TODO : new private chat
         User user1 = searchClient(request.getUser1());
         User user2 = searchClient(request.getUser2());
-    }
-    private void chat(ChatRequest request) {
-        User requestedUser = searchClient(request.getRequestedUser());
-        try {
-            response.writeObject(new ChatResponse(userData.get(requestedUser).getPrivateChat(request.getUsername())));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
     private void privateChatList(PrivateChatListRequest requested) {
         User requestedUser = searchClient(requested.getUsername());
@@ -99,13 +94,29 @@ public class ClientHandler implements Runnable{
             throw new RuntimeException(e);
         }
     }
+    private void chat(ChatRequest request) {
+        User requestedUser = searchClient(request.getRequestedUser());
+        try {
+            PrivateChat privateChat = userData.get(requestedUser).getPrivateChat(request.getUsername());
+            response.writeObject(new ChatResponse(privateChat.getMessages()));
+            privateChat.addInChat(this);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private void sendMessage(NewPrivateChatMessageRequest request) {
+        User sender = searchClient(request.getSender());
+        User receiver = searchClient(request.getReceiver());
+        userData.get(sender).getPrivateChat(receiver.getUsername()).addMessage(request.getMessage());
+        userData.get(receiver).getPrivateChat(sender.getUsername()).addMessage(request.getMessage());
+    }
     private void react(ReactRequest request) {
         User person = searchClient(request.getRequestedUsername());
         ArrayList<Message> personMessages = userData.get(person).getPrivateChats().get(request.getRequestingUser());
         ArrayList<Message> userMessages = userData.get(request.getRequestingUser()).getPrivateChats().get(person);
         personMessages.get(personMessages.indexOf(request.getMessage())).addReaction(request.getReact(), request.getRequestingUser().getUsername());
         userMessages.get(userMessages.indexOf(request.getMessage())).addReaction(request.getReact(), request.getRequestingUser().getUsername());
-    }
+    } //TODO : add reaction to message
     private void login(LoginRequest info) {
         String username, password;
         username = info.getUsername();
@@ -123,11 +134,13 @@ public class ClientHandler implements Runnable{
             try {
                 response.writeObject(new LoginResponse(LoginStatus.SUCCESS, loginClient));
                 servingUser = loginClient;
+                onlineUsers.put(loginClient, this);
             } catch (IOException e) {
                 System.out.println("Damn!(login)");
             }
         }
     }
+    private void logOut() {} //TODO : log out
     private void signUP(SignUpRequest info) {
         String username , password , mail, phoneNumber;
         username = info.getUsername();
@@ -142,6 +155,7 @@ public class ClientHandler implements Runnable{
                 users.put(newUser, password);
                 userData.put(newUser, new UserData());
                 servingUser = newUser;
+                onlineUsers.put(newUser, this);
             }
                 response.writeObject(new SignUpResponse(status, newUser ));
         } catch (IOException e) {
@@ -179,6 +193,9 @@ public class ClientHandler implements Runnable{
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+    private void newMessage(Message message) {
+
     }
     private void close() { //TODO: close connection
         try {
