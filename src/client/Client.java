@@ -27,6 +27,7 @@ public class Client {
     private ResponseHandler responseHandler;
     private PrivateChatListResponse chatList; //TODO : should be alive while user is online
     private ChatResponse chat; //TODO: should be alive while user is online
+    private GetFriendsListResponse friends; //TODO: should be alive while user is online
     private IncomingFriendRequestsResponse friendRequests;
     //constructor
     public Client() {
@@ -76,8 +77,10 @@ public class Client {
             responseHandler.chatResponse(chat);
             notify();
         }
-        else if(response.getResType() == ResType.NOTIFICATION)
+        else if(response.getResType() == ResType.NOTIFICATION) {
             System.out.println(((Notification) response).getDescription());
+            System.out.flush();
+        }
         else if(response.getResType() == ResType.NEW_MESSAGE) {
             Message newMessage = responseHandler.newMessageResponse((NewMessageResponse) response);
             chat.addMessage(newMessage);
@@ -94,6 +97,14 @@ public class Client {
         }
         else if(response.getResType() == ResType.ADD_FRIEND) {
             System.out.println(response);
+            notify();
+        }
+        else if(response.getResType() == ResType.GET_FRIENDS_LIST) {
+            int index = 1;
+            for(String friend : friends.getFriends()) {
+                System.out.println(index + "-" + friend);
+                index++;
+            }
             notify();
         }
     }
@@ -176,28 +187,24 @@ public class Client {
         clearConsole();
         int choice;
         do {
-            System.out.println("1- private chats\n2- servers\n3- new private chat\n4- friends status\n5- add friend\n6- remove friend\n7-incoming friend requests\n8-pending friend requests\n9-blocked users\n10- setting\n11- exit");
+            System.out.println("1- private chats\n2- servers\n3- new private chat\n4- friends\n5- add friend\n6-incoming friend requests\n7-blocked users\n8- setting\n9- exit");
             choice = scanner.nextInt();
             switch (choice) {
                 case 1 -> privateChats();
                 case 2 -> servers();
                 case 3 -> newPrivateChat();
-                case 4 -> friendsStatus();
+                case 4 -> friends();
                 case 5 -> addFriend();
-                case 6 -> removeFriend();
-                case 7 -> incomingFriendRequests();
-                case 8 -> pendingFriendRequests();
-                case 9 -> blockedUsers();
-                case 10 -> setting();
-                case 11 -> System.out.println("Bye Bye!");
+                case 6 -> incomingFriendRequests();
+                case 7 -> blockedUsers();
+                case 8 -> setting();
+                case 9 -> System.out.println("Bye Bye!");
                 default -> System.out.println("Invalid Choice!");
             }
-        } while (choice != 8);
+        } while (choice != 9);
         user = null;
     }
     private synchronized void blockedUsers() {} //TODO : implement
-    private synchronized void pendingFriendRequests() {} //TODO : implement pending friend requests
-    private synchronized void outgoingFriendRequests() {} // TODO : implement
     private synchronized void incomingFriendRequests() {
         int choice;
         try {
@@ -229,18 +236,12 @@ public class Client {
             System.out.println("1-accept\n2-decline\n3-back");
             choice = scanner.nextInt();
             switch (choice) {
-                case 1 -> {
-                    accepted = true;
-                    break;
-                }
-                case 2 -> {
-                    accepted = false;
-                    break;
-                }
+                case 1 -> accepted = true;
+                case 2 -> accepted = false;
                 case 3 -> System.out.println("Bye Bye!");
                 default -> System.out.println("Invalid Choice!");
             }
-        } while (choice != 3);
+        } while (choice > 3 || choice < 1);
         if(accepted != null) {
             try {
                 request.writeObject(new FriendRequestAnswerRequest(user.getUsername(),friendRequests.getIncomingFriendRequests().get(requestID - 1), accepted));
@@ -374,9 +375,6 @@ public class Client {
             }
         } while(choice != 2);
     }//TODO : NEW_PRIVATE_CHAT
-    private void friendsStatus() {
-
-    }//TODO : FRIENDS_STATUS
     private void addFriend() {
         int choice;
         do {
@@ -398,10 +396,52 @@ public class Client {
             }
         } while(choice != 2);
     }
-    private void removeFriend() {
+    private void friends()  {
+        int choice;
+        do {
+            try {
+                request.writeObject(new GetFriendsListRequest(user.getUsername()));
+                wait();
+            }
+             catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
 
-    } //TODO : REMOVE_FRIEND
-    private void blockUser() {} //TODO : BLOCK_USER
+            System.out.println("1-select friend\n2-Back to the main page");
+            choice = scanner.nextInt();
+            switch (choice) {
+                case 1 -> selectFriend();
+                case 2 -> System.out.println("Ok");
+                default -> System.out.println("Invalid Choice!");
+            }
+        } while (choice != 2);
+    }
+    private void selectFriend() {
+        int requestID, choice;
+        Boolean accepted = null;
+        do {
+            System.out.println("Enter request id: ");
+            requestID = scanner.nextInt();
+        }
+        while (requestID >  friends.getFriends().size() || requestID < 1);
+        do {
+            System.out.println("1-block\n2-remove\n3-back");
+            choice = scanner.nextInt();
+            switch (choice) {
+                case 1 -> accepted = true;
+                case 2 -> accepted = false;
+                case 3 -> System.out.println("Bye Bye!");
+                default -> System.out.println("Invalid Choice!");
+            }
+        } while (choice > 3 || choice < 1);
+        if(accepted != null) {
+            try {
+                request.writeObject(new FriendRequestAnswerRequest(user.getUsername(),friendRequests.getIncomingFriendRequests().get(requestID - 1), accepted));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
     private void setting() {
 
     } //Last : TODO : SETTING

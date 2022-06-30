@@ -77,4 +77,9 @@ public class UserData implements Serializable {
             return friends.contains(username);
         }
     }
+    public ArrayList<String> getFriends() {
+        synchronized (friends) {
+            return new ArrayList<>(friends);
+        }
+    }
 }

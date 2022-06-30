@@ -4,6 +4,7 @@ package server;
 import server.data.PrivateChat;
 import server.data.UserData;
 import shared.requests.*;
+import shared.requests.AddFriendRequest;
 import shared.responses.*;
 import shared.responses.addfriend.AddFriendResponse;
 import shared.responses.addfriend.AddFriendResponseStatus;
@@ -27,15 +28,15 @@ import java.util.regex.Pattern;
 
 public class ClientHandler implements Runnable{
     //fields
-    public static ConcurrentHashMap<User, String> users;
+    private static ConcurrentHashMap<User, String> users;
     private static ConcurrentHashMap<User, UserData> userData;
+    private static ConcurrentHashMap<User, Vector<ClientHandler>> onlineUsers;
+
     private static HashSet<Server> servers;
     private final Socket socket;
     private ObjectInputStream request;
     private ObjectOutputStream response;
-    private User servingUser;
-    private ConcurrentHashMap<User, Vector<ClientHandler>> onlineUsers;
-    //constructor
+    private User servingUser;//constructor
 
     public ClientHandler(Socket socket) {
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
@@ -92,6 +93,21 @@ public class ClientHandler implements Runnable{
             friendRequestAnswer((FriendRequestAnswerRequest) requested);
         else if(requested.getType() == ReqType.ADD_FRIEND)
             addFriend((AddFriendRequest) requested);
+        else if(requested.getType() == ReqType.GET_FRIENDS_LIST)
+            getFriendsList((GetFriendsListRequest) requested);
+    }
+    private void getFriendsList(GetFriendsListRequest requested) {
+        User requestedUser = searchUser(requested.getUsername());
+        ArrayList<String> friends = new ArrayList<>();
+        for(String friend : userData.get(requestedUser).getFriends()) {
+            friends.add(searchUser(friend).userStatus());
+        }
+        try {
+            response.writeObject(new GetFriendsListResponse(friends));
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     private void addFriend(AddFriendRequest requested) {
         User requesting = searchUser(requested.getRequestingUser());
@@ -107,7 +123,7 @@ public class ClientHandler implements Runnable{
             userData.get(requestedFriend).addIncomingFriendRequest(requesting.getUsername());
             if(onlineUsers.get(requestedFriend) != null)
                 for(ClientHandler ch : onlineUsers.get(requestedFriend))
-                 ch.notify("Friend request from " + requesting.getUsername());
+                 ch.sendNotification("Friend request from " + requesting.getUsername());
         }
         try {
             response.writeObject(new AddFriendResponse(status, requesting.getUsername()));
@@ -126,9 +142,9 @@ public class ClientHandler implements Runnable{
             userData.get(requestedUser).addFriend(requestingUser.getUsername());
             userData.get(requestingUser).addFriend(requestedUser.getUsername());
         }
-        for(ClientHandler clientHandler : onlineUsers.get(requestedUser)) {
-            clientHandler.notify(notificationForRequestedUser);
-        }
+        if(onlineUsers.get(requestedUser) != null)
+            for(ClientHandler ch : onlineUsers.get(requestedUser))
+                ch.sendNotification(notificationForRequestedUser);
     }
     private void getFriendRequests(GetFriendRequestsRequest requested) {
         User requestedUser = searchUser(requested.getRequestedUser());
@@ -166,7 +182,7 @@ public class ClientHandler implements Runnable{
         User receiver = searchUser(request.getReceiver());
         userData.get(sender).getPrivateChat(receiver.getUsername()).addMessage(request.getMessage());
         userData.get(receiver).getPrivateChat(sender.getUsername()).addMessage(request.getMessage());
-    }
+    } //TODO : send message to private chat
     private void react(ReactRequest request) {
         /*
         User person = searchClient(request.getRequestedUsername());
@@ -194,11 +210,10 @@ public class ClientHandler implements Runnable{
             try {
                 response.writeObject(new LoginResponse(LoginStatus.SUCCESS, loginClient));
                 servingUser = loginClient;
-                Vector<ClientHandler> clients = onlineUsers.get(loginClient);
-                if(clients != null)
-                    clients.add(this);
+                if(onlineUsers.keySet().contains(loginClient))
+                    onlineUsers.get(loginClient).add(this);
                 else {
-                    clients = new Vector<>();
+                    Vector<ClientHandler> clients = new Vector<>();
                     clients.add(this);
                     onlineUsers.put(loginClient, clients);
                 }
@@ -222,7 +237,7 @@ public class ClientHandler implements Runnable{
                 users.put(newUser, password);
                 userData.put(newUser, new UserData());
                 servingUser = newUser;
-                if(onlineUsers.get(newUser) != null)
+                if(onlineUsers.containsKey(newUser))
                     onlineUsers.get(newUser).add(this);
                 else {
                     Vector<ClientHandler> clients = new Vector<>();
@@ -260,11 +275,13 @@ public class ClientHandler implements Runnable{
                 return user;
         return null;
     }
-    private synchronized void notify(String notification) {
-        try {
-            response.writeObject(new Notification(notification));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    private  void sendNotification(String notification) {
+        synchronized (response) {
+            try {
+                response.writeObject(new Notification(notification));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
     public void newMessage(Message message) {

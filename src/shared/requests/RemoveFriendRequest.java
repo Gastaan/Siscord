@@ -1,11 +1,11 @@
 package shared.requests;
 
-public class AddFriendRequest extends Request {
+public class RemoveFriendRequest extends Request{
     private final String requestingUser;
     private final String requestedUser;
     //constructor
-    public AddFriendRequest(String requestingUser, String requestedUser) {
-        super(ReqType.ADD_FRIEND);
+    public RemoveFriendRequest(String requestingUser, String requestedUser) {
+        super(ReqType.REMOVE_FRIEND);
         this.requestingUser = requestingUser;
         this.requestedUser = requestedUser;
     }

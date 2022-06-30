@@ -11,4 +11,5 @@ public enum ResType implements Serializable {
     NEW_MESSAGE,
     INCOMING_FRIEND_REQUESTS,
     ADD_FRIEND,
+    GET_FRIENDS_LIST,
 }
