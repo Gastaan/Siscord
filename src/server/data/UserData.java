@@ -39,9 +39,6 @@ public class UserData implements Serializable {
     public HashSet<String> getIncomingFriendRequests() {
         return incomingFriendRequests;
     }
-    public HashSet<String> getOutgoingFriendRequests() {
-        return outgoingFriendRequests;
-    }
     public void addOutgoingFriendRequest(String username) {
         synchronized (outgoingFriendRequests) {
             outgoingFriendRequests.add(username);
@@ -80,6 +77,11 @@ public class UserData implements Serializable {
     public ArrayList<String> getFriends() {
         synchronized (friends) {
             return new ArrayList<>(friends);
+        }
+    }
+    public ArrayList<String> getOutgoingFriendRequests() {
+        synchronized (outgoingFriendRequests) {
+            return new ArrayList<>(outgoingFriendRequests);
         }
     }
 }

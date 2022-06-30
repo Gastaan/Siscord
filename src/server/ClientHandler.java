@@ -95,6 +95,24 @@ public class ClientHandler implements Runnable{
             addFriend((AddFriendRequest) requested);
         else if(requested.getType() == ReqType.GET_FRIENDS_LIST)
             getFriendsList((GetFriendsListRequest) requested);
+        else if(requested.getType() == ReqType.REMOVE_FRIEND)
+            removeFriend((RemoveFriendRequest) requested);
+        else if(requested.getType() == ReqType.GET_OUTGOING_FRIEND)
+            getOutgoingFriend((GetOutGoingFriendRequest) requested);
+    }
+    private void getOutgoingFriend(GetOutGoingFriendRequest requested) {
+        try {
+            response.writeObject(new GetOutgoingFriendResponse(userData.get(servingUser).getOutgoingFriendRequests()));
+        }
+        catch (IOException e) {
+            System.err.println("Can not send outgoing friend to client!");
+        }
+    }
+    private void removeFriend(RemoveFriendRequest request) {
+        User requestingUser = searchUser(request.getRequestingUser());
+        User requestedUser = searchUser(request.getRequestedUser());
+        userData.get(requestingUser).getFriends().remove(requestedUser);
+        userData.get(requestedUser).getFriends().remove(requestingUser);
     }
     private void getFriendsList(GetFriendsListRequest requested) {
         User requestedUser = searchUser(requested.getUsername());
@@ -113,7 +131,7 @@ public class ClientHandler implements Runnable{
         User requesting = searchUser(requested.getRequestingUser());
         User requestedFriend = searchUser(requested.getRequestedUser());
         AddFriendResponseStatus  status;
-        if(requestedFriend == null)
+        if(requestedFriend == null || requesting == requestedFriend)
             status = AddFriendResponseStatus.USER_NOT_FOUND;
         else if(userData.get(requesting).isFriend(requestedFriend.getUsername()))
             status = AddFriendResponseStatus.ALREADY_FRIENDS;

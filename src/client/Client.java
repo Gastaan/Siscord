@@ -27,8 +27,9 @@ public class Client {
     private ResponseHandler responseHandler;
     private PrivateChatListResponse chatList; //TODO : should be alive while user is online
     private ChatResponse chat; //TODO: should be alive while user is online
-    private GetFriendsListResponse friends; //TODO: should be alive while user is online
+    private GetFriendsListResponse friends;
     private IncomingFriendRequestsResponse friendRequests;
+    private GetOutgoingFriendResponse outgoingFriendRequests;
     //constructor
     public Client() {
         try {
@@ -106,6 +107,11 @@ public class Client {
                 index++;
             }
             notify();
+        }
+        else if(response.getResType() == ResType.GET_OUTGOING_FRIEND) {
+            for(String outgoingFriend : outgoingFriendRequests.getOutgoingFriendRequests()) {
+                System.out.println(outgoingFriend);
+            }
         }
     }
     public void start() {
@@ -187,7 +193,7 @@ public class Client {
         clearConsole();
         int choice;
         do {
-            System.out.println("1- private chats\n2- servers\n3- new private chat\n4- friends\n5- add friend\n6-incoming friend requests\n7-blocked users\n8- setting\n9- exit");
+            System.out.println("1- private chats\n2- servers\n3- new private chat\n4- friends\n5- add friend\n6-incoming friend requests\n7-pending requests\n8-blocked users\n9- setting\n910- exit");
             choice = scanner.nextInt();
             switch (choice) {
                 case 1 -> privateChats();
@@ -196,13 +202,31 @@ public class Client {
                 case 4 -> friends();
                 case 5 -> addFriend();
                 case 6 -> incomingFriendRequests();
-                case 7 -> blockedUsers();
-                case 8 -> setting();
-                case 9 -> System.out.println("Bye Bye!");
+                case 7 -> outGoingFriendRequests();
+                case 8 -> blockedUsers();
+                case 9 -> setting();
+                case 10 -> System.out.println("Bye Bye!");
                 default -> System.out.println("Invalid Choice!");
             }
-        } while (choice != 9);
+        } while (choice != 10);
         user = null;
+    }
+    private synchronized void outGoingFriendRequests() {
+        int choice;
+        try {
+            request.writeObject(new Request(ReqType.GET_OUTGOING_FRIEND));
+            wait();
+            do {
+                System.out.println("1-back");
+                choice = scanner.nextInt();
+                switch (choice) {
+                    case 1 -> System.out.println("Ok!");
+                    default -> System.out.println("Invalid Choice!");
+                }
+            } while (choice != 1);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
     private synchronized void blockedUsers() {} //TODO : implement
     private synchronized void incomingFriendRequests() {
@@ -418,29 +442,27 @@ public class Client {
     }
     private void selectFriend() {
         int requestID, choice;
-        Boolean accepted = null;
         do {
             System.out.println("Enter request id: ");
             requestID = scanner.nextInt();
         }
         while (requestID >  friends.getFriends().size() || requestID < 1);
         do {
-            System.out.println("1-block\n2-remove\n3-back");
+            System.out.println("1-remove\n2-back");
             choice = scanner.nextInt();
             switch (choice) {
-                case 1 -> accepted = true;
-                case 2 -> accepted = false;
-                case 3 -> System.out.println("Bye Bye!");
+                case 1 -> {
+                    try {
+                        request.writeObject(new RemoveFriendRequest(user.getUsername(), friends.getFriends().get(requestID - 1)));
+                        System.out.println("Ok!");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                case 2 -> System.out.println("Bye Bye!");
                 default -> System.out.println("Invalid Choice!");
             }
-        } while (choice > 3 || choice < 1);
-        if(accepted != null) {
-            try {
-                request.writeObject(new FriendRequestAnswerRequest(user.getUsername(),friendRequests.getIncomingFriendRequests().get(requestID - 1), accepted));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        } while (choice > 2 || choice < 1);
     }
     private void setting() {
 
