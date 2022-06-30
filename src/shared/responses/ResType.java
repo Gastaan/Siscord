@@ -7,5 +7,8 @@ public enum ResType implements Serializable {
     SIGNUP,
     PRIVATE_CHAT_LIST,
     PRIVATE_CHAT,
-    NOTIFICATION
+    NOTIFICATION,
+    NEW_MESSAGE,
+    INCOMING_FRIEND_REQUESTS,
+    ADD_FRIEND,
 }

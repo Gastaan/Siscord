@@ -1,6 +1,8 @@
 package shared.responses.login;
 
-public enum LoginStatus {
+import java.io.Serializable;
+
+public enum LoginStatus implements Serializable {
     SUCCESS,
     FAILURE,
 }

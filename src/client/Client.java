@@ -1,3 +1,4 @@
+//Ya Ali
 package client;
 
 import shared.requests.*;
@@ -7,7 +8,6 @@ import shared.responses.signup.SignUpResponse;
 import shared.user.User;
 import shared.user.data.message.FileMessage;
 import shared.user.data.message.Message;
-import shared.user.data.message.Reacts;
 import shared.user.data.message.TextMessage;
 
 import java.io.IOException;
@@ -25,8 +25,9 @@ public class Client {
     private ObjectInputStream response;
     private ObjectOutputStream request;
     private ResponseHandler responseHandler;
-    private PrivateChatListResponse chatList;
-    private ChatResponse chat;
+    private PrivateChatListResponse chatList; //TODO : should be alive while user is online
+    private ChatResponse chat; //TODO: should be alive while user is online
+    private IncomingFriendRequestsResponse friendRequests;
     //constructor
     public Client() {
         try {
@@ -56,13 +57,13 @@ public class Client {
             }
         }).start();
     }
-    private void handleResponse(Response response) {
+    private synchronized void handleResponse(Response response) {
         if(response.getResType() == ResType.SIGNUP) {
-            user = responseHandler.loginResponse((LoginResponse) response);
+            user = responseHandler.signUpResponse((SignUpResponse) response);
             notify();
         }
         else if(response.getResType() == ResType.LOGIN) {
-            user = responseHandler.signUpResponse((SignUpResponse) response);
+            user = responseHandler.loginResponse((LoginResponse) response);
             notify();
         }
         else if(response.getResType() == ResType.PRIVATE_CHAT_LIST) {
@@ -77,8 +78,25 @@ public class Client {
         }
         else if(response.getResType() == ResType.NOTIFICATION)
             System.out.println(((Notification) response).getDescription());
+        else if(response.getResType() == ResType.NEW_MESSAGE) {
+            Message newMessage = responseHandler.newMessageResponse((NewMessageResponse) response);
+            chat.addMessage(newMessage);
+            System.out.println(chat.getMessages().size() + "-" + newMessage);
+        }
+        else if(response.getResType() == ResType.INCOMING_FRIEND_REQUESTS) {
+            friendRequests = (IncomingFriendRequestsResponse) response;
+            int index = 1;
+            for(String request : friendRequests.getIncomingFriendRequests()) {
+                System.out.println(index + "-" + request);
+                index++;
+            }
+            notify();
+        }
+        else if(response.getResType() == ResType.ADD_FRIEND) {
+            System.out.println(response);
+            notify();
+        }
     }
-
     public void start() {
         int choice;
         do {
@@ -98,7 +116,7 @@ public class Client {
             }
         } while(choice != 3);
     }
-    private void login() {
+    private synchronized void login() {
         System.out.println("Enter user username: ");
         String username = scanner.next();
         System.out.println("Enter your password: ");
@@ -112,7 +130,7 @@ public class Client {
             throw new RuntimeException(e);
         }
     }
-    private  void signUp() throws IOException, ClassNotFoundException {
+    private synchronized void signUp() throws IOException, ClassNotFoundException {
         String username, password, mail, phoneNumber = "";
         int choice;
         A :  do {
@@ -155,9 +173,10 @@ public class Client {
             homePage();
     }
     private void homePage() {
+        clearConsole();
         int choice;
         do {
-            System.out.println("1- private chats\n2- servers\n3- new private chat\n4- friends status\n5- add friend\n6- remove friend\n7- setting\n8- exit");
+            System.out.println("1- private chats\n2- servers\n3- new private chat\n4- friends status\n5- add friend\n6- remove friend\n7-incoming friend requests\n8-pending friend requests\n9-blocked users\n10- setting\n11- exit");
             choice = scanner.nextInt();
             switch (choice) {
                 case 1 -> privateChats();
@@ -166,15 +185,71 @@ public class Client {
                 case 4 -> friendsStatus();
                 case 5 -> addFriend();
                 case 6 -> removeFriend();
-                case 7 -> setting();
-                case 8 -> System.out.println("Bye Bye!");
+                case 7 -> incomingFriendRequests();
+                case 8 -> pendingFriendRequests();
+                case 9 -> blockedUsers();
+                case 10 -> setting();
+                case 11 -> System.out.println("Bye Bye!");
                 default -> System.out.println("Invalid Choice!");
             }
         } while (choice != 8);
         user = null;
     }
+    private synchronized void blockedUsers() {} //TODO : implement
+    private synchronized void pendingFriendRequests() {} //TODO : implement pending friend requests
+    private synchronized void outgoingFriendRequests() {} // TODO : implement
+    private synchronized void incomingFriendRequests() {
+        int choice;
+        try {
+            request.writeObject(new GetFriendRequestsRequest(user.getUsername()));
+            wait();
+            do {
+                System.out.println("1-select request\n2-back");
+                choice = scanner.nextInt();
+                switch (choice) {
+                    case 1 -> selectRequest();
+                    case 2 -> System.out.println("Bye Bye!");
+                    default -> System.out.println("Invalid Choice!");
+                }
+            } while (choice != 2);
+        }
+        catch (InterruptedException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private void selectRequest() {
+        int requestID, choice;
+        Boolean accepted = null;
+        do {
+            System.out.println("Enter request id: ");
+            requestID = scanner.nextInt();
+        }
+        while (requestID >  friendRequests.getIncomingFriendRequests().size() || requestID < 1);
+        do {
+            System.out.println("1-accept\n2-decline\n3-back");
+            choice = scanner.nextInt();
+            switch (choice) {
+                case 1 -> {
+                    accepted = true;
+                    break;
+                }
+                case 2 -> {
+                    accepted = false;
+                    break;
+                }
+                case 3 -> System.out.println("Bye Bye!");
+                default -> System.out.println("Invalid Choice!");
+            }
+        } while (choice != 3);
+        if(accepted != null) {
+            try {
+                request.writeObject(new FriendRequestAnswerRequest(user.getUsername(),friendRequests.getIncomingFriendRequests().get(requestID - 1), accepted));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
     private void chatPage(int chosenChat) {
-        ArrayList<Message> messages = new ArrayList<>(chat.getMessages());
         String chatsName = chatList.getChatNames().get(chosenChat - 1);
         int choice;
         do {
@@ -200,8 +275,6 @@ public class Client {
                     scanner.nextLine();
                     String message = scanner.nextLine();
                     Message newMessage = new TextMessage(message, user.getUsername());
-                    chat.addMessage(newMessage);
-                    System.out.println(chat.getMessages().size() + "-" + newMessage);
                     try {
                         request.writeObject(new NewPrivateChatMessageRequest(newMessage, user.getUsername(), chatsName));
                     } catch (IOException e) {
@@ -229,6 +302,7 @@ public class Client {
 
     } //TODO : VOICE_CALL
     private void react(String chatsName) {
+        /*
         int choice, size = messages.size();
         do {
                 System.out.println("Which message ?" + 1 + "-" + size);
@@ -256,6 +330,8 @@ public class Client {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+         */
     } //TODO : REACT
     private void privateChats() {
         System.out.println("Private chats: ");
@@ -302,14 +378,38 @@ public class Client {
 
     }//TODO : FRIENDS_STATUS
     private void addFriend() {
-
-    } //TODO : ADD_FRIEND
+        int choice;
+        do {
+            System.out.println("1-Enter username\n2-Back to the main page");
+            choice = scanner.nextInt();
+            switch (choice) {
+                case 1 -> {
+                    System.out.println("Enter username: ");
+                    String username = scanner.next();
+                    try {
+                        request.writeObject(new AddFriendRequest(user.getUsername(), username));
+                        wait();
+                    } catch (IOException | InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                case 2 -> System.out.println("Ok");
+                default -> System.out.println("Invalid Choice!");
+            }
+        } while(choice != 2);
+    }
     private void removeFriend() {
 
     } //TODO : REMOVE_FRIEND
+    private void blockUser() {} //TODO : BLOCK_USER
     private void setting() {
 
-    } //TODO : SETTING
+    } //Last : TODO : SETTING
+    public  static void clearConsole()
+    {
+        for (int i = 0; i < 50; ++i) System.out.println();
+    }
+
     public static void main(String[] args) {
         Client client = new Client();
         client.start();

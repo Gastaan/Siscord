@@ -19,8 +19,17 @@ public class PrivateChat {
     public Vector<Message> getMessages() {
         return messages;
     }
+    public void sendNewMessage(Message message) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for(ClientHandler client : inChat)
+                    client.newMessage(message);
+            }
+        }).start();
+    }
     public void addMessage(Message message) {
-
+        sendNewMessage(message);
         messages.add(message);
     }
     public void addInChat(ClientHandler clientHandler) {

@@ -1,6 +1,7 @@
 package client;
 
 import shared.responses.ChatResponse;
+import shared.responses.NewMessageResponse;
 import shared.responses.PrivateChatListResponse;
 import shared.responses.login.LoginResponse;
 import shared.responses.login.LoginStatus;
@@ -55,5 +56,8 @@ public class ResponseHandler {
             index++;
             System.out.println(index + "-" + message);
         }
+    }
+    public Message newMessageResponse(NewMessageResponse response) {
+        return  response.getNewMessage();
     }
 }

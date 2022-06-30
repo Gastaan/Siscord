@@ -1,6 +1,8 @@
 package shared.responses.signup;
 
-public enum SignUpStatus {
+import java.io.Serializable;
+
+public enum SignUpStatus implements Serializable {
     VALID,
     INVALID,
     DUPLICATE
