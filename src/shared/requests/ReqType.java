@@ -17,6 +17,8 @@ public enum ReqType implements Serializable {
     ADD_FRIEND,
     REMOVE_FRIEND,
     GET_FRIENDS_LIST,
-    GET_OUTGOING_FRIEND
-
+    GET_OUTGOING_FRIEND,
+    GET_BLOCKED_USERS,
+    UNBLOCK_USER,
+    BLOCK_USER
 }

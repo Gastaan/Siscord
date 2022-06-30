@@ -25,7 +25,7 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+//TODO : Refactor
 public class ClientHandler implements Runnable{
     //fields
     private static ConcurrentHashMap<User, String> users;
@@ -56,7 +56,7 @@ public class ClientHandler implements Runnable{
         catch (IOException e) {
             System.err.println("Can not connect client to client handler!");
         }
-    }
+    } //Done
     //methods
     @Override
     public void run() {
@@ -71,7 +71,7 @@ public class ClientHandler implements Runnable{
             System.out.println("Damn!");
             close();
         }
-    }
+    } //Done
     private void giveResponse(Request requested) {
         if(requested.getType() == ReqType.LOGIN)
             login((LoginRequest) requested);
@@ -98,22 +98,58 @@ public class ClientHandler implements Runnable{
         else if(requested.getType() == ReqType.REMOVE_FRIEND)
             removeFriend((RemoveFriendRequest) requested);
         else if(requested.getType() == ReqType.GET_OUTGOING_FRIEND)
-            getOutgoingFriend((GetOutGoingFriendRequest) requested);
+            getOutgoingFriend(requested);
+        else if(requested.getType() == ReqType.GET_BLOCKED_USERS)
+            getBlockedUsers(requested);
+        else if(requested.getType() == ReqType.UNBLOCK_USER)
+            unblockUser((UnblockRequest)requested);
+        else if (requested.getType() == ReqType.BLOCK_USER)
+            blockUser((BlockRequest)requested);
     }
-    private void getOutgoingFriend(GetOutGoingFriendRequest requested) {
+    private void blockUser(BlockRequest requested) {
+        User blockingUser = searchUser(requested.getUsername());
+        boolean success;
+        if(blockingUser == null)
+            success = false;
+        else {
+            userData.get(servingUser).blockUser(blockingUser.getUsername());
+            success = true;
+        }
+        try {
+            response.writeObject(new BlockResponse(success));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private void unblockUser(UnblockRequest requested) { //TODO : Failed to unblock user
+        userData.get(servingUser).unblockUser(requested.getUsername());
+        try {
+            response.writeObject(new UnblockResponse(true));
+        }
+        catch (IOException e) {
+            System.err.println("Can not send response to client!");
+        }
+    }
+    private void getBlockedUsers(Request requested) {
+        try {
+            response.writeObject(new GetBlockedUsersResponse(userData.get(servingUser).getBlockedUsers()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private void getOutgoingFriend(Request requested) {
         try {
             response.writeObject(new GetOutgoingFriendResponse(userData.get(servingUser).getOutgoingFriendRequests()));
         }
         catch (IOException e) {
             System.err.println("Can not send outgoing friend to client!");
         }
-    }
+    } //Done
     private void removeFriend(RemoveFriendRequest request) {
-        User requestingUser = searchUser(request.getRequestingUser());
         User requestedUser = searchUser(request.getRequestedUser());
-        userData.get(requestingUser).getFriends().remove(requestedUser);
-        userData.get(requestedUser).getFriends().remove(requestingUser);
-    }
+        userData.get(servingUser).getFriends().remove(requestedUser);
+        userData.get(requestedUser).getFriends().remove(servingUser.getUsername());
+    } //Done
     private void getFriendsList(GetFriendsListRequest requested) {
         User requestedUser = searchUser(requested.getUsername());
         ArrayList<String> friends = new ArrayList<>();
@@ -152,8 +188,8 @@ public class ClientHandler implements Runnable{
     private void  friendRequestAnswer(FriendRequestAnswerRequest requested) {
         User requestingUser = searchUser(requested.getRequestingUser());
         User requestedUser = searchUser(requested.getRequestedUser());
-        userData.get(requestingUser).deleteIncomingFriendRequest(requestedUser.getUsername());
-        userData.get(requestingUser).deleteOutgoingFriendRequest(requestedUser.getUsername());
+        userData.get(servingUser).deleteIncomingFriendRequest(requestedUser.getUsername());
+        userData.get(requestedUser).deleteOutgoingFriendRequest(servingUser.getUsername());
         String notificationForRequestedUser = requestingUser.getUsername();
         notificationForRequestedUser += requested.isAccept() ? " accepted your friend request" : " rejected your friend request!";
         if(requested.isAccept()) {
@@ -211,6 +247,7 @@ public class ClientHandler implements Runnable{
 
          */
     } //TODO : add reaction to message
+    private void logOut() {} //TODO : log out
     private void login(LoginRequest info) {
         String username, password;
         username = info.getUsername();
@@ -239,8 +276,7 @@ public class ClientHandler implements Runnable{
                 System.out.println("Damn!(login)");
             }
         }
-    }
-    private void logOut() {} //TODO : log out
+    } //Done
     private void signUP(SignUpRequest info) {
         String username , password , mail, phoneNumber;
         username = info.getUsername();
@@ -267,7 +303,7 @@ public class ClientHandler implements Runnable{
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
+    } //Done
     private SignUpStatus checkRegex(String username, String password, String mail, String phoneNumber) {
         String usernameRegex = "[a-zA-Z0-9]{6,}";
         String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9]{8,}$";
@@ -281,18 +317,18 @@ public class ClientHandler implements Runnable{
         }
         else
             return SignUpStatus.DUPLICATE;
-    }
+    }//Done
     private Boolean match(String text, String regex) {
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(text);
         return matcher.matches();
-    }
+    } //Done
     private static User searchUser(String username) {
         for(User user : users.keySet())
             if(user.getUsername().equals(username))
                 return user;
         return null;
-    }
+    } //Done
     private  void sendNotification(String notification) {
         synchronized (response) {
             try {
@@ -301,14 +337,14 @@ public class ClientHandler implements Runnable{
                 throw new RuntimeException(e);
             }
         }
-    }
+    } //Done
     public void newMessage(Message message) {
         try {
             response.writeObject(new NewMessageResponse(message));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
+    } //TODO : Message
     private void close() { //TODO: close connection
         try {
             if (request != null)

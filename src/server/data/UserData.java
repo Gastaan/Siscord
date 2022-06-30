@@ -33,8 +33,12 @@ public class UserData implements Serializable {
         return privateChats.get(chatName);
     }
     //getters
-    public HashSet<String> getBlockedUsers() {
-        return blockedUsers;
+    public ArrayList<String> getBlockedUsers() {
+        synchronized (blockedUsers) {
+            ArrayList<String> blockedUsersList = new ArrayList<>();
+            blockedUsersList.addAll(blockedUsers);
+            return blockedUsersList;
+        }
     }
     public HashSet<String> getIncomingFriendRequests() {
         return incomingFriendRequests;
@@ -82,6 +86,16 @@ public class UserData implements Serializable {
     public ArrayList<String> getOutgoingFriendRequests() {
         synchronized (outgoingFriendRequests) {
             return new ArrayList<>(outgoingFriendRequests);
+        }
+    }
+    public void unblockUser(String username) {
+        synchronized (blockedUsers) {
+            blockedUsers.remove(username);
+        }
+    }
+    public void blockUser(String username) {
+        synchronized (blockedUsers) {
+            blockedUsers.add(username);
         }
     }
 }
