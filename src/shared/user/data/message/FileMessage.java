@@ -24,14 +24,16 @@ public class FileMessage extends Message{
             Files.createDirectories(path);
         path = Paths.get("./clients/downloads/"+ writer + "/" + filename);
         int i = 1;
-        while(Files.exists(path)) {
+        while(Files.exists(path) && Files.size(path) != file.length) {
             String newName = filename.substring(0, filename.lastIndexOf('.')) + "(" + i + ")" + filename.substring(filename.lastIndexOf('.'));
             path = Paths.get("./clients/downloads/" +  writer + "/" + newName);
             i++;
         }
-            FileOutputStream fos = new FileOutputStream(path.toString());
-            fos.write(file);
-            fos.close();
+         if(!Files.exists(path)) {
+              FileOutputStream fos = new FileOutputStream(path.toString());
+              fos.write(file);
+              fos.close();
+          }
         }
         catch (IOException e) {
             e.printStackTrace();

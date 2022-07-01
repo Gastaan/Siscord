@@ -32,4 +32,7 @@ abstract public class Message implements Serializable {
         }
         return sb.toString();
     }
+    public String getTime() {
+        return String.valueOf(time);
+    }
 }

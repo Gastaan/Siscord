@@ -4,7 +4,7 @@ public class ChatRequest extends Request{
     private final String username;
 
     public ChatRequest(String username) {
-        super(ReqType.PRIVATE_CHAT);
+        super(ReqType.CHAT_REQUEST);
         this.username = username;
     }
 

@@ -9,6 +9,7 @@ import shared.responses.addfriend.AddFriendResponse;
 import shared.responses.addfriend.AddFriendResponseStatus;
 import shared.responses.login.LoginResponse;
 import shared.responses.login.LoginStatus;
+import shared.responses.newprivatechat.NewPrivateChatResponse;
 import shared.responses.newprivatechat.NewPrivateChatStatus;
 import shared.responses.signup.SignUpResponse;
 import shared.responses.signup.SignUpStatus;
@@ -97,9 +98,9 @@ public class ClientHandler implements Runnable{
         else if(requested.getType() == ReqType.REMOVE_FRIEND)
             removeFriend((RemoveFriendRequest) requested);
         else if(requested.getType() == ReqType.GET_OUTGOING_FRIEND)
-            getOutgoingFriend(requested);
+            getOutgoingFriend();
         else if(requested.getType() == ReqType.GET_BLOCKED_USERS)
-            getBlockedUsers(requested);
+            getBlockedUsers();
         else if(requested.getType() == ReqType.UNBLOCK_USER)
             unblockUser((UnblockRequest)requested);
         else if (requested.getType() == ReqType.BLOCK_USER)
@@ -129,14 +130,14 @@ public class ClientHandler implements Runnable{
             System.err.println("Can not send response to client!");
         }
     }
-    private void getBlockedUsers(Request requested) {
+    private void getBlockedUsers() {
         try {
             response.writeObject(new GetBlockedUsersResponse(userData.get(servingUser).getBlockedUsers()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    private void getOutgoingFriend(Request requested) {
+    private void getOutgoingFriend() {
         try {
             response.writeObject(new GetOutgoingFriendResponse(userData.get(servingUser).getOutgoingFriendRequests()));
         }
@@ -146,8 +147,8 @@ public class ClientHandler implements Runnable{
     } //Done
     private void removeFriend(RemoveFriendRequest request) {
         User requestedUser = searchUser(request.getRequestedUser());
-        userData.get(servingUser).getFriends().remove(requestedUser);
-        userData.get(requestedUser).getFriends().remove(servingUser.getUsername());
+        userData.get(servingUser).deleteFriend(requestedUser.getUsername());
+        userData.get(requestedUser).deleteFriend(servingUser.getUsername());
     } //Done
     private void getFriendsList(GetFriendsListRequest requested) {
         User requestedUser = searchUser(requested.getUsername());
@@ -222,6 +223,11 @@ public class ClientHandler implements Runnable{
                 for(ClientHandler ch : onlineUsers.get(wantedUser))
                     ch.sendNotification("New private chat with " + servingUser.getUsername() + " just created!");
         }
+        try {
+            response.writeObject(new NewPrivateChatResponse(status));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
     private void privateChatList(Request requested) {
         ArrayList<String> chatNames = userData.get(servingUser).getPrivateChatList();
@@ -232,11 +238,21 @@ public class ClientHandler implements Runnable{
         }
     }
     private void chat(ChatRequest request) {
+        PrivateChat privateChat = userData.get(servingUser).getPrivateChat(request.getUsername());
         try {
-            PrivateChat privateChat = userData.get(servingUser).getPrivateChat(request.getUsername());
+            reset();
             response.writeObject(new ChatResponse(privateChat.getMessages(), request.getUsername()));
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+    private void reset() {
+        synchronized (response) {
+            try {
+                response.reset();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
     private void sendMessage(NewPrivateChatMessageRequest request) {
@@ -251,8 +267,8 @@ public class ClientHandler implements Runnable{
     }
     private void react(ReactRequest request) {
         User user = searchUser(request.getChatName());
-        userData.get(servingUser).getPrivateChat(user.getUsername()).addReaction(servingUser.getUsername(), request.getMessage(), request.getReact());
-        userData.get(user).getPrivateChat(servingUser.getUsername()).addReaction(servingUser.getUsername(), request.getMessage(), request.getReact());
+        userData.get(servingUser).getPrivateChat(user.getUsername()).addReaction(servingUser.getUsername(), request.getTime(), request.getReact());
+        userData.get(user).getPrivateChat(servingUser.getUsername()).addReaction(servingUser.getUsername(), request.getTime(), request.getReact());
         try {
             response.writeObject(new ReactResponse(true));
         } catch (IOException e) {

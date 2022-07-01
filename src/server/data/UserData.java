@@ -23,13 +23,19 @@ public class UserData implements Serializable {
     }
     //getters
     public ArrayList<String> getPrivateChatList() {
+        ArrayList<String> list = new ArrayList<>();
         synchronized (privateChats) {
-            return new ArrayList<>(privateChats.keySet());
+            for(String username : privateChats.keySet()) {
+                if(!blockedUsers.contains(username)) {
+                    list.add(username);
+                }
+            }
         }
+        return list;
     }
     public void newPrivateChat(String username) {
         synchronized (privateChats) {
-            privateChats.putIfAbsent(username, new PrivateChat());
+            privateChats.put(username, new PrivateChat());
         }
     }
     public PrivateChat getPrivateChat(String chatName) {
@@ -40,9 +46,7 @@ public class UserData implements Serializable {
     //getters
     public ArrayList<String> getBlockedUsers() {
         synchronized (blockedUsers) {
-            ArrayList<String> blockedUsersList = new ArrayList<>();
-            blockedUsersList.addAll(blockedUsers);
-            return blockedUsersList;
+            return   new ArrayList<>(blockedUsers);
         }
     }
     public HashSet<String> getIncomingFriendRequests() {
