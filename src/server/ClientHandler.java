@@ -4,16 +4,15 @@ package server;
 import server.data.PrivateChat;
 import server.data.UserData;
 import shared.requests.*;
-import shared.requests.AddFriendRequest;
 import shared.responses.*;
 import shared.responses.addfriend.AddFriendResponse;
 import shared.responses.addfriend.AddFriendResponseStatus;
 import shared.responses.login.LoginResponse;
 import shared.responses.login.LoginStatus;
+import shared.responses.newprivatechat.NewPrivateChatStatus;
 import shared.responses.signup.SignUpResponse;
 import shared.responses.signup.SignUpStatus;
 import shared.user.User;
-import shared.user.data.message.Message;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -78,7 +77,7 @@ public class ClientHandler implements Runnable{
         else if(requested.getType() == ReqType.SIGN_UP)
             signUP((SignUpRequest)requested);
         else if(requested.getType() == ReqType.PRIVATE_CHAT_LIST)
-            privateChatList((PrivateChatListRequest) requested);
+            privateChatList(requested);
         else if(requested.getType() == ReqType.CHAT_REQUEST)
             chat((ChatRequest) requested);
         else if(requested.getType() == ReqType.PRIVATE_CHAT_REACT)
@@ -109,7 +108,7 @@ public class ClientHandler implements Runnable{
     private void blockUser(BlockRequest requested) {
         User blockingUser = searchUser(requested.getUsername());
         boolean success;
-        if(blockingUser == null)
+        if (blockingUser == null || blockingUser == servingUser)
             success = false;
         else {
             userData.get(servingUser).blockUser(blockingUser.getUsername());
@@ -208,13 +207,24 @@ public class ClientHandler implements Runnable{
             throw new RuntimeException(e);
         }
     }
-    private void newPrivateChat(NewPrivateChatRequest request) { //TODO : new private chat
-        User user1 = searchUser(request.getUser1());
-        User user2 = searchUser(request.getUser2());
+    private void newPrivateChat(NewPrivateChatRequest request) {
+        User wantedUser = searchUser(request.getUsername());
+        NewPrivateChatStatus status;
+        if (wantedUser == null)
+            status = NewPrivateChatStatus.USER_NOT_FOUND;
+        else if(userData.get(servingUser).getPrivateChat(wantedUser.getUsername()) != null)
+            status = NewPrivateChatStatus.ALREADY_CHAT_EXISTS;
+        else {
+            status = NewPrivateChatStatus.CHAT_CREATED;
+            userData.get(servingUser).newPrivateChat(wantedUser.getUsername());
+            userData.get(wantedUser).newPrivateChat(servingUser.getUsername());
+            if(onlineUsers.get(wantedUser) != null)
+                for(ClientHandler ch : onlineUsers.get(wantedUser))
+                    ch.sendNotification("New private chat with " + servingUser.getUsername() + " just created!");
+        }
     }
-    private void privateChatList(PrivateChatListRequest requested) {
-        User requestedUser = searchUser(requested.getUsername());
-        ArrayList<String> chatNames = userData.get(requestedUser).getPrivateChatList();
+    private void privateChatList(Request requested) {
+        ArrayList<String> chatNames = userData.get(servingUser).getPrivateChatList();
         try {
             response.writeObject(new PrivateChatListResponse(chatNames));
         } catch (IOException e) {
@@ -222,31 +232,33 @@ public class ClientHandler implements Runnable{
         }
     }
     private void chat(ChatRequest request) {
-        User requestedUser = searchUser(request.getRequestedUser());
         try {
-            PrivateChat privateChat = userData.get(requestedUser).getPrivateChat(request.getUsername());
-            response.writeObject(new ChatResponse(privateChat.getMessages()));
-            privateChat.addInChat(this);
+            PrivateChat privateChat = userData.get(servingUser).getPrivateChat(request.getUsername());
+            response.writeObject(new ChatResponse(privateChat.getMessages(), request.getUsername()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
     private void sendMessage(NewPrivateChatMessageRequest request) {
-        User sender = searchUser(request.getSender());
         User receiver = searchUser(request.getReceiver());
-        userData.get(sender).getPrivateChat(receiver.getUsername()).addMessage(request.getMessage());
-        userData.get(receiver).getPrivateChat(sender.getUsername()).addMessage(request.getMessage());
-    } //TODO : send message to private chat
+        userData.get(servingUser).getPrivateChat(receiver.getUsername()).addMessage(request.getMessage());
+        userData.get(receiver).getPrivateChat(servingUser.getUsername()).addMessage(request.getMessage());
+        try {
+            response.writeObject(new NewMessageResponse(true));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
     private void react(ReactRequest request) {
-        /*
-        User person = searchClient(request.getRequestedUsername());
-        ArrayList<Message> personMessages = userData.get(person).getPrivateChats().get(request.getRequestingUser());
-        ArrayList<Message> userMessages = userData.get(request.getRequestingUser()).getPrivateChats().get(person);
-        personMessages.get(personMessages.indexOf(request.getMessage())).addReaction(request.getReact(), request.getRequestingUser().getUsername());
-        userMessages.get(userMessages.indexOf(request.getMessage())).addReaction(request.getReact(), request.getRequestingUser().getUsername());
-
-         */
-    } //TODO : add reaction to message
+        User user = searchUser(request.getChatName());
+        userData.get(servingUser).getPrivateChat(user.getUsername()).addReaction(servingUser.getUsername(), request.getMessage(), request.getReact());
+        userData.get(user).getPrivateChat(servingUser.getUsername()).addReaction(servingUser.getUsername(), request.getMessage(), request.getReact());
+        try {
+            response.writeObject(new ReactResponse(true));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
     private void logOut() {} //TODO : log out
     private void login(LoginRequest info) {
         String username, password;
@@ -338,13 +350,6 @@ public class ClientHandler implements Runnable{
             }
         }
     } //Done
-    public void newMessage(Message message) {
-        try {
-            response.writeObject(new NewMessageResponse(message));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    } //TODO : Message
     private void close() { //TODO: close connection
         try {
             if (request != null)

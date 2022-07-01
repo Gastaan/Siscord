@@ -20,4 +20,16 @@ abstract public class Message implements Serializable {
     public void addReaction(Reacts react, String username) {
         reacts.get(react).add(username);
     }
+    public String getReacts() {
+        StringBuilder sb = new StringBuilder();
+        synchronized (reacts) {
+            for(Reacts reacted : reacts.keySet()) {
+                sb.append(reacted.toString()).append(": ").append(reacts.get(reacted).size()).append("\n");
+                for(String username : reacts.get(reacted)) {
+                    sb.append(username).append(" ");
+                }
+            }
+        }
+        return sb.toString();
+    }
 }

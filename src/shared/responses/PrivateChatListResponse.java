@@ -9,14 +9,7 @@ public class PrivateChatListResponse extends  Response {
             super(ResType.PRIVATE_CHAT_LIST);
             this.chatNames = chatNames;
         }
-        //getters
-        public Integer getCount() {
-            return chatNames.size();
-        }
         public ArrayList<String> getChatNames() {
             return chatNames;
-        }
-        public void addChatName(String chatName) {
-            chatNames.add(chatName);
         }
 }

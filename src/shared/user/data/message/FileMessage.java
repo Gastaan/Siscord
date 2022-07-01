@@ -17,7 +17,7 @@ public class FileMessage extends Message{
 
     }
     //download file
-    public void download() {
+    public void download() { //TODO : OPTIMIZE
     try {
         Path path = Paths.get("./clients/downloads/"+ writer);
         if(!Files.exists(path))
@@ -40,6 +40,6 @@ public class FileMessage extends Message{
     //toString
     @Override
     public String toString() {
-        return  writer + " " + time+ "\n" + filename + "\n";
+        return  writer + " " + time+ "\n" + filename + "\n" + getReacts();
     }
 }

@@ -12,6 +12,6 @@ public class TextMessage extends Message{
     }
     //toString
     public String toString() {
-        return  writer + " " + time+ "\n" + text + "\n";
+        return  writer + " " + time+ "\n" + text + "\n" + getReacts();
     }
 }

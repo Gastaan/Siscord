@@ -1,30 +1,23 @@
 package shared.requests;
 
-import shared.user.User;
-import shared.user.data.message.Message;
 import shared.user.data.message.Reacts;
 
 public class ReactRequest extends Request{
-    private final User requestingUser;
-    private final String requestedUsername;
-    private final Message message;
+    private final String chatName;
+    private final String message;
     private final Reacts react;
     //constructor
-    public ReactRequest(User requestingUser, String requestedUsername, Message message, Reacts react) {
+    public ReactRequest(String chatName, String message, Reacts react) {
         super(ReqType.PRIVATE_CHAT_REACT);
-        this.requestingUser = requestingUser;
-        this.requestedUsername = requestedUsername;
+        this.chatName = chatName;
         this.message = message;
         this.react = react;
     }
-        //getters
-    public User getRequestingUser() {
-        return requestingUser;
+    //getters
+    public String getChatName() {
+        return chatName;
     }
-    public String getRequestedUsername() {
-        return requestedUsername;
-    }
-    public Message getMessage() {
+    public String getMessage() {
         return message;
     }
     public Reacts getReact() {

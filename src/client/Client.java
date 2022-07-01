@@ -8,13 +8,13 @@ import shared.responses.signup.SignUpResponse;
 import shared.user.User;
 import shared.user.data.message.FileMessage;
 import shared.user.data.message.Message;
+import shared.user.data.message.Reacts;
 import shared.user.data.message.TextMessage;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Client {
@@ -71,6 +71,11 @@ public class Client {
         }
         else if(response.getResType() == ResType.PRIVATE_CHAT_LIST) {
             chatList = (PrivateChatListResponse) response;
+            int index = 1;
+            System.out.println("Private chats:");
+            for(String chatName : chatList.getChatNames()) {
+                System.out.println(index++  + ": " + chatName);
+            }
             notify();
         }
         else if(response.getResType() == ResType.PRIVATE_CHAT) {
@@ -82,11 +87,6 @@ public class Client {
         else if(response.getResType() == ResType.NOTIFICATION) {
             System.out.println(((Notification) response).getDescription());
             System.out.flush();
-        }
-        else if(response.getResType() == ResType.NEW_MESSAGE) {
-            Message newMessage = responseHandler.newMessageResponse((NewMessageResponse) response);
-            chat.addMessage(newMessage);
-            System.out.println(chat.getMessages().size() + "-" + newMessage);
         }
         else if(response.getResType() == ResType.INCOMING_FRIEND_REQUESTS) {
             friendRequests = (IncomingFriendRequestsResponse) response;
@@ -128,6 +128,18 @@ public class Client {
             notify();
         }
         else if(response.getResType() == ResType.BLOCK_USER) {
+            System.out.println(response);
+            notify();
+        }
+        else if(response.getResType() == ResType.NEW_PRIVATE_CHAT) {
+            System.out.println(response);
+            notify();
+        }
+        else if(response.getResType() == ResType.NEW_MESSAGE) {
+            System.out.println(response);
+            notify();
+        }
+        else if(response.getResType() == ResType.PRIVATE_CHAT_REACT)  {
             System.out.println(response);
             notify();
         }
@@ -211,22 +223,21 @@ public class Client {
         clearConsole();
         int choice;
         do {
-            System.out.println("1- private chats\n2- servers\n3- new private chat\n4- friends\n5- add friend\n6-incoming friend requests\n7-pending requests\n8-blocked users\n9- setting\n10- exit");
+            System.out.println("1- private chats\n2- servers\n4- friends\n5- add friend\n6-incoming friend requests\n7-pending requests\n8-blocked users\n9- setting\n10- exit");
             choice = scanner.nextInt();
             switch (choice) {
                 case 1 -> privateChats();
                 case 2 -> servers();
-                case 3 -> newPrivateChat();
-                case 4 -> friends();
-                case 5 -> addFriend();
-                case 6 -> incomingFriendRequests();
-                case 7 -> outGoingFriendRequests();
-                case 8 -> blockedUsers();
-                case 9 -> setting();
-                case 10 -> System.out.println("Bye Bye!");
+                case 3 -> friends();
+                case 4 -> addFriend();
+                case 5 -> incomingFriendRequests();
+                case 6 -> outGoingFriendRequests();
+                case 7 -> blockedUsers();
+                case 8 -> setting();
+                case 9 -> System.out.println("Bye Bye!");
                 default -> System.out.println("Invalid Choice!");
             }
-        } while (choice != 10);
+        } while (choice != 9);
         user = null;
     }
     private synchronized void outGoingFriendRequests() {
@@ -356,22 +367,28 @@ public class Client {
             }
         }
     }
-    private void chatPage(int chosenChat) {
-        String chatsName = chatList.getChatNames().get(chosenChat - 1);
+    private synchronized void chatPage(int chatID) {
         int choice;
-        do {
-            System.out.println("1-sendMessage\n2-React\n3-make voice call\n4-back to home page");
-            choice = scanner.nextInt();
-            switch (choice) {
-                case 1 -> sendMessage(chatsName);
-                case 2 -> react(chatsName);
-                case 3 -> voiceCall();
-                case 4 -> System.out.println("OK!");
-                default -> System.out.println("Invalid Choice!");
+        try {
+            request.writeObject(new ChatRequest(chatList.getChatNames().get(chatID - 1)));
+            wait();
+            do {
+                System.out.println("1-sendMessage\n2-React\n3-make voice call\n4-back to home page");
+                choice = scanner.nextInt();
+                switch (choice) {
+                    case 1 -> sendMessage();
+                    case 2 -> react();
+                    case 3 -> voiceCall();
+                    case 4 -> System.out.println("OK!");
+                    default -> System.out.println("Invalid Choice!");
+                }
+            } while (choice < 1 || choice > 3);
+        }
+          catch (InterruptedException | IOException e) {
+                throw new RuntimeException(e);
             }
-        } while (choice < 1 || choice > 3);
     }
-    private void sendMessage(String chatsName) {
+    private void sendMessage() {
         int choice;
         do {
             System.out.println("1-text\n2-file\n3-back");
@@ -383,14 +400,15 @@ public class Client {
                     String message = scanner.nextLine();
                     Message newMessage = new TextMessage(message, user.getUsername());
                     try {
-                        request.writeObject(new NewPrivateChatMessageRequest(newMessage, user.getUsername(), chatsName));
-                    } catch (IOException e) {
+                        request.writeObject(new NewPrivateChatMessageRequest(newMessage, chat.getUsername()));
+                        wait();
+                    } catch (IOException | InterruptedException e) {
                         throw new RuntimeException(e);
                     }
                 }
                 case 2 -> sendFileMessages();
             }
-        } while (choice != 3);
+        } while (choice < 1 || choice > 3);
     }
     private void sendFileMessages() {} //TODO : send file messages
     private void downLoadFileMessages() {
@@ -408,59 +426,85 @@ public class Client {
     private void voiceCall() {
 
     } //TODO : VOICE_CALL
-    private void react(String chatsName) {
-        /*
-        int choice, size = messages.size();
+    private void react() {
+        int choice, reactChoice;
         do {
-                System.out.println("Which message ?" + 1 + "-" + size);
+                System.out.println("1-select message\n2-back");
                 choice = scanner.nextInt();
-                if(choice > size || choice < 1)
-                    System.out.println("Invalid Choice!");
-            }
-         while (choice < 1 || choice > size);
-        do {
-            System.out.println("1-like\n2-dislike\n3-lol\n4-back to the main page");
-            choice = scanner.nextInt();
-        }while (choice < 1 || choice > 4);
-        Reacts react;
-        switch (choice) {
-            case 1 -> react = Reacts.LIKE;
-            case 2 -> react = Reacts.DISLIKE;
-            case 3 -> react = Reacts.LOL;
-            default -> {
-                System.out.println("Ok!");
-                return;
-            }
-        }
-        try {
-            request.writeObject(new ReactRequest(user, chatsName, messages.get(choice - 1), react));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-         */
-    } //TODO : REACT
-    private void privateChats() {
-        System.out.println("Private chats: ");
+                switch (choice) {
+                    case 1 ->  {
+                        int messageID;
+                        do {
+                            System.out.println("Enter message id: ");
+                            messageID = scanner.nextInt();
+                        }
+                        while (messageID > chat.getMessages().size() || messageID < 1);
+                        Message message = chat.getMessages().get(messageID - 1);
+                        Reacts reaction = null;
+                        do {
+                            System.out.println("Enter your reaction: 1-like\n2-dislike\n3-lol");
+                            reactChoice = scanner.nextInt();
+                            switch (reactChoice) {
+                                case 1 -> reaction = Reacts.LIKE;
+                                case 2 -> reaction = Reacts.DISLIKE;
+                                case 3 -> reaction = Reacts.LOL;
+                                default -> System.out.println("Invalid Choice!");
+                            }
+                        }
+                        while (reactChoice > 3 || reactChoice < 1);
+                            try {
+                                request.writeObject(new ReactRequest(chat.getUsername(), message.toString(), reaction));
+                                wait();
+                            } catch (IOException | InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                    }
+                    case 2 -> System.out.println("OK!");
+                    default -> System.out.println("Invalid Choice!");
+                }
+        } while(choice != 2);
+    }
+    private synchronized void privateChats() {
         int choice;
         try {
-            request.writeObject(new PrivateChatListRequest(user.getUsername()));
-            wait();
-            choice = responseHandler.privateChatListResponse(chatList);
-            if(choice != chatList.getCount() + 1) {
-                request.writeObject(new ChatRequest(user.getUsername() , chatList.getChatNames().get(choice - 1)));
+            do {
+                request.writeObject(new Request(ReqType.PRIVATE_CHAT_LIST));
                 wait();
-                ArrayList<Message> messages = new ArrayList<>(chat.getMessages());
-                chatPage(choice);
-            }
+                System.out.println("1-select chat\n2-new chat\n3-back");
+                choice = scanner.nextInt();
+                switch (choice) {
+                    case 1 -> selectChat();
+                    case 2 -> newPrivateChat();
+                    case 3 -> System.out.println("Ok!");
+                    default -> System.out.println("Invalid Choice!");
+                }
+            } while (choice != 3);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
+    private void selectChat() {
+        int choice, chatID;
+        do {
+            System.out.println("1-select chat\n2-back");
+            choice = scanner.nextInt();
+            switch (choice) {
+                case 1 -> {
+                    do {
+                        System.out.println("Enter chat id: ");
+                         chatID = scanner.nextInt();
+                    } while (chatID > chatList.getChatNames().size() || chatID < 1);
+                    chatPage(chatID);
+                }
+                case 2 -> System.out.println("Ok!");
+                default -> System.out.println("Invalid Choice!");
+            }
+        } while (choice > 2 || choice < 1);
+    }
     private void servers() {
 
     }//TODO : SERVERS
-    private void newPrivateChat() {
+    private synchronized void newPrivateChat() {
         int choice;
         do {
             System.out.println("1-Enter username\n2-Back to the main page");
@@ -470,7 +514,7 @@ public class Client {
                     System.out.println("Enter username: ");
                     String username = scanner.next();
                     try {
-                        request.writeObject(new NewPrivateChatRequest(user.getUsername(), username));
+                        request.writeObject(new NewPrivateChatRequest(user.getUsername()));
                         wait();
                     } catch (IOException | InterruptedException e) {
                         throw new RuntimeException(e);
@@ -480,8 +524,8 @@ public class Client {
                 default -> System.out.println("Invalid Choice!");
             }
         } while(choice != 2);
-    }//TODO : NEW_PRIVATE_CHAT
-    private void addFriend() {
+    }
+    private synchronized void addFriend() {
         int choice;
         do {
             System.out.println("1-Enter username\n2-Back to the main page");
@@ -502,7 +546,7 @@ public class Client {
             }
         } while(choice != 2);
     }
-    private void friends()  {
+    private synchronized void friends()  {
         int choice;
         do {
             try {
@@ -548,7 +592,7 @@ public class Client {
     }
     private void setting() {
 
-    } //Last : TODO : SETTING
+    } //Last : TODO : SETTING : change password , change status
     public  static void clearConsole()
     {
         for (int i = 0; i < 50; ++i) System.out.println();

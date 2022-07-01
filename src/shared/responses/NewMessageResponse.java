@@ -1,16 +1,17 @@
 package shared.responses;
 
-import shared.user.data.message.Message;
-
 public class NewMessageResponse extends Response {
-    private final Message newMessage;
+    private final boolean isDelivered;
     //constructor
-    public NewMessageResponse(Message newMessage) {
+    public NewMessageResponse(boolean isDelivered) {
         super(ResType.NEW_MESSAGE);
-        this.newMessage = newMessage;
+        this.isDelivered = isDelivered;
     }
-    //getters
-    public Message getNewMessage() {
-        return newMessage;
+    //toString
+    @Override
+    public String toString() {
+        return "NewMessageResponse{" +
+                "isDelivered=" + isDelivered +
+                '}';
     }
 }
