@@ -1,8 +1,9 @@
 package server;
 
 
-import server.data.PrivateChat;
+import server.data.Chat;
 import server.data.UserData;
+import server.data.socialserver.SocialServer;
 import shared.requests.*;
 import shared.responses.*;
 import shared.responses.addfriend.AddFriendResponse;
@@ -20,7 +21,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -32,11 +33,11 @@ public class ClientHandler implements Runnable{
     private static ConcurrentHashMap<User, UserData> userData;
     private static ConcurrentHashMap<User, Vector<ClientHandler>> onlineUsers;
 
-    private static HashSet<Server> servers;
+    private static Vector<SocialServer> servers;
     private final Socket socket;
     private ObjectInputStream request;
     private ObjectOutputStream response;
-    private User servingUser;//constructor
+    private User servingUser;
 
     public ClientHandler(Socket socket) {
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
@@ -46,7 +47,7 @@ public class ClientHandler implements Runnable{
         if(userData == null)
             userData = new ConcurrentHashMap<>();
         if(servers == null)
-            servers = new HashSet<>();
+            servers = new Vector<>();
         if(onlineUsers == null)
             onlineUsers = new ConcurrentHashMap<>();
         try {
@@ -105,6 +106,49 @@ public class ClientHandler implements Runnable{
             unblockUser((UnblockRequest)requested);
         else if (requested.getType() == ReqType.BLOCK_USER)
             blockUser((BlockRequest)requested);
+        else if(requested.getType() == ReqType.NEW_SERVER)
+            newServer((NewServerRequest) requested);
+        else if(requested.getType() == ReqType.SERVER_LIST)
+            serverList(requested);
+        else if(requested.getType() == ReqType.SERVER_CHANELS)
+            serverChanels(requested);
+    }
+    private void serverChanels(GetChanelsRequest requested) {
+        int serverID = requested.getServerID();
+        SocialServer server = servers.get(serverID);
+        ArrayList<String> chanels = server.getChanels();
+        try {
+            response.writeObject(new GetChanelsResponse(chanels));
+        }
+        catch (IOException e) {
+            System.err.println("Can not send response to client!");
+        }
+    }
+    private void serverList(Request requested) {
+        HashMap<Integer, String> serverList = new HashMap<>();
+        synchronized (servers) {
+            for(Integer server : userData.get(servingUser).getServers())
+                for(SocialServer s : servers)
+                    if(s.getServerID() == server)
+                        serverList.put(s.getServerID(), s.getServerName());
+        }
+        try {
+            response.writeObject(new ServerListResponse(serverList));
+        }
+        catch (IOException e) {
+            System.err.println("Can not send server list to client!");
+        }
+    } //Done
+    private void newServer(NewServerRequest requested) { //TODO : here
+        SocialServer server = new SocialServer(requested.getServerName(), servingUser.getUsername());
+        servers.add(server);
+        userData.get(servingUser).addServer(server.getServerID());
+        try {
+            response.writeObject(new NewServerResponse(true, server.getServerID()));
+        }
+        catch (IOException e) {
+            System.err.println("Can not send new server response!");
+        }
     }
     private void blockUser(BlockRequest requested) {
         User blockingUser = searchUser(requested.getUsername());
@@ -238,7 +282,7 @@ public class ClientHandler implements Runnable{
         }
     }
     private void chat(ChatRequest request) {
-        PrivateChat privateChat = userData.get(servingUser).getPrivateChat(request.getUsername());
+        Chat privateChat = userData.get(servingUser).getPrivateChat(request.getUsername());
         try {
             reset();
             response.writeObject(new ChatResponse(privateChat.getMessages(), request.getUsername()));

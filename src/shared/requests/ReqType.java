@@ -20,5 +20,8 @@ public enum ReqType implements Serializable {
     GET_OUTGOING_FRIEND,
     GET_BLOCKED_USERS,
     UNBLOCK_USER,
-    BLOCK_USER
+    BLOCK_USER,
+    NEW_SERVER,
+    SERVER_LIST,
+    SERVER_CHANELS
 }

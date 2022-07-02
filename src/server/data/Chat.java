@@ -6,11 +6,11 @@ import shared.user.data.message.Reacts;
 import java.util.ArrayList;
 import java.util.Vector;
 
-public class PrivateChat {
+public class Chat {
     //fields
     private final Vector<Message> messages;
     //constructor
-    public PrivateChat() {
+    public Chat() {
         messages = new Vector<>();
     }
     //methods

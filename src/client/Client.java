@@ -33,6 +33,7 @@ public class Client {
     private IncomingFriendRequestsResponse friendRequests;
     private GetOutgoingFriendResponse outgoingFriendRequests;
     private GetBlockedUsersResponse blockedUsers;
+    private ServerListResponse serverList;
     //constructor
     public Client() {
         try {
@@ -149,6 +150,58 @@ public class Client {
             System.out.println(response);
             notify();
         }
+        else if(response.getResType() == ResType.NEW_SERVER) {
+            System.out.println(response);
+            notify();
+        }
+        else if(response.getResType() == ResType.SERVER_LIST) {
+            serverList = (ServerListResponse) response;
+            int index = 1;
+            for(String server : serverList.getServers()) {
+                System.out.println(index++ + "-" + server);
+            }
+            notify();
+        }
+        else if(response.getResType() == ResType.SERVER_LIST) {
+            serverList = (ServerListResponse) response;
+            int index = 1;
+            for(String server : serverList.getServers()) {
+                System.out.println(index++ + "-" + server);
+            }
+            notify();
+        }
+        else if(response.getResType() == ResType.SERVER_LIST) {
+            serverList = (ServerListResponse) response;
+            int index = 1;
+            for(String server : serverList.getServers()) {
+                System.out.println(index++ + "-" + server);
+            }
+            notify();
+        }
+        else if(response.getResType() == ResType.SERVER_LIST) {
+            serverList = (ServerListResponse) response;
+            int index = 1;
+            for(String server : serverList.getServers()) {
+                System.out.println(index++ + "-" + server);
+            }
+            notify();
+        }
+        else if(response.getResType() == ResType.SERVER_LIST) {
+            serverList = (ServerListResponse) response;
+            int index = 1;
+            for(String server : serverList.getServers()) {
+                System.out.println(index++ + "-" + server);
+            }
+            notify();
+        }
+        else if(response.getResType() == ResType.SERVER_LIST) {
+            serverList = (ServerListResponse) response;
+            int index = 1;
+            for(String server : serverList.getServers()) {
+                System.out.println(index++ + "-" + server);
+            }
+            notify();
+        }
     }
     public void start() {
         int choice;
@@ -262,7 +315,7 @@ public class Client {
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
-    }
+    } //TODO : cancel friend request
     //Blocked users can not send message or see profile photo
     private synchronized void blockedUsers() {
         int choice;
@@ -379,16 +432,16 @@ public class Client {
             do {
                 request.writeObject(new ChatRequest(chatList.getChatNames().get(chatID - 1)));
                 wait();
-                System.out.println("1-sendMessage\n2-React\n3-make voice call\n4-back to home page");
+                System.out.println("1-sendMessage\n2-React\n3-back to home page");
                 choice = scanner.nextInt();
                 switch (choice) {
                     case 1 -> sendMessage();
                     case 2 -> react();
-                    case 3 -> voiceCall();
-                    case 4 -> System.out.println("OK!");
+                    //case 3 -> voiceCall();
+                    case 3 -> System.out.println("OK!");
                     default -> System.out.println("Invalid Choice!");
                 }
-            } while (choice != 4);
+            } while (choice != 3);
         }
           catch (InterruptedException | IOException e) {
                 throw new RuntimeException(e);
@@ -537,15 +590,66 @@ public class Client {
             System.out.println("1-select server\n2-new server\n3-back");
             choice = scanner.nextInt();
             switch (choice) {
-                case 1 -> selectServer();
+                case 1 -> selectServerPage();
                 case 2 -> newServer();
                 case 3 -> System.out.println("Ok!");
                 default -> System.out.println("Invalid Choice!");
             }
         } while (choice != 3);
     }
+    private void serverPage(int serverIndex) {
+        int choice;
+        try {
+            do {
+                request.writeObject(new GetChanelsRequest(serverList.getID(serverList.getServers().get(serverIndex - 1))));
+                wait();
+                System.out.println("1-select chanel\n2-back");
+                choice = scanner.nextInt();
+                switch (choice) {
+                    case 1 -> selectChat();
+                    case 3 -> System.out.println("Ok!");
+                    default -> System.out.println("Invalid Choice!");
+                }
+            } while (choice != 2);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private void selectServerPage() {
+        int choice;
+        try {
+            do {
+                request.writeObject(new Request(ReqType.SERVER_LIST));
+                wait();
+                    System.out.println("1-select server\n2-back");
+                    choice = scanner.nextInt();
+                    switch (choice) {
+                        case 1 -> selectServer();
+                        case 2 -> System.out.println("Ok!");
+                        default -> System.out.println("Invalid Choice!");
+                    }
+            } while (choice != 2);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
     private void selectServer() {
-
+        int choice, serverID;
+        do {
+            System.out.println("1-select server\n2-back");
+            choice = scanner.nextInt();
+            switch (choice) {
+                case 1 -> {
+                    do {
+                        System.out.println("Enter server id: ");
+                        serverID = scanner.nextInt();
+                    } while (serverID > serverList.getServers().size() || serverID < 1);
+                    serverPage(serverID);
+                }
+                case 2 -> System.out.println("Ok!");
+                default -> System.out.println("Invalid Choice!");
+            }
+        } while (choice > 2 || choice < 1);
     }
     public void newServer() {
         String serverName;

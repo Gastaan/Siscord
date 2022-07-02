@@ -6,11 +6,11 @@ import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UserData implements Serializable {
-    private final ConcurrentHashMap<String, PrivateChat> privateChats;
+    private final ConcurrentHashMap<String, Chat> privateChats;
     private final HashSet<String> blockedUsers;
     private final HashSet<String> incomingFriendRequests;
     private final HashSet<String> outgoingFriendRequests;
-    private final HashSet<String>   servers;
+    private final HashSet<Integer>   servers;
     private final HashSet<String> friends;
     //constructor
     public UserData() {
@@ -35,10 +35,10 @@ public class UserData implements Serializable {
     }
     public void newPrivateChat(String username) {
         synchronized (privateChats) {
-            privateChats.put(username, new PrivateChat());
+            privateChats.put(username, new Chat());
         }
     }
-    public PrivateChat getPrivateChat(String chatName) {
+    public Chat getPrivateChat(String chatName) {
         if(privateChats.containsKey(chatName))
             return privateChats.get(chatName);
         return  null;
@@ -105,6 +105,16 @@ public class UserData implements Serializable {
     public void blockUser(String username) {
         synchronized (blockedUsers) {
             blockedUsers.add(username);
+        }
+    }
+    public void addServer(int serverID) {
+        synchronized (servers) {
+            servers.add(serverID);
+        }
+    }
+    public ArrayList<Integer> getServers() {
+        synchronized (servers) {
+            return new ArrayList<>(servers);
         }
     }
 }

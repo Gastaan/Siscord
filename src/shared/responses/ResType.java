@@ -17,5 +17,7 @@ public enum ResType implements Serializable {
     UNBLOCK_USER,
     BLOCK_USER,
     NEW_PRIVATE_CHAT,
-    PRIVATE_CHAT_REACT
+    PRIVATE_CHAT_REACT,
+    NEW_SERVER,
+    SERVER_LIST
 }

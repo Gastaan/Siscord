@@ -25,17 +25,6 @@ public class User implements Serializable {
         this.email = email;
         this.phoneNumber = phoneNumber;
     }
-    //Block
-    //Get friends list with their status
-    //private chat
-    //make server (gets name and can be changed ) _ every body in server can add member Owner and admins can  delete member _ welcome message
-    // _ multiple chanels  _ see members in server status
-    // Chanel : name _ type ( voice _ text )
-    //owner can give roles  : 1_ make chanel 2_ delete chanel 3_ delete member 4_limit access to a chanel 5_ block from server
-    //6 _ change server name 7_ see chat history 8_ pin a message
-    // send and download files
-
-    //Get user info
     public String userStatus() {
         return username + " : " + status;
     }
