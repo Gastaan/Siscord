@@ -454,6 +454,11 @@ public class Client {
             choice = scanner.nextInt();
             switch (choice) {
                 case 1 -> {
+                    try {
+                        request.writeObject(new IsTypingRequest(chat.getUsername()) );
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                     System.out.println("Enter your message: ");
                     scanner.nextLine();
                     String message = scanner.nextLine();
@@ -468,7 +473,7 @@ public class Client {
                 case 2 -> sendFileMessages();
             }
         } while (choice < 1 || choice > 3);
-    } //TODO : isTyping
+    }
     private void uploadFileMessage(String finalFilePath) {
         new Thread(new Runnable() {
             @Override
@@ -567,7 +572,7 @@ public class Client {
         }
     }
     private void selectChat() {
-        int choice, chatID;
+        int choice, chatIndex;
         do {
             System.out.println("1-select chat\n2-back");
             choice = scanner.nextInt();
@@ -575,14 +580,20 @@ public class Client {
                 case 1 -> {
                     do {
                         System.out.println("Enter chat id: ");
-                         chatID = scanner.nextInt();
-                    } while (chatID > chatList.getChatNames().size() || chatID < 1);
-                    chatPage(chatID);
+                         chatIndex = scanner.nextInt();
+                    } while (chatIndex > chatList.getChatNames().size() || chatIndex < 1);
+                    if(chatList.getChatNames().get(chatIndex - 1).contains("Text Chanel"))
+                        chatPage(chatIndex);
+                    else
+                        voiceChanle(chatIndex);
                 }
                 case 2 -> System.out.println("Ok!");
                 default -> System.out.println("Invalid Choice!");
             }
         } while (choice > 2 || choice < 1);
+    }
+    private void voiceChanle(int chatIndex) {
+
     }
     private void servers() {
         int choice;

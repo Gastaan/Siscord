@@ -111,14 +111,20 @@ public class ClientHandler implements Runnable{
         else if(requested.getType() == ReqType.SERVER_LIST)
             serverList(requested);
         else if(requested.getType() == ReqType.SERVER_CHANELS)
-            serverChanels(requested);
+            serverChanels((GetChanelsRequest) requested);
+        else if(requested.getType() == ReqType.IS_TYPING)
+            isTyping((IsTypingRequest) requested);
+    }
+    private void isTyping(IsTypingRequest requested) {
+      for(ClientHandler ch  : onlineUsers.get(searchUser(requested.getUsername())))
+          ch.sendNotification(servingUser.getUsername() + " is typing...");
     }
     private void serverChanels(GetChanelsRequest requested) {
         int serverID = requested.getServerID();
         SocialServer server = servers.get(serverID);
         ArrayList<String> chanels = server.getChanels();
         try {
-            response.writeObject(new GetChanelsResponse(chanels));
+            response.writeObject(new PrivateChatListResponse(chanels));
         }
         catch (IOException e) {
             System.err.println("Can not send response to client!");

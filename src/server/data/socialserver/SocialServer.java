@@ -1,7 +1,9 @@
 package server.data.socialserver;
 
 import server.data.socialserver.chanel.Chanel;
+import server.data.socialserver.chanel.TextChanel;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,5 +52,13 @@ public class SocialServer {
     public int getServerID() {
         return serverID;
     }
-    private 
+    public ArrayList<String> getChanels() {
+        ArrayList<String> list = new ArrayList<>();
+        synchronized (chanels) {
+            for (String chanelName : chanels.keySet()) {
+                list.add((chanels.get(chanelName) instanceof TextChanel ? "Text Chanel :  " : "Voice Chanel : ") + chanelName);
+            }
+        }
+        return list;
+    }
 }

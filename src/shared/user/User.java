@@ -12,8 +12,8 @@ enum UserStatus{
 public class User implements Serializable {
     private final String username;
     private  String email;
-    private String phoneNumber; // optional
-    private File Profile; //optional
+    private String phoneNumber;
+    private File profilePhoto;
     private UserStatus status;
 
     public String getUsername() {
