@@ -74,7 +74,7 @@ public class ClientHandler implements Runnable{
             }
         }
         catch (IOException | ClassNotFoundException e) {
-            System.out.println("Damn!");
+            System.out.println("Client disconnected!");
             close();
         }
     } //Done
@@ -461,7 +461,7 @@ public class ClientHandler implements Runnable{
                 socket.close();
         }
         catch (IOException e) {
-            System.out.println("Damn!");
+            System.out.println("Couldn't close resources");
         }
     }
 }

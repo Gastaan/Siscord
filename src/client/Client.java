@@ -18,6 +18,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Client {
@@ -184,75 +185,87 @@ public class Client {
     }
     public void start() {
         int choice;
-        do {
-            System.out.println("1-login\n2-sign up\n3-exit");
-            choice = scanner.nextInt();
-            switch (choice) {
-                case 1 -> login();
-                case 2 -> {
-                    try {
-                        signUp();
-                    } catch (IOException | ClassNotFoundException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                case 3 -> System.out.println("Bye Bye!");
-                default -> System.out.println("Invalid Choice!");
-            }
-        } while(choice != 3);
-    }
-    private synchronized void login() {
-        System.out.println("Enter user username: ");
-        String username = scanner.next();
-        System.out.println("Enter your password: ");
-        String password = scanner.next();
         try {
+            do {
+                System.out.println(ANSI_YELLOW + "1-login\n2-sign up\n3-exit" + ANSI_RESET);
+                try {
+                    choice = scanner.nextInt();
+                } catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
+                }
+                switch (choice) {
+                    case 1 -> login();
+                    case 2 -> signUp();
+                    case 3 -> System.out.println(ANSI_BLUE + "Bye Bye!" + ANSI_RESET);
+                    default -> System.out.println(ANSI_RED + "Invalid !" + ANSI_RESET);
+                }
+            } while (choice != 3);
+        }
+        catch (Exception e) {
+            System.err.println("Problem occurred!");
+            e.printStackTrace();
+        }
+        finally {
+            close();
+        }
+    }
+    private synchronized void login() throws IOException, InterruptedException {
+            System.out.println(ANSI_WHITE + "Enter user username: " + ANSI_RESET);
+            String username = scanner.next();
+            System.out.println(ANSI_WHITE + "Enter your password: " + ANSI_RESET);
+            String password = scanner.next();
             request.writeObject(new LoginRequest(username, password));
             wait();
                 if (user != null)
                     homePage();
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
     }
-    private synchronized void signUp() throws IOException, ClassNotFoundException {
+    private synchronized void signUp() throws IOException, InterruptedException {
         String username, password, mail, phoneNumber = "";
         int choice;
         A :  do {
-            System.out.println("Back to the main page ?\n1-yes\n2-no");
             do {
-                choice = scanner.nextInt();
+                System.out.println(ANSI_PURPLE + "Back to the main page ?\n1-yes\n2-no" + ANSI_RESET);
+                try {
+                    choice = scanner.nextInt();
+                }
+                catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
+                }
                 switch (choice) {
                     case 1 :
                         break A;
                     case 2 :
-                        System.out.println("Ok");
+                        System.out.println(ANSI_BLUE + "Ok" + ANSI_RESET);
                         break;
                     default:
-                        System.out.println("Invalid Option!");
+                        System.out.println(ANSI_RED + "Invalid Option!" + ANSI_RESET);
                 }
             } while (choice > 2 || choice < 1);
-            System.out.println("Enter username: ");
+            System.out.println(ANSI_WHITE + "Enter username: " + ANSI_RESET);
                 username = scanner.next();
-            System.out.println("Enter password: ");
+            System.out.println(ANSI_WHITE + "Enter password: " + ANSI_RESET);
                 password = scanner.next();
-            System.out.println("Enter mail: ");
+            System.out.println(ANSI_WHITE + "Enter mail: " + ANSI_RESET);
                 mail = scanner.next();
             do {
-                System.out.println("Do you want to enter your phoneNumber ?\n1-Yes\n2-No");
-                choice = scanner.nextInt();
+                System.out.println(ANSI_PURPLE + "Do you want to enter your phoneNumber ?\n1-Yes\n2-No" + ANSI_RESET);
+                try {
+                    choice = scanner.nextInt();
+                }
+                catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
+                }
                 switch (choice) {
                     case 1 -> phoneNumber = scanner.next();
                     case 2 -> System.out.println("Ok");
                     default -> System.out.println("Invalid choice!");
                 }
             } while (choice < 1 || choice > 2);
-            request.writeObject(new SignUpRequest(username, password, mail, phoneNumber));
-            try {
+                request.writeObject(new SignUpRequest(username, password, mail, phoneNumber));
                 wait();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
         } while (user == null);
         if(user != null)
             homePage();
@@ -827,7 +840,29 @@ public class Client {
     public  static void clearConsole()
     {
         for (int i = 0; i < 50; ++i) System.out.println();
+
     }
+
+    /**
+     * closes the connection with the server
+     */
+    private void close() {
+        try {
+            if (request != null)
+                request.close();
+            if (response != null)
+                response.close();
+            if (serverConnection != null)
+                serverConnection.close();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Instantiates a new client.
+     */
     public static void main(String[] args) {
         Client client = new Client();
         client.start();
