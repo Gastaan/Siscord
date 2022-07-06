@@ -270,12 +270,16 @@ public class Client {
         if(user != null)
             homePage();
     }
-    private void homePage() {
-        clearConsole();
+    private void homePage() throws IOException, InterruptedException {
         int choice;
         do {
-            System.out.println("1- private chats\n2- servers\n3- friends\n4- add friend\n5-incoming friend requests\n6-pending requests\n7-blocked users\n8- setting\n9- exit");
-            choice = scanner.nextInt();
+            System.out.println(ANSI_YELLOW + "1- private chats\n2- servers\n3- friends\n4- add friend\n5-incoming friend requests\n6-pending requests\n7-blocked users\n8- setting\n9- logout" + ANSI_RESET);
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                scanner.nextLine();
+                choice = -1;
+            }
             switch (choice) {
                 case 1 -> privateChats();
                 case 2 -> servers();
@@ -285,10 +289,13 @@ public class Client {
                 case 6 -> outGoingFriendRequests();
                 case 7 -> blockedUsers();
                 case 8 -> setting();
-                case 9 -> System.out.println("Bye Bye!");
-                default -> System.out.println("Invalid Choice!");
+                case 9 -> System.out.println(ANSI_BLUE + "Bye Bye!" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid Choice!" + ANSI_RESET);
             }
         } while (choice != 9);
+        logOut();
+    }
+    private void logOut() { //TODO : clear all the data
         user = null;
     }
     private synchronized void outGoingFriendRequests() {
@@ -564,29 +571,31 @@ public class Client {
                 }
         } while(choice != 2);
     }
-    private synchronized void privateChats() {
+    private synchronized void privateChats() throws IOException, InterruptedException {
         int choice;
-        try {
             do {
                 request.writeObject(new Request(ReqType.PRIVATE_CHAT_LIST));
                 wait();
-                System.out.println("1-select chat\n2-new chat\n3-back");
-                choice = scanner.nextInt();
+                System.out.println(ANSI_YELLOW + "1-select chat\n2-new chat\n3-back" + ANSI_RESET);
+                try {
+                    choice = scanner.nextInt();
+                }
+                catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
+                }
                 switch (choice) {
                     case 1 -> selectChat();
                     case 2 -> newPrivateChat();
-                    case 3 -> System.out.println("Ok!");
-                    default -> System.out.println("Invalid Choice!");
+                    case 3 -> System.out.println(ANSI_BLUE + "Ok" + ANSI_RESET);
+                    default -> System.out.println(ANSI_RED + "Invalid Choice!" + ANSI_RED);
                 }
             } while (choice != 3);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
     }
     private void selectChat() {
         int choice, chatIndex;
         do {
-            System.out.println("1-select from list\n2-back");
+            System.out.println(ANSI_PURPLE + "1-select from list\n2-back" + ANSI_RESET);
             choice = scanner.nextInt();
             switch (choice) {
                 case 1 -> {
@@ -715,24 +724,26 @@ public class Client {
             throw new RuntimeException(e);
         }
     }
-    private synchronized void newPrivateChat() {
+    private synchronized void newPrivateChat() throws IOException, InterruptedException {
         int choice;
         do {
-            System.out.println("1-Enter username\n2-Back to the main page");
-            choice = scanner.nextInt();
+            System.out.println(ANSI_PURPLE + "1-Enter a username\n2-Back to the home page" + ANSI_RESET);
+            try {
+                choice = scanner.nextInt();
+            }
+            catch (InputMismatchException e) {
+                choice = -1;
+                scanner.nextLine();
+            }
             switch (choice) {
                 case 1 -> {
-                    System.out.println("Enter username: ");
+                    System.out.println(ANSI_WHITE + "Enter username: " + ANSI_RESET);
                     String username = scanner.next();
-                    try {
-                        request.writeObject(new NewPrivateChatRequest(username));
-                        wait();
-                    } catch (IOException | InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+                    request.writeObject(new NewPrivateChatRequest(username));
+                    wait();
                 }
-                case 2 -> System.out.println("Ok");
-                default -> System.out.println("Invalid Choice!");
+                case 2 -> System.out.println(ANSI_BLUE + "Ok" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid Choice!" + ANSI_RESET);
             }
         } while(choice != 2);
     }
@@ -835,7 +846,6 @@ public class Client {
     private void changeEmail() {
 
     }
-    private void logOut() {}
 
     public  static void clearConsole()
     {
