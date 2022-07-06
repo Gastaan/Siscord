@@ -8,6 +8,7 @@ import shared.requests.*;
 import shared.responses.*;
 import shared.responses.addfriend.AddFriendResponse;
 import shared.responses.addfriend.AddFriendResponseStatus;
+import shared.responses.list.ChatListResponse;
 import shared.responses.login.LoginResponse;
 import shared.responses.login.LoginStatus;
 import shared.responses.newprivatechat.NewPrivateChatResponse;
@@ -38,6 +39,10 @@ public class ClientHandler implements Runnable{
     private ObjectInputStream request;
     private ObjectOutputStream response;
     private User servingUser;
+    private final String usernameRegex = "[a-zA-Z0-9]{6,}";
+    private String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9]{8,}$";
+    private final String mailRegex = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
+    private String phoneNumberRegex = " ^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$ ";
 
     public ClientHandler(Socket socket) {
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
@@ -114,6 +119,24 @@ public class ClientHandler implements Runnable{
             serverChanels((GetChanelsRequest) requested);
         else if(requested.getType() == ReqType.IS_TYPING)
             isTyping((IsTypingRequest) requested);
+        else if(requested.getType() == ReqType.CHANGE_PASSWORD)
+            changePassword((ChangePasswordRequest) requested);
+    }
+    private void changePassword(ChangePasswordRequest requested) {
+         if(match(requested.getNewPassword(), passwordRegex)) {
+             users.put(servingUser, requested.getNewPassword());
+             try {
+                 response.writeObject(new ChangePasswordResponse(true));
+             } catch (IOException e) {
+                 throw new RuntimeException(e);
+             }
+         }
+         else
+                try {
+                    response.writeObject(new ChangePasswordResponse(false));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
     }
     private void isTyping(IsTypingRequest requested) {
       for(ClientHandler ch  : onlineUsers.get(searchUser(requested.getUsername())))
@@ -124,7 +147,7 @@ public class ClientHandler implements Runnable{
         SocialServer server = servers.get(serverID);
         ArrayList<String> chanels = server.getChanels();
         try {
-            response.writeObject(new PrivateChatListResponse(chanels));
+            response.writeObject(new ChanelListResponse(serverID, chanels));
         }
         catch (IOException e) {
             System.err.println("Can not send response to client!");
@@ -282,19 +305,35 @@ public class ClientHandler implements Runnable{
     private void privateChatList(Request requested) {
         ArrayList<String> chatNames = userData.get(servingUser).getPrivateChatList();
         try {
-            response.writeObject(new PrivateChatListResponse(chatNames));
+            response.writeObject(new ChatListResponse(chatNames));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
     private void chat(ChatRequest request) {
-        Chat privateChat = userData.get(servingUser).getPrivateChat(request.getUsername());
+        Chat privateChat;
+        String direction = request.getUsername();
+        if(request.getUsername().contains("Server")) {
+         int serverID = Integer.parseInt(request.getUsername().substring(direction.lastIndexOf(" ") + 1));
+         String chanelName = direction.substring(direction.indexOf(" ") + 1, direction.lastIndexOf(" "));
+         privateChat = servers.get(servers.indexOf(searchServerByID(serverID))).getTextChanel(chanelName);
+        }
+        else
+            privateChat = userData.get(servingUser).getPrivateChat(request.getUsername());
         try {
             reset();
             response.writeObject(new ChatResponse(privateChat.getMessages(), request.getUsername()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+    private SocialServer searchServerByID(int id) {
+        synchronized (servers) {
+            for (SocialServer server : servers)
+                if (server.getServerID() == id)
+                    return server;
+        }
+        return null;
     }
     private void reset() {
         synchronized (response) {
@@ -383,10 +422,6 @@ public class ClientHandler implements Runnable{
         }
     } //Done
     private SignUpStatus checkRegex(String username, String password, String mail, String phoneNumber) {
-        String usernameRegex = "[a-zA-Z0-9]{6,}";
-        String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9]{8,}$";
-        String mailRegex = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
-        String phoneNumberRegex = " ^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$ ";
         if(searchUser(username) == null) {
             if(match(username, usernameRegex) && match(password, passwordRegex) && match(mail, mailRegex) && (match(phoneNumber, phoneNumberRegex) || phoneNumber.equals("")))
                 return SignUpStatus.VALID;

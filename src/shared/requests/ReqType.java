@@ -23,5 +23,6 @@ public enum ReqType implements Serializable {
     BLOCK_USER,
     NEW_SERVER,
     SERVER_LIST,
-    SERVER_CHANELS
+    SERVER_CHANELS,
+    CHANGE_PASSWORD
 }

@@ -5,7 +5,7 @@ import java.io.Serializable;
 public enum ResType implements Serializable {
     LOGIN,
     SIGNUP,
-    PRIVATE_CHAT_LIST,
+    LIST,
     PRIVATE_CHAT,
     NOTIFICATION,
     NEW_MESSAGE,
@@ -19,5 +19,7 @@ public enum ResType implements Serializable {
     NEW_PRIVATE_CHAT,
     PRIVATE_CHAT_REACT,
     NEW_SERVER,
-    SERVER_LIST
+    SERVER_LIST,
+    CHANEL_LIST,
+    CHANGE_PASSWORD
 }

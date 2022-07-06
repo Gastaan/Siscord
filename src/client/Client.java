@@ -3,6 +3,7 @@ package client;
 
 import shared.requests.*;
 import shared.responses.*;
+import shared.responses.list.ChatListResponse;
 import shared.responses.login.LoginResponse;
 import shared.responses.signup.SignUpResponse;
 import shared.user.User;
@@ -27,13 +28,24 @@ public class Client {
     private ObjectInputStream response;
     private ObjectOutputStream request;
     private ResponseHandler responseHandler;
-    private PrivateChatListResponse chatList;
+    private ChatListResponse chatList;
     private ChatResponse chat;
     private GetFriendsListResponse friends;
     private IncomingFriendRequestsResponse friendRequests;
     private GetOutgoingFriendResponse outgoingFriendRequests;
     private GetBlockedUsersResponse blockedUsers;
     private ServerListResponse serverList;
+    private ChanelListResponse chanels;
+    //colors
+    public static final String ANSI_RESET = "\u001B[0m";
+    public static final String ANSI_BLACK = "\u001B[30m";
+    public static final String ANSI_RED = "\u001B[31m";
+    public static final String ANSI_GREEN = "\u001B[32m";
+    public static final String ANSI_YELLOW = "\u001B[33m";
+    public static final String ANSI_BLUE = "\u001B[34m";
+    public static final String ANSI_PURPLE = "\u001B[35m";
+    public static final String ANSI_CYAN = "\u001B[36m";
+    public static final String ANSI_WHITE = "\u001B[37m";
     //constructor
     public Client() {
         try {
@@ -72,10 +84,9 @@ public class Client {
             user = responseHandler.loginResponse((LoginResponse) response);
             notify();
         }
-        else if(response.getResType() == ResType.PRIVATE_CHAT_LIST) {
-            chatList = (PrivateChatListResponse) response;
+        else if(response.getResType() == ResType.LIST) {
+            chatList = (ChatListResponse) response;
             int index = 1;
-            System.out.println("Private chats:");
             for(String chatName : chatList.getChatNames()) {
                 System.out.println(index++  + ": " + chatName);
             }
@@ -134,10 +145,6 @@ public class Client {
             System.out.println(response);
             notify();
         }
-        else if(response.getResType() == ResType.NEW_PRIVATE_CHAT) {
-            System.out.println(response);
-            notify();
-        }
         else if(response.getResType() == ResType.NEW_MESSAGE) {
             System.out.println(response);
             notify();
@@ -162,44 +169,16 @@ public class Client {
             }
             notify();
         }
-        else if(response.getResType() == ResType.SERVER_LIST) {
-            serverList = (ServerListResponse) response;
+        else if(response.getResType() == ResType.CHANEL_LIST) {
+            chanels = (ChanelListResponse) response;
             int index = 1;
-            for(String server : serverList.getServers()) {
-                System.out.println(index++ + "-" + server);
+            for(String chanel : chanels.getChanelNames()) {
+                System.out.println(index++ + "-" + chanel);
             }
             notify();
         }
-        else if(response.getResType() == ResType.SERVER_LIST) {
-            serverList = (ServerListResponse) response;
-            int index = 1;
-            for(String server : serverList.getServers()) {
-                System.out.println(index++ + "-" + server);
-            }
-            notify();
-        }
-        else if(response.getResType() == ResType.SERVER_LIST) {
-            serverList = (ServerListResponse) response;
-            int index = 1;
-            for(String server : serverList.getServers()) {
-                System.out.println(index++ + "-" + server);
-            }
-            notify();
-        }
-        else if(response.getResType() == ResType.SERVER_LIST) {
-            serverList = (ServerListResponse) response;
-            int index = 1;
-            for(String server : serverList.getServers()) {
-                System.out.println(index++ + "-" + server);
-            }
-            notify();
-        }
-        else if(response.getResType() == ResType.SERVER_LIST) {
-            serverList = (ServerListResponse) response;
-            int index = 1;
-            for(String server : serverList.getServers()) {
-                System.out.println(index++ + "-" + server);
-            }
+        else if(response.getResType() == ResType.CHANGE_PASSWORD) {
+            System.out.println(response);
             notify();
         }
     }
@@ -426,26 +405,46 @@ public class Client {
             }
         }
     }
-    private synchronized void chatPage(int chatID) {
+    private synchronized void privateChatPage(int chatIndex) {
         int choice;
         try {
             do {
-                request.writeObject(new ChatRequest(chatList.getChatNames().get(chatID - 1)));
+                request.writeObject(new ChatRequest(chatList.getChatNames().get(chatIndex - 1)));
+                wait();
+                System.out.println("1-sendMessage\n2-React\n3-voice call\n4-back to home page");
+                choice = scanner.nextInt();
+                switch (choice) {
+                    case 1 -> sendMessage();
+                    case 2 -> react();
+                    case 3 -> voiceCall();
+                    case 4 -> System.out.println("OK!");
+                    default -> System.out.println("Invalid Choice!");
+                }
+            } while (choice != 4);
+        }
+          catch (InterruptedException | IOException e) {
+                throw new RuntimeException(e);
+            }
+    }
+    private void textChanelPage(int chatIndex) {
+        int choice;
+        try {
+            do {
+                request.writeObject(new ChatRequest("Server: " + chanels.getServerID() + "Chanel: " + chanels.getChanelNames().get(chatIndex - 1)));
                 wait();
                 System.out.println("1-sendMessage\n2-React\n3-back to home page");
                 choice = scanner.nextInt();
                 switch (choice) {
                     case 1 -> sendMessage();
                     case 2 -> react();
-                    //case 3 -> voiceCall();
                     case 3 -> System.out.println("OK!");
                     default -> System.out.println("Invalid Choice!");
                 }
             } while (choice != 3);
         }
-          catch (InterruptedException | IOException e) {
-                throw new RuntimeException(e);
-            }
+        catch (InterruptedException | IOException e) {
+            throw new RuntimeException(e);
+        }
     }
     private synchronized void sendMessage() {
         int choice;
@@ -574,27 +573,22 @@ public class Client {
     private void selectChat() {
         int choice, chatIndex;
         do {
-            System.out.println("1-select chat\n2-back");
+            System.out.println("1-select from list\n2-back");
             choice = scanner.nextInt();
             switch (choice) {
                 case 1 -> {
                     do {
-                        System.out.println("Enter chat id: ");
+                        System.out.println("Enter chat index: ");
                          chatIndex = scanner.nextInt();
                     } while (chatIndex > chatList.getChatNames().size() || chatIndex < 1);
-                    if(chatList.getChatNames().get(chatIndex - 1).contains("Text Chanel"))
-                        chatPage(chatIndex);
-                    else
-                        voiceChanle(chatIndex);
+                        privateChatPage(chatIndex);
                 }
                 case 2 -> System.out.println("Ok!");
                 default -> System.out.println("Invalid Choice!");
             }
         } while (choice > 2 || choice < 1);
     }
-    private void voiceChanle(int chatIndex) {
-
-    }
+    private void voiceChanel(int chatIndex) {} //TODO : play music
     private void servers() {
         int choice;
         do {
@@ -614,11 +608,43 @@ public class Client {
             do {
                 request.writeObject(new GetChanelsRequest(serverList.getID(serverList.getServers().get(serverIndex - 1))));
                 wait();
+                System.out.println("1-select chanel\n2-add friend\n3-members\n4-setting\n5-leave server\n6-back");
+                choice = scanner.nextInt();
+                switch (choice) {
+                    case 1 -> selectChanel(serverList.getID(serverList.getServers().get(serverIndex - 1)));
+                 //   case 2 -> addFriend(serverList.getID(serverList.getServers().get(serverIndex - 1)));
+                 //    case 3 -> members(serverList.getID(serverList.getServers().get(serverIndex - 1)));
+                 //    case 4 -> serverSetting(serverList.getID(serverList.getServers().get(serverIndex - 1)));
+                 //    case 5 -> leaveServer(serverList.getID(serverList.getServers().get(serverIndex - 1)));
+                    case 6 -> System.out.println("Ok!");
+                    default -> System.out.println("Invalid Choice!");
+                }
+            } while (choice != 2);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private synchronized void selectChanel(int serverID) {
+        int choice;
+        try {
+            do {
+                request.writeObject(new GetChanelsRequest(serverID));
+                wait();
                 System.out.println("1-select chanel\n2-back");
                 choice = scanner.nextInt();
                 switch (choice) {
-                    case 1 -> selectChat();
-                    case 3 -> System.out.println("Ok!");
+                    case 1 -> {
+                        int chanelIndex;
+                        do {
+                            System.out.println("Enter chanel index: ");
+                            chanelIndex = scanner.nextInt();
+                        } while (chanelIndex > chanels.getChanelNames().size() || chanelIndex < 1);
+                        if(chanels.getChanelNames().get(chanelIndex - 1).contains("Voice Channel"))
+                            voiceChanel(serverID);
+                        else
+                            textChanelPage(chanelIndex);
+                    }
+                    case 2 -> System.out.println("Ok!");
                     default -> System.out.println("Invalid Choice!");
                 }
             } while (choice != 2);
@@ -763,8 +789,41 @@ public class Client {
         } while (choice > 2 || choice < 1);
     }
     private void setting() {
+        int choice;
+        do {
+            System.out.println("1-change password\n2-change email\n3-change status\n4-log out\n5-back");
+            choice = scanner.nextInt();
+            switch (choice) {
+                case 1 -> changePassword();
+                case 2 -> changeEmail();
+                case 3 -> changeStatus();
+                case 4 -> logOut();
+                case 5 -> System.out.println("Ok!");
+                default -> System.out.println("Invalid Choice!");
+            }
+        } while(choice != 5);
+    }
+    private void changeStatus() {
 
-    } //Last : TODO : SETTING : change password , change status, logout
+    }
+    private void changePassword() {
+        String password;
+        do {
+            System.out.println("Enter new password: ");
+            password = scanner.next();
+        } while (password.isEmpty());
+        try {
+            request.writeObject(new ChangePasswordRequest(password));
+            wait();
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private void changeEmail() {
+
+    }
+    private void logOut() {}
+
     public  static void clearConsole()
     {
         for (int i = 0; i < 50; ++i) System.out.println();

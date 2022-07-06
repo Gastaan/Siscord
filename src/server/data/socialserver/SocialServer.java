@@ -1,5 +1,6 @@
 package server.data.socialserver;
 
+import server.data.Chat;
 import server.data.socialserver.chanel.Chanel;
 import server.data.socialserver.chanel.TextChanel;
 
@@ -17,7 +18,7 @@ enum Roles{
     CHANGE_SERVERNAME,
     PIN_MESSAGE
 }
-public class SocialServer {
+public class SocialServer { //TODO : welcome message , delete server
     private String serverName;
     private final Integer serverID;
     private final String serverOwner;
@@ -60,5 +61,11 @@ public class SocialServer {
             }
         }
         return list;
+    }
+    public Chat getTextChanel(String chanelName) {
+        if(chanels.containsKey(chanelName)) {
+            return ((TextChanel)chanels.get(chanelName)).getChat();
+        }
+        return null;
     }
 }
