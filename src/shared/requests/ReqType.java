@@ -2,12 +2,15 @@ package shared.requests;
 
 import java.io.Serializable;
 
+/**
+ * This class is used to represent request types.
+ */
 public enum ReqType implements Serializable {
     LOGIN,
     SIGN_UP,
     PRIVATE_CHAT_LIST,
     CHAT_REQUEST,
-    PRIVATE_CHAT_REACT,
+    CHAT_REACT,
     IS_TYPING,
     NEW_PRIVATE_CHAT,
     NEW_MESSAGE,
@@ -23,5 +26,6 @@ public enum ReqType implements Serializable {
     NEW_SERVER,
     SERVER_LIST,
     SERVER_CHANELS,
-    CHANGE_PASSWORD
+    CHANGE_PASSWORD,
+    PIN_MESSAGE
 }

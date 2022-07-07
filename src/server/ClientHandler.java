@@ -108,7 +108,7 @@ public class ClientHandler implements Runnable{
             privateChatList();
         else if(requested.getType() == ReqType.CHAT_REQUEST)
             chat((ChatRequest) requested);
-        else if(requested.getType() == ReqType.PRIVATE_CHAT_REACT)
+        else if(requested.getType() == ReqType.CHAT_REACT)
             react((ReactRequest) requested);
         else if(requested.getType() == ReqType.NEW_PRIVATE_CHAT)
             newPrivateChat((NewPrivateChatRequest) requested);
@@ -160,7 +160,7 @@ public class ClientHandler implements Runnable{
                 }
     }
     private void sendNotification(String notification, String username) {
-        if(!username.equals(servingUser))
+        if(!username.equals(servingUser.getUsername()))
             for(ClientHandler ch : onlineUsers.get(username))
                 ch.getNotification(notification);
     }
@@ -408,15 +408,20 @@ public class ClientHandler implements Runnable{
         }
         response.writeObject(new NewMessageResponse(true));
     }
-    private void react(ReactRequest request) {
-        User user = searchUser(request.getChatName());
-        userData.get(servingUser).getPrivateChat(user.getUsername()).addReaction(servingUser.getUsername(), request.getTime(), request.getReact());
-        userData.get(user).getPrivateChat(servingUser.getUsername()).addReaction(servingUser.getUsername(), request.getTime(), request.getReact());
-        try {
-            response.writeObject(new ReactResponse(true));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    private void react(ReactRequest request) throws IOException {
+        String time = request.getTime();
+        if(request.getPlaceholder().length == 1) {
+            User receiver = searchUser(request.getPlaceholder()[0]);
+            userData.get(servingUser).getPrivateChat(receiver.getUsername()).addReaction(servingUser.getUsername(), time, request.getReaction());
+            userData.get(receiver).getPrivateChat(servingUser.getUsername()).addReaction(servingUser.getUsername(), time, request.getReaction());
         }
+        else {
+            int serverID = Integer.parseInt(request.getPlaceholder()[0]);
+            SocialServer socialServer = servers.get(searchServerByID(serverID));
+            TextChanel chanel = socialServer.getTextChanel(request.getPlaceholder()[1]);
+            chanel.getChat().addReaction(servingUser.getUsername(), time, request.getReaction());
+        }
+        response.writeObject(new ReactResponse(true));
     }
     private void logOut() {} //TODO : log out
     private void login(LoginRequest info) {

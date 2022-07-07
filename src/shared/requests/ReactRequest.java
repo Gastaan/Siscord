@@ -8,7 +8,7 @@ public class ReactRequest extends Request{
     private final Reacts react;
     //constructor
     public ReactRequest(String time, Reacts react, String... placeholder) {
-        super(ReqType.PRIVATE_CHAT_REACT);
+        super(ReqType.CHAT_REACT);
         this.placeholder = placeholder;
         this.time = time;
         this.react = react;
@@ -20,7 +20,7 @@ public class ReactRequest extends Request{
     public String getTime() {
         return time;
     }
-    public Reacts getReact() {
+    public Reacts getReaction() {
         return react;
     }
 }

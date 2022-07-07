@@ -53,15 +53,20 @@ public class Client {
     public static final String ANSI_CYAN = "\u001B[36m";
     public static final String ANSI_WHITE = "\u001B[37m";
     //constructor
+
+    /**
+     * constructor of the client class.
+     */
     public Client() {
         try {
-            serverConnection = new Socket("localhost", 3132);
+            serverConnection = new Socket("localhost", 3132); //localhost : 127.0.0.1
             request = new ObjectOutputStream(serverConnection.getOutputStream());
             response = new ObjectInputStream(serverConnection.getInputStream());
             responseHandler = new ResponseHandler();
             listener();
         } catch (IOException e) {
-            System.out.println("Can not connect to server!");
+            System.err.println("Can not connect to server!");
+            close();
             System.exit(404);
         }
     }
@@ -230,7 +235,7 @@ public class Client {
     }
 
     /**
-     * This method is used to login the user.
+     * This method is used to log in the user.
      * @throws IOException If an I/O error occurs while sending the request.
      * @throws InterruptedException If interrupted while waiting for the response.
      */
@@ -492,8 +497,36 @@ public class Client {
                 }
             } while (choice != 4);
         }
-        private void pin() {
-                //TODO : pin message
+        private void pin() throws InterruptedException {
+            int choice;
+                do {
+                    System.out.println(ANSI_PURPLE + "1-pin\n2-back" + ANSI_RESET);
+                    try {
+                        choice = scanner.nextInt();
+                    }
+                    catch (InputMismatchException e) {
+                        scanner.nextLine();
+                        choice = -1;
+                    }
+                    switch (choice) {
+                        case 1 -> {
+                            int messageIndex;
+                            do {
+                                messageIndex = selectMessage();
+                                if(!chat.getMessages().get(messageIndex - 1).isPinned())
+                                    System.out.println(ANSI_RED + "Message is already pinned" + ANSI_RESET);
+                            } while(!chat.getMessages().get(messageIndex - 1).isPinned());
+                            try {
+                                request.writeObject(new PinRequest(chat.getMessages().get(messageIndex - 1).getTime(), chat.getPlaceholder()));
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                            wait();
+                        }
+                        case 2 -> System.out.println(ANSI_BLUE + "Ok" + ANSI_RESET);
+                        default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+                    }
+                } while (choice != 2);
         }
         private void pinnedMessages() {
                 //TODO : pinned messages
@@ -502,7 +535,7 @@ public class Client {
         int choice;
         try {
             do {
-                request.writeObject(new ChatRequest("Server: " + chanels.getServerID() + "Chanel: " + chanels.getChanelNames().get(chatIndex - 1)));
+                request.writeObject(new ChatRequest( chanels.getServerID() +  chanels.getChanelNames().get(chatIndex - 1)));
                 wait();
                 System.out.println("1-sendMessage\n2-React\n3-back to home page");
                 choice = scanner.nextInt();
@@ -608,7 +641,7 @@ public class Client {
                 }
                 switch (choice) {
                     case 1 ->  {
-                        int messageIndex = select();
+                        int messageIndex = selectMessage();
                         Message message = chat.getMessages().get(messageIndex - 1);
                         Reacts reaction = null;
                         do {
@@ -634,6 +667,21 @@ public class Client {
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
         } while(choice != 2);
+    }
+    private int selectMessage() {
+    int messageIndex;
+        do {
+            System.out.println(ANSI_WHITE + "Enter message index: " + ANSI_RESET);
+            try {
+                messageIndex = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                scanner.nextLine();
+                messageIndex = -1;
+            }
+            if(messageIndex > chat.getMessages().size() || messageIndex < 1)
+                System.out.println(ANSI_RED + "Invalid!" + ANSI_RESET);
+        } while (messageIndex < 1 || messageIndex > chat.getMessages().size());
+        return messageIndex;
     }
     /**
      * Private chats page

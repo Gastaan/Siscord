@@ -9,6 +9,7 @@ abstract public class Message implements Serializable {
     protected String writer;
     protected LocalDateTime time;
     private final HashMap<Reacts, HashSet<String>> reacts;
+    private boolean isPinned;
     public Message(String writer) {
         this.writer = writer;
         this.time = LocalDateTime.now();
@@ -34,5 +35,11 @@ abstract public class Message implements Serializable {
     }
     public String getTime() {
         return String.valueOf(time);
+    }
+    public boolean isPinned() {
+        return isPinned;
+    }
+    public void setPinned() {
+        isPinned = !isPinned;
     }
 }
