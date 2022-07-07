@@ -60,17 +60,34 @@ public class Chat {
 
     /**
      * @param username The username of reactor.
-     * @param message The message that the reactor reacted to.
-     * @param react The React that the reactor added to the message.
+     * @param messageTime The messageTime that the reactor reacted to.
+     * @param react The React that the reactor added to the messageTime.
      */
-    public void addReaction(String username, String message, Reacts react) {
+    public void addReaction(String username, String messageTime, Reacts react) {
+        findMessageByTime(messageTime).addReaction(react, username);
+    }
+
+    /**
+     * @param messageTime The messageTime of pinned message.
+     */
+    public void pinMessage(String messageTime) {
+        Message message = findMessageByTime(messageTime);
+        message.setPinned();
+        pinnedMessages.add(message);
+    }
+
+    /**
+     * @param time The time of the message.
+     * @return The message with the given time.
+     */
+    private Message findMessageByTime(String time) {
         synchronized (messages) {
             for (Message checkingMessage : messages) {
-                if (checkingMessage.getTime().equals(message)) {
-                    checkingMessage.addReaction(react, username);
-                    break;
+                if (checkingMessage.getTime().equals(time)) {
+                    return checkingMessage;
                 }
             }
         }
+        return null;
     }
 }

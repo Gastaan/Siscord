@@ -21,5 +21,6 @@ public enum ResType implements Serializable {
     NEW_SERVER,
     SERVER_LIST,
     CHANEL_LIST,
-    CHANGE_PASSWORD
+    CHANGE_PASSWORD,
+    PIN_MESSAGE
 }

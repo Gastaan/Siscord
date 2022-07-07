@@ -142,7 +142,29 @@ public class ClientHandler implements Runnable{
             isTyping((IsTypingRequest) requested);
         else if(requested.getType() == ReqType.CHANGE_PASSWORD)
             changePassword((ChangePasswordRequest) requested);
+        else if(requested.getType() == ReqType.PIN_MESSAGE)
+            pin((PinRequest) requested);
     }
+    private void pin(PinRequest request) throws IOException {
+        String[] placeholders = request.getPlaceHolder();
+        if(placeholders.length == 1) {
+            User user =  searchUser(placeholders[0]);
+            userData.get(servingUser).getPrivateChat(user.getUsername()).pinMessage(request.getTime());
+            userData.get(user).getPrivateChat(servingUser.getUsername()).pinMessage(request.getTime());
+        }
+        else {
+            int serverID = Integer.parseInt(placeholders[0]);
+            SocialServer socialServer = servers.get(searchServerByID(serverID));
+            TextChanel chanel = socialServer.getTextChanel(placeholders[1]);
+            chanel.getChat().pinMessage(request.getTime());
+        }
+        response.writeObject(new PinResponse(true));
+    }
+
+    /**
+     * This method changes the password of the user.
+     * @param requested the change password request from the client.
+     */
     private void changePassword(ChangePasswordRequest requested) {
          if(match(requested.getNewPassword(), passwordRegex)) {
              userData.get(servingUser).changePassword(requested.getNewPassword());

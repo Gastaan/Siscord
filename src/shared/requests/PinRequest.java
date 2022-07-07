@@ -13,7 +13,7 @@ public class PinRequest extends Request{
     public String getTime() {
         return time;
     }
-    public String[] getPlaceholder() {
+    public String[] getPlaceHolder() {
         return placeholder;
     }
 }

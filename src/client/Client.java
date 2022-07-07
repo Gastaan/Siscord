@@ -197,7 +197,7 @@ public class Client {
             }
             notify();
         }
-        else if(response.getResType() == ResType.CHANGE_PASSWORD) {
+        else if(response.getResType() == ResType.CHANGE_PASSWORD || response.getResType() == ResType.PIN_MESSAGE) {
             System.out.println(response);
             notify();
         }
@@ -490,14 +490,14 @@ public class Client {
                     case 1 -> sendMessage();
                     case 2 -> react();
                     case 3 -> pin();
-                    case 5 -> pinnedMessages();
+                    case 5 -> showPinnedMessages();
                     case 4 -> voiceCall();
                     case 6 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
             } while (choice != 4);
         }
-        private void pin() throws InterruptedException {
+        private void pin() throws InterruptedException, IOException {
             int choice;
                 do {
                     System.out.println(ANSI_PURPLE + "1-pin\n2-back" + ANSI_RESET);
@@ -516,11 +516,7 @@ public class Client {
                                 if(!chat.getMessages().get(messageIndex - 1).isPinned())
                                     System.out.println(ANSI_RED + "Message is already pinned" + ANSI_RESET);
                             } while(!chat.getMessages().get(messageIndex - 1).isPinned());
-                            try {
-                                request.writeObject(new PinRequest(chat.getMessages().get(messageIndex - 1).getTime(), chat.getPlaceholder()));
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
+                            request.writeObject(new PinRequest(chat.getMessages().get(messageIndex - 1).getTime(), chat.getPlaceholder()));
                             wait();
                         }
                         case 2 -> System.out.println(ANSI_BLUE + "Ok" + ANSI_RESET);
@@ -528,8 +524,8 @@ public class Client {
                     }
                 } while (choice != 2);
         }
-        private void pinnedMessages() {
-                //TODO : pinned messages
+        private void showPinnedMessages() {
+            
         }
     private void textChanelPage(int chatIndex) {
         int choice;
