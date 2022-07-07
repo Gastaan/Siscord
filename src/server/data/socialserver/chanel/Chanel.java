@@ -10,10 +10,15 @@ abstract public class Chanel {
         isLimited = false;
         accessList = new HashSet<>();
     }
-    public void setLimited(boolean isLimited) {
-        this.isLimited = isLimited;
+   public boolean getIsLimited() {
+        return isLimited;
     }
     public void addAccess(String username) {
         accessList.add(username);
+    }
+    public HashSet<String> getAccessList() {
+        synchronized (accessList) {
+            return new HashSet<>(accessList);
+        }
     }
 }

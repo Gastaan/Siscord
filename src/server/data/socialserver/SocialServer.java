@@ -1,6 +1,5 @@
 package server.data.socialserver;
 
-import server.data.Chat;
 import server.data.socialserver.chanel.Chanel;
 import server.data.socialserver.chanel.TextChanel;
 
@@ -9,21 +8,13 @@ import java.util.HashSet;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
-enum Roles{
-    CREATE_CHANEL,
-    DELETE_CHANEL,
-    DELETE_MEMBER,
-    LIMIT_MEMBERS,
-    BLOCK_USER,
-    CHANGE_SERVERNAME,
-    PIN_MESSAGE
-}
 public class SocialServer { //TODO : welcome message , delete server
     private String serverName;
     private final Integer serverID;
     private final String serverOwner;
     private final Vector<String> blockedUsers;
     private final ConcurrentHashMap<String, HashSet<Roles>> members;
+    private final ConcurrentHashMap<Roles, HashSet<String>> roles;
     private final ConcurrentHashMap<String, Chanel> chanels;
     private static int serverIndex = 1;
     //constructor
@@ -34,6 +25,26 @@ public class SocialServer { //TODO : welcome message , delete server
         this.blockedUsers = new Vector<>();
         this.members = new ConcurrentHashMap<>();
         this.chanels = new ConcurrentHashMap<>();
+        this.roles = new ConcurrentHashMap<>();
+        roles.put(Roles.BLOCK_USER, new HashSet<>());
+        roles.put(Roles.CREATE_CHANEL, new HashSet<>());
+        roles.put(Roles.DELETE_CHANEL, new HashSet<>());
+        roles.put(Roles.DELETE_MEMBER, new HashSet<>());
+        roles.put(Roles.LIMIT_MEMBERS, new HashSet<>());
+        roles.put(Roles.CHANGE_SERVERNAME, new HashSet<>());
+        roles.put(Roles.PIN_MESSAGE, new HashSet<>());
+        roles.get(Roles.CREATE_CHANEL).add(serverOwner);
+        roles.get(Roles.DELETE_CHANEL).add(serverOwner);
+        roles.get(Roles.DELETE_MEMBER).add(serverOwner);
+        roles.get(Roles.LIMIT_MEMBERS).add(serverOwner);
+        roles.get(Roles.BLOCK_USER).add(serverOwner);
+        roles.get(Roles.CHANGE_SERVERNAME).add(serverOwner);
+        roles.get(Roles.PIN_MESSAGE).add(serverOwner);
+    }
+    public HashSet<String> getRoles(Roles role) {
+        synchronized (roles) {
+            return new HashSet<>(roles.get(role));
+        }
     }
     private void changeName(String newName) {
         serverName = newName;
@@ -62,10 +73,13 @@ public class SocialServer { //TODO : welcome message , delete server
         }
         return list;
     }
-    public Chat getTextChanel(String chanelName) {
+    public TextChanel getTextChanel(String chanelName) {
         if(chanels.containsKey(chanelName)) {
-            return ((TextChanel)chanels.get(chanelName)).getChat();
+            return (TextChanel)chanels.get(chanelName);
         }
         return null;
+    }
+    public HashSet<String> getMembers() {
+        return new HashSet<>(members.keySet());
     }
 }

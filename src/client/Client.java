@@ -21,6 +21,11 @@ import java.nio.file.Paths;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
+/**
+ * @author Saman Hazemi
+ * @version 1.0
+ * This class is the client side of the program.
+ */
 public class Client {
     //fields
     private static final Scanner scanner = new Scanner(System.in);
@@ -61,6 +66,10 @@ public class Client {
         }
     }
     //methods
+
+    /**
+     * This method is used to listen to the server and handle the responses.
+     */
     private void listener() {
             new  Thread(new Runnable() {
             @Override
@@ -76,6 +85,11 @@ public class Client {
             }
         }).start();
     }
+
+    /**
+     * This method is used to handle the responses.
+     * @param response The response from the server.
+     */
     private synchronized void handleResponse(Response response) {
         if(response.getResType() == ResType.SIGNUP) {
             user = responseHandler.signUpResponse((SignUpResponse) response);
@@ -93,7 +107,7 @@ public class Client {
             }
             notify();
         }
-        else if(response.getResType() == ResType.PRIVATE_CHAT) {
+        else if(response.getResType() == ResType.CHAT) {
             chat = (ChatResponse)response;
             responseHandler.chatResponse(chat);
             downLoadFileMessages();
@@ -183,6 +197,10 @@ public class Client {
             notify();
         }
     }
+
+    /**
+     * Main Page of the client.
+     */
     public void start() {
         int choice;
         try {
@@ -210,6 +228,12 @@ public class Client {
             close();
         }
     }
+
+    /**
+     * This method is used to login the user.
+     * @throws IOException If an I/O error occurs while sending the request.
+     * @throws InterruptedException If interrupted while waiting for the response.
+     */
     private synchronized void login() throws IOException, InterruptedException {
             System.out.println(ANSI_WHITE + "Enter user username: " + ANSI_RESET);
             String username = scanner.next();
@@ -220,6 +244,12 @@ public class Client {
                 if (user != null)
                     homePage();
     }
+
+    /**
+     * This method is used to sign up the user.
+     * @throws IOException If an I/O error occurs while sending the request.
+     * @throws InterruptedException If interrupted while waiting for the response.
+     */
     private synchronized void signUp() throws IOException, InterruptedException {
         String username, password, mail, phoneNumber = "";
         int choice;
@@ -270,6 +300,12 @@ public class Client {
         if(user != null)
             homePage();
     }
+
+    /**
+     * The home page of the client.
+     * @throws IOException If an I/O error occurs while sending the request.
+     * @throws InterruptedException If interrupted while waiting for the response.
+     */
     private void homePage() throws IOException, InterruptedException {
         int choice;
         do {
@@ -425,27 +461,35 @@ public class Client {
             }
         }
     }
-    private synchronized void privateChatPage(int chatIndex) {
-        int choice;
-        try {
+
+    /**
+     * Private chat page.
+     * @throws IOException If an I/O error occurs.
+     * @throws InterruptedException If interrupted.
+     */
+    private synchronized void privateChatPage() throws IOException, InterruptedException {
+        int choice, chatIndex;
+        chatIndex = select();
             do {
                 request.writeObject(new ChatRequest(chatList.getChatNames().get(chatIndex - 1)));
                 wait();
-                System.out.println("1-sendMessage\n2-React\n3-voice call\n4-back to home page");
-                choice = scanner.nextInt();
+                System.out.println(ANSI_YELLOW + "1-sendMessage\n2-React\n3-voice call\n4-back to home page"+ ANSI_RESET);
+                try {
+                    choice = scanner.nextInt();
+                }
+                catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
+                }
                 switch (choice) {
                     case 1 -> sendMessage();
                     case 2 -> react();
                     case 3 -> voiceCall();
-                    case 4 -> System.out.println("OK!");
-                    default -> System.out.println("Invalid Choice!");
+                    case 4 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                    default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
             } while (choice != 4);
         }
-          catch (InterruptedException | IOException e) {
-                throw new RuntimeException(e);
-            }
-    }
     private void textChanelPage(int chatIndex) {
         int choice;
         try {
@@ -466,18 +510,21 @@ public class Client {
             throw new RuntimeException(e);
         }
     }
-    private synchronized void sendMessage() {
+    private synchronized void sendMessage() throws IOException {
         int choice;
         do {
-            System.out.println("1-text\n2-file\n3-back");
-            choice = scanner.nextInt();
+            System.out.println(ANSI_WHITE + "1-text\n2-file\n3-back" + ANSI_RESET);
+            try {
+                choice = scanner.nextInt();
+            }
+            catch (InputMismatchException e) {
+                scanner.nextLine();
+                choice = -1;
+            }
             switch (choice) {
                 case 1 -> {
-                    try {
-                        request.writeObject(new IsTypingRequest(chat.getUsername()) );
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+                    request.writeObject(new IsTypingRequest(chat.getPlaceholder()));
+
                     System.out.println("Enter your message: ");
                     scanner.nextLine();
                     String message = scanner.nextLine();
@@ -571,6 +618,12 @@ public class Client {
                 }
         } while(choice != 2);
     }
+
+    /**
+     * Private chats page
+     * @throws IOException if an I/O error occurs while sending a request to the server
+     * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
+     */
     private synchronized void privateChats() throws IOException, InterruptedException {
         int choice;
             do {
@@ -585,30 +638,26 @@ public class Client {
                     choice = -1;
                 }
                 switch (choice) {
-                    case 1 -> selectChat();
+                    case 1 -> privateChatPage();
                     case 2 -> newPrivateChat();
                     case 3 -> System.out.println(ANSI_BLUE + "Ok" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid Choice!" + ANSI_RED);
                 }
             } while (choice != 3);
     }
-    private void selectChat() {
-        int choice, chatIndex;
+    private int select() {
+        int  index;
         do {
-            System.out.println(ANSI_PURPLE + "1-select from list\n2-back" + ANSI_RESET);
-            choice = scanner.nextInt();
-            switch (choice) {
-                case 1 -> {
-                    do {
-                        System.out.println("Enter chat index: ");
-                         chatIndex = scanner.nextInt();
-                    } while (chatIndex > chatList.getChatNames().size() || chatIndex < 1);
-                        privateChatPage(chatIndex);
-                }
-                case 2 -> System.out.println("Ok!");
-                default -> System.out.println("Invalid Choice!");
+            System.out.println(ANSI_WHITE + "Enter index: " + ANSI_RESET);
+            try {
+                index = scanner.nextInt();
             }
-        } while (choice > 2 || choice < 1);
+            catch (InputMismatchException e) {
+                scanner.nextLine();
+                index = -1;
+            }
+        } while (index > chatList.getChatNames().size() || index < 1);
+        return index;
     }
     private void voiceChanel(int chatIndex) {} //TODO : play music
     private void servers() {

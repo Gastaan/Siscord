@@ -3,7 +3,9 @@ package server;
 
 import server.data.Chat;
 import server.data.UserData;
+import server.data.socialserver.Roles;
 import server.data.socialserver.SocialServer;
+import server.data.socialserver.chanel.Chanel;
 import shared.requests.*;
 import shared.responses.*;
 import shared.responses.addfriend.AddFriendResponse;
@@ -23,32 +25,38 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-//TODO : Refactor
+
+/**
+ * @author saman hazemi
+ * This class is a client handler.
+ * It is used to handle the client requests.
+ */
 public class ClientHandler implements Runnable{
     //fields
-    private static ConcurrentHashMap<User, String> users;
     private static ConcurrentHashMap<User, UserData> userData;
-    private static ConcurrentHashMap<User, Vector<ClientHandler>> onlineUsers;
-
+    private static ConcurrentHashMap<String, Vector<ClientHandler>> onlineUsers;
     private static Vector<SocialServer> servers;
     private final Socket socket;
     private ObjectInputStream request;
     private ObjectOutputStream response;
     private User servingUser;
     private final String usernameRegex = "[a-zA-Z0-9]{6,}";
-    private String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9]{8,}$";
+    private final String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9]{8,}$";
     private final String mailRegex = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
-    private String phoneNumberRegex = " ^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$ ";
+    private final String phoneNumberRegex = " ^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$ ";
 
+    /**
+     * constructor of the client handler class.
+     * @param socket the socket of the client.
+     */
     public ClientHandler(Socket socket) {
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
         this.socket = socket;
-        if(users == null)
-            users = new ConcurrentHashMap<>();
         if(userData == null)
             userData = new ConcurrentHashMap<>();
         if(servers == null)
@@ -61,9 +69,14 @@ public class ClientHandler implements Runnable{
         }
         catch (IOException e) {
             System.err.println("Can not connect client to client handler!");
+            close();
         }
     } //Done
     //methods
+
+    /**
+     * This method gets the request from the client.
+     */
     @Override
     public void run() {
         Request requested;
@@ -78,13 +91,18 @@ public class ClientHandler implements Runnable{
             close();
         }
     } //Done
+
+    /**
+     * This method gives the response to the client.
+     * @param requested the request from the client.
+     */
     private void giveResponse(Request requested) {
         if(requested.getType() == ReqType.LOGIN)
             login((LoginRequest) requested);
         else if(requested.getType() == ReqType.SIGN_UP)
             signUP((SignUpRequest)requested);
         else if(requested.getType() == ReqType.PRIVATE_CHAT_LIST)
-            privateChatList(requested);
+            privateChatList();
         else if(requested.getType() == ReqType.CHAT_REQUEST)
             chat((ChatRequest) requested);
         else if(requested.getType() == ReqType.PRIVATE_CHAT_REACT)
@@ -114,7 +132,7 @@ public class ClientHandler implements Runnable{
         else if(requested.getType() == ReqType.NEW_SERVER)
             newServer((NewServerRequest) requested);
         else if(requested.getType() == ReqType.SERVER_LIST)
-            serverList(requested);
+            serverList();
         else if(requested.getType() == ReqType.SERVER_CHANELS)
             serverChanels((GetChanelsRequest) requested);
         else if(requested.getType() == ReqType.IS_TYPING)
@@ -124,7 +142,7 @@ public class ClientHandler implements Runnable{
     }
     private void changePassword(ChangePasswordRequest requested) {
          if(match(requested.getNewPassword(), passwordRegex)) {
-             users.put(servingUser, requested.getNewPassword());
+             userData.get(servingUser).changePassword(requested.getNewPassword());
              try {
                  response.writeObject(new ChangePasswordResponse(true));
              } catch (IOException e) {
@@ -139,8 +157,26 @@ public class ClientHandler implements Runnable{
                 }
     }
     private void isTyping(IsTypingRequest requested) {
-      for(ClientHandler ch  : onlineUsers.get(searchUser(requested.getUsername())))
-          ch.sendNotification(servingUser.getUsername() + " is typing...");
+        String[] placeholder = requested.getPlaceholder();
+      if(placeholder.length == 1)
+          for(ClientHandler ch : onlineUsers.get(placeholder[0]))
+              ch.sendNotification(servingUser.getUsername() + "is typing...");
+      else {
+          SocialServer notifyingServer = servers.get(searchServerByID(Integer.parseInt(placeholder[0])));
+          Chanel textChanel = notifyingServer.getTextChanel(placeholder[1]);
+          if(textChanel.getIsLimited()) {
+              HashSet<String> accessUsers = textChanel.getAccessList();
+              accessUsers.addAll(notifyingServer.getRoles(Roles.LIMIT_MEMBERS));
+              for(String user : accessUsers)
+                  for(ClientHandler ch : onlineUsers.get(user))
+                      ch.sendNotification(servingUser.getUsername() + "is typing...");
+          }
+          else {
+              for(String member : notifyingServer.getMembers())
+                  for(ClientHandler ch : onlineUsers.get(member))
+                      ch.sendNotification(servingUser.getUsername() + "is typing...");
+          }
+      }
     }
     private void serverChanels(GetChanelsRequest requested) {
         int serverID = requested.getServerID();
@@ -153,7 +189,7 @@ public class ClientHandler implements Runnable{
             System.err.println("Can not send response to client!");
         }
     }
-    private void serverList(Request requested) {
+    private void serverList() {
         HashMap<Integer, String> serverList = new HashMap<>();
         synchronized (servers) {
             for(Integer server : userData.get(servingUser).getServers())
@@ -248,8 +284,8 @@ public class ClientHandler implements Runnable{
             status = AddFriendResponseStatus.FRIEND_REQUEST_SENT;
             userData.get(requesting).addOutgoingFriendRequest(requestedFriend.getUsername());
             userData.get(requestedFriend).addIncomingFriendRequest(requesting.getUsername());
-            if(onlineUsers.get(requestedFriend) != null)
-                for(ClientHandler ch : onlineUsers.get(requestedFriend))
+            if(onlineUsers.get(requestedFriend.getUsername()) != null)
+                for(ClientHandler ch : onlineUsers.get(requestedFriend.getUsername()))
                  ch.sendNotification("Friend request from " + requesting.getUsername());
         }
         try {
@@ -269,8 +305,8 @@ public class ClientHandler implements Runnable{
             userData.get(requestedUser).addFriend(requestingUser.getUsername());
             userData.get(requestingUser).addFriend(requestedUser.getUsername());
         }
-        if(onlineUsers.get(requestedUser) != null)
-            for(ClientHandler ch : onlineUsers.get(requestedUser))
+        if(onlineUsers.get(requestedUser.getUsername()) != null)
+            for(ClientHandler ch : onlineUsers.get(requestedUser.getUsername()))
                 ch.sendNotification(notificationForRequestedUser);
     }
     private void getFriendRequests(GetFriendRequestsRequest requested) {
@@ -292,8 +328,8 @@ public class ClientHandler implements Runnable{
             status = NewPrivateChatStatus.CHAT_CREATED;
             userData.get(servingUser).newPrivateChat(wantedUser.getUsername());
             userData.get(wantedUser).newPrivateChat(servingUser.getUsername());
-            if(onlineUsers.get(wantedUser) != null)
-                for(ClientHandler ch : onlineUsers.get(wantedUser))
+            if(onlineUsers.get(wantedUser.getUsername()) != null)
+                for(ClientHandler ch : onlineUsers.get(wantedUser.getUsername()))
                     ch.sendNotification("New private chat with " + servingUser.getUsername() + " just created!");
         }
         try {
@@ -302,7 +338,7 @@ public class ClientHandler implements Runnable{
             throw new RuntimeException(e);
         }
     }
-    private void privateChatList(Request requested) {
+    private void privateChatList() {
         ArrayList<String> chatNames = userData.get(servingUser).getPrivateChatList();
         try {
             response.writeObject(new ChatListResponse(chatNames));
@@ -311,31 +347,30 @@ public class ClientHandler implements Runnable{
         }
     }
     private void chat(ChatRequest request) {
-        Chat privateChat;
-        String direction = request.getUsername();
-        if(request.getUsername().contains("Server")) {
-         int serverID = Integer.parseInt(request.getUsername().substring(direction.lastIndexOf(" ") + 1));
-         String chanelName = direction.substring(direction.indexOf(" ") + 1, direction.lastIndexOf(" "));
-         privateChat = servers.get(servers.indexOf(searchServerByID(serverID))).getTextChanel(chanelName);
-        }
-        else
-            privateChat = userData.get(servingUser).getPrivateChat(request.getUsername());
+        Chat chat = getChat(request.getPlaceholder());
         try {
-            reset();
-            response.writeObject(new ChatResponse(privateChat.getMessages(), request.getUsername()));
+            response.writeObject(new ChatResponse(chat.getMessages(), chat.getPinnedMessages(), request.getPlaceholder()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    private SocialServer searchServerByID(int id) {
-        synchronized (servers) {
-            for (SocialServer server : servers)
-                if (server.getServerID() == id)
-                    return server;
-        }
-        return null;
+    public Chat getChat(String[] placeholder) {
+        Chat chat;
+        if(placeholder.length == 1)
+            chat = userData.get(servingUser).getPrivateChat(placeholder[0]);
+        else
+            chat = servers.get(searchServerByID(Integer.parseInt(placeholder[0]))).getTextChanel(placeholder[1]).getChat();
+        return chat;
     }
-    private void reset() {
+    private int  searchServerByID(int id) {
+        synchronized (servers) {
+            for(int i = 0; i < servers.size(); i++)
+                if(servers.get(i).getServerID() == id)
+                    return i;
+        }
+        return -1;
+    }
+    private void reset() { //TODO : USE IT IF Problem occurred
         synchronized (response) {
             try {
                 response.reset();
@@ -370,7 +405,7 @@ public class ClientHandler implements Runnable{
         username = info.getUsername();
         password = info.getPassword();
         User loginClient = searchUser(username);
-        if(loginClient == null || !users.get(loginClient).equals(password)) {
+        if(loginClient == null || !userData.get(loginClient).getPassword().equals(password)) {
             try {
                 response.writeObject(new LoginResponse(LoginStatus.FAILURE, null));
             } catch (IOException e) {
@@ -382,12 +417,12 @@ public class ClientHandler implements Runnable{
             try {
                 response.writeObject(new LoginResponse(LoginStatus.SUCCESS, loginClient));
                 servingUser = loginClient;
-                if(onlineUsers.keySet().contains(loginClient))
-                    onlineUsers.get(loginClient).add(this);
+                if(onlineUsers.containsKey(username))
+                    onlineUsers.get(username).add(this);
                 else {
                     Vector<ClientHandler> clients = new Vector<>();
                     clients.add(this);
-                    onlineUsers.put(loginClient, clients);
+                    onlineUsers.put(username, clients);
                 }
             } catch (IOException e) {
                 System.out.println("Damn!(login)");
@@ -405,15 +440,14 @@ public class ClientHandler implements Runnable{
             User newUser = null;
             if(status == SignUpStatus.VALID) {
                 newUser = new User(username, mail, phoneNumber);
-                users.put(newUser, password);
-                userData.put(newUser, new UserData());
+                userData.put(newUser, new UserData(password));
                 servingUser = newUser;
-                if(onlineUsers.containsKey(newUser))
-                    onlineUsers.get(newUser).add(this);
+                if(onlineUsers.containsKey(username))
+                    onlineUsers.get(username).add(this);
                 else {
                     Vector<ClientHandler> clients = new Vector<>();
                     clients.add(this);
-                    onlineUsers.put(newUser, clients);
+                    onlineUsers.put(username, clients);
                 }
             }
                 response.writeObject(new SignUpResponse(status, newUser ));
@@ -437,7 +471,7 @@ public class ClientHandler implements Runnable{
         return matcher.matches();
     } //Done
     private static User searchUser(String username) {
-        for(User user : users.keySet())
+        for(User user : userData.keySet())
             if(user.getUsername().equals(username))
                 return user;
         return null;
@@ -451,7 +485,7 @@ public class ClientHandler implements Runnable{
             }
         }
     } //Done
-    private void close() { //TODO: close connection
+    private void close() {
         try {
             if (request != null)
                 response.close();

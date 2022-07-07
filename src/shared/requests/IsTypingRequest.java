@@ -1,14 +1,14 @@
 package shared.requests;
 
 public class IsTypingRequest extends Request {
-    private final String username;
+    private final String[] placeholder;
     //constructor
-    public IsTypingRequest(String username) {
+    public IsTypingRequest(String... placeholder) {
         super(ReqType.IS_TYPING);
-        this.username = username;
+        this.placeholder = placeholder;
     }
     //getters
-    public String getUsername() {
-        return username;
+    public String[] getPlaceholder() {
+        return placeholder;
     }
 }

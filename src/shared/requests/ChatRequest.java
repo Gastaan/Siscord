@@ -1,15 +1,14 @@
 package shared.requests;
 
-public class ChatRequest extends Request{
-    private final String username;
+public class ChatRequest extends Request {
+    private final String[] placeholder;
 
-    public ChatRequest(String username) {
+    public ChatRequest(String... placeholder) {
         super(ReqType.CHAT_REQUEST);
-        this.username = username;
+        this.placeholder = placeholder;
     }
 
-
-public String getUsername() {
-        return username;
+    public String[] getPlaceholder() {
+        return placeholder;
     }
 }

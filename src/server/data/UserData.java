@@ -12,14 +12,16 @@ public class UserData implements Serializable {
     private final HashSet<String> outgoingFriendRequests;
     private final HashSet<Integer>   servers;
     private final HashSet<String> friends;
+    private String password;
     //constructor
-    public UserData() {
+    public UserData(String password) {
         privateChats = new ConcurrentHashMap<>();
         blockedUsers = new HashSet<>();
         incomingFriendRequests = new HashSet<>();
         outgoingFriendRequests = new HashSet<>();
         servers = new HashSet<>();
         friends = new HashSet<>();
+        this.password = password;
     }
     //getters
     public ArrayList<String> getPrivateChatList() {
@@ -116,5 +118,11 @@ public class UserData implements Serializable {
         synchronized (servers) {
             return new ArrayList<>(servers);
         }
+    }
+    public void changePassword(String password) {
+        this.password = password;
+    }
+    public String getPassword() {
+            return password;
     }
 }
