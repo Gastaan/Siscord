@@ -6,6 +6,7 @@ import server.data.UserData;
 import server.data.socialserver.Roles;
 import server.data.socialserver.SocialServer;
 import server.data.socialserver.chanel.Chanel;
+import server.data.socialserver.chanel.TextChanel;
 import shared.requests.*;
 import shared.responses.*;
 import shared.responses.addfriend.AddFriendResponse;
@@ -18,6 +19,8 @@ import shared.responses.newprivatechat.NewPrivateChatStatus;
 import shared.responses.signup.SignUpResponse;
 import shared.responses.signup.SignUpStatus;
 import shared.user.User;
+import shared.user.data.message.Message;
+import shared.user.data.message.TextMessage;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -55,7 +58,6 @@ public class ClientHandler implements Runnable{
      * @param socket the socket of the client.
      */
     public ClientHandler(Socket socket) {
-        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
         this.socket = socket;
         if(userData == null)
             userData = new ConcurrentHashMap<>();
@@ -79,6 +81,7 @@ public class ClientHandler implements Runnable{
      */
     @Override
     public void run() {
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
         Request requested;
         try {
             while (socket.isConnected()) {
@@ -96,7 +99,7 @@ public class ClientHandler implements Runnable{
      * This method gives the response to the client.
      * @param requested the request from the client.
      */
-    private void giveResponse(Request requested) {
+    private void giveResponse(Request requested) throws IOException {
         if(requested.getType() == ReqType.LOGIN)
             login((LoginRequest) requested);
         else if(requested.getType() == ReqType.SIGN_UP)
@@ -109,8 +112,8 @@ public class ClientHandler implements Runnable{
             react((ReactRequest) requested);
         else if(requested.getType() == ReqType.NEW_PRIVATE_CHAT)
             newPrivateChat((NewPrivateChatRequest) requested);
-        else if(requested.getType() == ReqType.NEW_PRIVATE_CHAT_MESSAGE)
-            sendMessage((NewPrivateChatMessageRequest) requested);
+        else if(requested.getType() == ReqType.NEW_MESSAGE)
+            sendMessage((NewMessageRequest) requested);
         else if(requested.getType() == ReqType.GET_FRIEND_REQUESTS)
             getFriendRequests((GetFriendRequestsRequest) requested);
         else if(requested.getType() == ReqType.FRIEND_REQUEST_ANSWER)
@@ -156,26 +159,29 @@ public class ClientHandler implements Runnable{
                     throw new RuntimeException(e);
                 }
     }
+    private void sendNotification(String notification, String username) {
+        if(!username.equals(servingUser))
+            for(ClientHandler ch : onlineUsers.get(username))
+                ch.getNotification(notification);
+    }
+    private HashSet<String> qualifyServerMembersToGetNotification(SocialServer notifyingServer, Chanel textChanel) {
+        if(textChanel.getIsLimited()) {
+            HashSet<String> accessUsers = textChanel.getAccessList();
+            accessUsers.addAll(notifyingServer.getRoles(Roles.LIMIT_MEMBERS));
+            return accessUsers;
+        }
+        else
+            return notifyingServer.getMembers();
+    }
     private void isTyping(IsTypingRequest requested) {
         String[] placeholder = requested.getPlaceholder();
       if(placeholder.length == 1)
-          for(ClientHandler ch : onlineUsers.get(placeholder[0]))
-              ch.sendNotification(servingUser.getUsername() + "is typing...");
+              sendNotification(servingUser.getUsername() + "is typing...", placeholder[0]);
       else {
           SocialServer notifyingServer = servers.get(searchServerByID(Integer.parseInt(placeholder[0])));
           Chanel textChanel = notifyingServer.getTextChanel(placeholder[1]);
-          if(textChanel.getIsLimited()) {
-              HashSet<String> accessUsers = textChanel.getAccessList();
-              accessUsers.addAll(notifyingServer.getRoles(Roles.LIMIT_MEMBERS));
-              for(String user : accessUsers)
-                  for(ClientHandler ch : onlineUsers.get(user))
-                      ch.sendNotification(servingUser.getUsername() + "is typing...");
-          }
-          else {
-              for(String member : notifyingServer.getMembers())
-                  for(ClientHandler ch : onlineUsers.get(member))
-                      ch.sendNotification(servingUser.getUsername() + "is typing...");
-          }
+          for(String username : qualifyServerMembersToGetNotification(notifyingServer, textChanel))
+              sendNotification(servingUser.getUsername() + "is typing...", username);
       }
     }
     private void serverChanels(GetChanelsRequest requested) {
@@ -286,7 +292,7 @@ public class ClientHandler implements Runnable{
             userData.get(requestedFriend).addIncomingFriendRequest(requesting.getUsername());
             if(onlineUsers.get(requestedFriend.getUsername()) != null)
                 for(ClientHandler ch : onlineUsers.get(requestedFriend.getUsername()))
-                 ch.sendNotification("Friend request from " + requesting.getUsername());
+                 ch.getNotification("Friend request from " + requesting.getUsername());
         }
         try {
             response.writeObject(new AddFriendResponse(status, requesting.getUsername()));
@@ -307,7 +313,7 @@ public class ClientHandler implements Runnable{
         }
         if(onlineUsers.get(requestedUser.getUsername()) != null)
             for(ClientHandler ch : onlineUsers.get(requestedUser.getUsername()))
-                ch.sendNotification(notificationForRequestedUser);
+                ch.getNotification(notificationForRequestedUser);
     }
     private void getFriendRequests(GetFriendRequestsRequest requested) {
         User requestedUser = searchUser(requested.getRequestedUser());
@@ -330,7 +336,7 @@ public class ClientHandler implements Runnable{
             userData.get(wantedUser).newPrivateChat(servingUser.getUsername());
             if(onlineUsers.get(wantedUser.getUsername()) != null)
                 for(ClientHandler ch : onlineUsers.get(wantedUser.getUsername()))
-                    ch.sendNotification("New private chat with " + servingUser.getUsername() + " just created!");
+                    ch.getNotification("New private chat with " + servingUser.getUsername() + " just created!");
         }
         try {
             response.writeObject(new NewPrivateChatResponse(status));
@@ -379,15 +385,28 @@ public class ClientHandler implements Runnable{
             }
         }
     }
-    private void sendMessage(NewPrivateChatMessageRequest request) {
-        User receiver = searchUser(request.getReceiver());
-        userData.get(servingUser).getPrivateChat(receiver.getUsername()).addMessage(request.getMessage());
-        userData.get(receiver).getPrivateChat(servingUser.getUsername()).addMessage(request.getMessage());
-        try {
-            response.writeObject(new NewMessageResponse(true));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    private void sendMessage(NewMessageRequest request) throws IOException {
+        Message newMessage = request.getMessage();
+        if(request.getPlaceholder().length == 1) {
+            User receiver = searchUser(request.getPlaceholder()[0]);
+            userData.get(servingUser).getPrivateChat(receiver.getUsername()).addMessage(newMessage);
+            userData.get(receiver).getPrivateChat(servingUser.getUsername()).addMessage(newMessage);
+            sendNotification(receiver.getUsername(), "New message from " + servingUser.getUsername());
         }
+        else {
+            int serverID = Integer.parseInt(request.getPlaceholder()[0]);
+            SocialServer socialServer = servers.get(searchServerByID(serverID));
+            TextChanel chanel = socialServer.getTextChanel(request.getPlaceholder()[1]);
+            chanel.getChat().addMessage(newMessage);
+            if(newMessage instanceof TextMessage) {
+                String[] mentionedUsers = ((TextMessage) newMessage).getMentionedUsers();
+                HashSet<String> qualifiedUsers = qualifyServerMembersToGetNotification(socialServer, chanel);
+                for(String user : mentionedUsers)
+                    if(qualifiedUsers.contains(user))
+                        sendNotification(servingUser.getUsername() + "mentioned you : " + socialServer.getServerName(), user);
+            }
+        }
+        response.writeObject(new NewMessageResponse(true));
     }
     private void react(ReactRequest request) {
         User user = searchUser(request.getChatName());
@@ -476,7 +495,7 @@ public class ClientHandler implements Runnable{
                 return user;
         return null;
     } //Done
-    private  void sendNotification(String notification) {
+    private  void getNotification(String notification) {
         synchronized (response) {
             try {
                 response.writeObject(new Notification(notification));

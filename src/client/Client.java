@@ -473,7 +473,7 @@ public class Client {
             do {
                 request.writeObject(new ChatRequest(chatList.getChatNames().get(chatIndex - 1)));
                 wait();
-                System.out.println(ANSI_YELLOW + "1-sendMessage\n2-React\n3-voice call\n4-back to home page"+ ANSI_RESET);
+                System.out.println(ANSI_YELLOW + "1-sendMessage\n2-React\n3-pin\n4-voice call\n5-pinned messages\n6-back to home page"+ ANSI_RESET);
                 try {
                     choice = scanner.nextInt();
                 }
@@ -484,11 +484,19 @@ public class Client {
                 switch (choice) {
                     case 1 -> sendMessage();
                     case 2 -> react();
-                    case 3 -> voiceCall();
-                    case 4 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                    case 3 -> pin();
+                    case 5 -> pinnedMessages();
+                    case 4 -> voiceCall();
+                    case 6 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
             } while (choice != 4);
+        }
+        private void pin() {
+                //TODO : pin message
+        }
+        private void pinnedMessages() {
+                //TODO : pinned messages
         }
     private void textChanelPage(int chatIndex) {
         int choice;
@@ -510,7 +518,13 @@ public class Client {
             throw new RuntimeException(e);
         }
     }
-    private synchronized void sendMessage() throws IOException {
+
+    /**
+     * Send message to a user.
+     * @throws IOException If an I/O error occurs while sending the message.
+     * @throws InterruptedException If interrupted while waiting for the server response.
+     */
+    private synchronized void sendMessage() throws IOException, InterruptedException {
         int choice;
         do {
             System.out.println(ANSI_WHITE + "1-text\n2-file\n3-back" + ANSI_RESET);
@@ -525,16 +539,12 @@ public class Client {
                 case 1 -> {
                     request.writeObject(new IsTypingRequest(chat.getPlaceholder()));
 
-                    System.out.println("Enter your message: ");
+                    System.out.println(ANSI_WHITE + "Enter your message: " + ANSI_RESET);
                     scanner.nextLine();
                     String message = scanner.nextLine();
                     Message newMessage = new TextMessage(message, user.getUsername());
-                    try {
-                        request.writeObject(new NewPrivateChatMessageRequest(newMessage, chat.getUsername()));
-                        wait();
-                    } catch (IOException | InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+                    request.writeObject(new NewMessageRequest(newMessage, chat.getPlaceholder()));
+                    wait();
                 }
                 case 2 -> sendFileMessages();
             }
@@ -547,7 +557,7 @@ public class Client {
                 try {
                     FileMessage newMessage = new FileMessage(user.getUsername(), Files.readAllBytes(Paths.get(finalFilePath)), finalFilePath);
                     synchronized (request) {
-                        request.writeObject(new NewPrivateChatMessageRequest(newMessage, chat.getUsername()));
+                        request.writeObject(new NewMessageRequest(newMessage, chat.getPlaceholder()));
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -558,10 +568,10 @@ public class Client {
     private void sendFileMessages() {
         String filePath;
         do {
-            System.out.println("Enter file path: ");
+            System.out.println(ANSI_WHITE + "Enter file path: " + ANSI_RESET);
             filePath = scanner.next();
             if(!Files.exists(Paths.get(filePath)))
-                System.out.println("File not found!");
+                System.out.println(ANSI_RED + "File not found!" + ANSI_RESET);
         } while (!Files.exists(Paths.get(filePath)));
         uploadFileMessage(filePath);
     }
@@ -580,45 +590,51 @@ public class Client {
     private void voiceCall() {
 
     } //TODO : VOICE_CALL
-    private void react() {
+
+    /**
+     * React to a message.
+     * @throws IOException If an I/O error occurs while sending the message.
+     * @throws InterruptedException If interrupted while waiting for the server response.
+     */
+    private void react() throws InterruptedException, IOException {
         int choice, reactChoice;
         do {
-                System.out.println("1-select message\n2-back");
-                choice = scanner.nextInt();
+                System.out.println(ANSI_PURPLE + "1-select message\n2-back" + ANSI_RESET);
+                try {
+                    choice = scanner.nextInt();
+                } catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
+                }
                 switch (choice) {
                     case 1 ->  {
-                        int messageID;
-                        do {
-                            System.out.println("Enter message id: ");
-                            messageID = scanner.nextInt();
-                        }
-                        while (messageID > chat.getMessages().size() || messageID < 1);
-                        Message message = chat.getMessages().get(messageID - 1);
+                        int messageIndex = select();
+                        Message message = chat.getMessages().get(messageIndex - 1);
                         Reacts reaction = null;
                         do {
-                            System.out.println("Enter your reaction: \n1-like\n2-dislike\n3-lol");
-                            reactChoice = scanner.nextInt();
+                            System.out.println(ANSI_WHITE + "Enter your reaction: \n1-like\n2-dislike\n3-lol" + ANSI_RESET);
+                            try {
+                                reactChoice = scanner.nextInt();
+                            } catch (InputMismatchException e) {
+                                scanner.nextLine();
+                                reactChoice = -1;
+                            }
                             switch (reactChoice) {
                                 case 1 -> reaction = Reacts.LIKE;
                                 case 2 -> reaction = Reacts.DISLIKE;
                                 case 3 -> reaction = Reacts.LOL;
-                                default -> System.out.println("Invalid Choice!");
+                                default -> System.out.println(ANSI_RED + "Invalid !" + ANSI_RESET);
                             }
                         }
                         while (reactChoice > 3 || reactChoice < 1);
-                            try {
-                                request.writeObject(new ReactRequest(chat.getUsername(), message.getTime(), reaction));
-                                wait();
-                            } catch (IOException | InterruptedException e) {
-                                throw new RuntimeException(e);
-                            }
+                        request.writeObject(new ReactRequest(message.getTime(), reaction, chat.getPlaceholder()));
+                        wait();
                     }
-                    case 2 -> System.out.println("OK!");
-                    default -> System.out.println("Invalid Choice!");
+                    case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                    default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
         } while(choice != 2);
     }
-
     /**
      * Private chats page
      * @throws IOException if an I/O error occurs while sending a request to the server

@@ -3,19 +3,19 @@ package shared.requests;
 import shared.user.data.message.Reacts;
 
 public class ReactRequest extends Request{
-    private final String chatName;
+    private final String[] placeholder;
     private final String time;
     private final Reacts react;
     //constructor
-    public ReactRequest(String chatName, String time, Reacts react) {
+    public ReactRequest(String time, Reacts react, String... placeholder) {
         super(ReqType.PRIVATE_CHAT_REACT);
-        this.chatName = chatName;
+        this.placeholder = placeholder;
         this.time = time;
         this.react = react;
     }
     //getters
-    public String getChatName() {
-        return chatName;
+    public String[] getPlaceholder() {
+        return placeholder;
     }
     public String getTime() {
         return time;
