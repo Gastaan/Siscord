@@ -285,8 +285,14 @@ public class ClientHandler implements Runnable{
             friends.add(searchUser(friend).userStatus());
         response.writeObject(new ListResponse(friends));
     }
-    private void addFriend(AddFriendRequest requested) {
-        User requesting = searchUser(requested.getRequestingUser());
+
+    /**
+     * This method gives response for add friend request.
+     * @param requested the add friend request from the client.
+     * @throws IOException if the response can not be sent to the client.
+     */
+    private void addFriend(AddFriendRequest requested) throws IOException {
+        User requesting = servingUser;
         User requestedFriend = searchUser(requested.getRequestedUser());
         AddFriendResponseStatus  status;
         if(requestedFriend == null || requesting == requestedFriend)
@@ -297,18 +303,14 @@ public class ClientHandler implements Runnable{
             status = AddFriendResponseStatus.FRIEND_REQUEST_SENT;
             userData.get(requesting).addOutgoingFriendRequest(requestedFriend.getUsername());
             userData.get(requestedFriend).addIncomingFriendRequest(requesting.getUsername());
-            if(onlineUsers.get(requestedFriend.getUsername()) != null)
+            if(onlineUsers.keySet().contains(requestedFriend.getUsername()))
                 for(ClientHandler ch : onlineUsers.get(requestedFriend.getUsername()))
-                 ch.getNotification("Friend request from " + requesting.getUsername());
+                    ch.getNotification("Friend request from " + requesting.getUsername());
         }
-        try {
-            response.writeObject(new AddFriendResponse(status, requesting.getUsername()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        response.writeObject(new AddFriendResponse(status, requesting.getUsername()));
     }
     private void  friendRequestAnswer(FriendRequestAnswerRequest requested) {
-        User requestingUser = searchUser(requested.getRequestingUser());
+        User requestingUser = servingUser;
         User requestedUser = searchUser(requested.getRequestedUser());
         userData.get(servingUser).deleteIncomingFriendRequest(requestedUser.getUsername());
         userData.get(requestedUser).deleteOutgoingFriendRequest(servingUser.getUsername());
@@ -318,7 +320,7 @@ public class ClientHandler implements Runnable{
             userData.get(requestedUser).addFriend(requestingUser.getUsername());
             userData.get(requestingUser).addFriend(requestedUser.getUsername());
         }
-        if(onlineUsers.get(requestedUser.getUsername()) != null)
+        if(onlineUsers.keySet().contains(requestedUser.getUsername()))
             for(ClientHandler ch : onlineUsers.get(requestedUser.getUsername()))
                 ch.getNotification(notificationForRequestedUser);
     }
