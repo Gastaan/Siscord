@@ -50,4 +50,23 @@ public class ChatResponse extends Response{
     public String[] getPlaceholder() {
         return placeholder;
     }
+
+    /**
+     * This method prints all the messages in the chat.
+     */
+    public void printAllMessages() {
+        System.out.println("messages: ");
+        for (Message message : messages) {
+            System.out.println(message);
+        }
+    }
+    /**
+     * This method prints all pinned messages in the chat.
+     */
+    public void printPinnedMessages() {
+        System.out.println("Pinned messages:");
+        for (Message message : pinnedMessages) {
+            System.out.println(message);
+        }
+    }
 }

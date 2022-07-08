@@ -413,7 +413,7 @@ public class ClientHandler implements Runnable{
             User receiver = searchUser(request.getPlaceholder()[0]);
             userData.get(servingUser).getPrivateChat(receiver.getUsername()).addMessage(newMessage);
             userData.get(receiver).getPrivateChat(servingUser.getUsername()).addMessage(newMessage);
-            sendNotification(receiver.getUsername(), "New message from " + servingUser.getUsername());
+            sendNotification("New message from " + servingUser.getUsername(), receiver.getUsername());
         }
         else {
             int serverID = Integer.parseInt(request.getPlaceholder()[0]);

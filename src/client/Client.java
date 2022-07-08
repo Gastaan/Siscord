@@ -495,9 +495,15 @@ public class Client {
                     case 6 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
-            } while (choice != 4);
+            } while (choice != 6);
         }
-        private void pin() throws InterruptedException, IOException {
+
+    /**
+     * Pins a message.
+     * @throws InterruptedException If interrupted while waiting for a response.
+     * @throws IOException If an I/O error occurs while sending a request.
+     */
+    private void pin() throws InterruptedException, IOException {
             int choice;
                 do {
                     System.out.println(ANSI_PURPLE + "1-pin\n2-back" + ANSI_RESET);
@@ -513,9 +519,9 @@ public class Client {
                             int messageIndex;
                             do {
                                 messageIndex = selectMessage();
-                                if(!chat.getMessages().get(messageIndex - 1).isPinned())
+                                if(chat.getMessages().get(messageIndex - 1).isPinned())
                                     System.out.println(ANSI_RED + "Message is already pinned" + ANSI_RESET);
-                            } while(!chat.getMessages().get(messageIndex - 1).isPinned());
+                            } while(chat.getMessages().get(messageIndex - 1).isPinned());
                             request.writeObject(new PinRequest(chat.getMessages().get(messageIndex - 1).getTime(), chat.getPlaceholder()));
                             wait();
                         }
@@ -524,8 +530,12 @@ public class Client {
                     }
                 } while (choice != 2);
         }
-        private void showPinnedMessages() {
-            
+
+    /**
+     * prints the pinned messages.
+     */
+    private void showPinnedMessages() {
+            chat.printPinnedMessages();
         }
     private void textChanelPage(int chatIndex) {
         int choice;
@@ -579,6 +589,11 @@ public class Client {
             }
         } while (choice < 1 || choice > 3);
     }
+
+    /**
+     * Send file message.
+     * @param finalFilePath The path of the file.
+     */
     private void uploadFileMessage(String finalFilePath) {
         new Thread(new Runnable() {
             @Override
@@ -594,6 +609,10 @@ public class Client {
             }
         }).start();
     }
+
+    /**
+     * Send file message.
+     */
     private void sendFileMessages() {
         String filePath;
         do {
@@ -604,6 +623,10 @@ public class Client {
         } while (!Files.exists(Paths.get(filePath)));
         uploadFileMessage(filePath);
     }
+
+    /**
+     * Download file messages.
+     */
     private void downLoadFileMessages() {
         new Thread(new Runnable() {
             @Override
@@ -616,10 +639,7 @@ public class Client {
             }
         }).start();
     }
-    private void voiceCall() {
-
-    } //TODO : VOICE_CALL
-
+    private void voiceCall() { } //TODO : voice call
     /**
      * React to a message.
      * @throws IOException If an I/O error occurs while sending the message.
@@ -666,6 +686,7 @@ public class Client {
     }
     private int selectMessage() {
     int messageIndex;
+    chat.printAllMessages();
         do {
             System.out.println(ANSI_WHITE + "Enter message index: " + ANSI_RESET);
             try {
