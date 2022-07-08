@@ -29,4 +29,6 @@ public enum ReqType implements Serializable {
     CHANGE_PASSWORD,
     PIN_MESSAGE,
     CANCEL_FRIEND_REQUEST,
+    CHANGE_EMAIL,
+    CHANGE_PHONE_NUMBER
 }

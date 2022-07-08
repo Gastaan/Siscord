@@ -3,18 +3,12 @@ package shared.user;
 import java.io.File;
 import java.io.Serializable;
 
-enum UserStatus{
-    ONLINE,
-    IDLE,
-    DO_NOT_DISTURB,
-    INVISIBLE
-}
 public class User implements Serializable {
     private final String username;
     private  String email;
     private String phoneNumber;
     private File profilePhoto;
-    private UserStatus status;
+    transient private UserStatus status = UserStatus.OFFLINE;
 
     public String getUsername() {
         return username;
@@ -27,5 +21,8 @@ public class User implements Serializable {
     }
     public String userStatus() {
         return username + " : " + status;
+    }
+    public void setStatus(UserStatus status) {
+        this.status = status;
     }
 }

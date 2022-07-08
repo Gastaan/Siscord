@@ -276,7 +276,7 @@ public class Client {
     private void homePage() throws IOException, InterruptedException {
         int choice;
         do {
-            System.out.println(ANSI_YELLOW + "1- private chats\n2- servers\n3- friends\n4- add friend\n5-incoming friend requests\n6-pending requests\n7-blocked users\n8- setting\n9- logout" + ANSI_RESET);
+            System.out.println(ANSI_YELLOW + "1- private chats\n2- servers\n3- friends\n4- add friend\n5-incoming friend requests\n6-pending requests\n7-blocked users\n8-change status\n9- setting\n10- logout" + ANSI_RESET);
             try {
                 choice = scanner.nextInt();
             } catch (InputMismatchException e) {
@@ -291,8 +291,9 @@ public class Client {
                 case 5 -> incomingFriendRequests();
                 case 6 -> outGoingFriendRequests();
                 case 7 -> blockedUsers();
-                case 8 -> setting();
-                case 9 -> System.out.println(ANSI_BLUE + "Bye Bye!" + ANSI_RESET);
+                case 8 -> changeStatus();
+                case 9 -> setting();
+                case 10 -> System.out.println(ANSI_BLUE + "Bye Bye!" + ANSI_RESET);
                 default -> System.out.println(ANSI_RED + "Invalid Choice!" + ANSI_RESET);
             }
         } while (choice != 9);
@@ -346,24 +347,31 @@ public class Client {
                 }
             } while(choice < 1 || choice > 2);
         }
-    private synchronized void blockedUsers() {
+
+    /**
+     * This method is used to block or unblock a user.
+     * @throws InterruptedException If interrupted while waiting for the response.
+     * @throws IOException If an I/O error occurs while sending the request.
+     */
+    private synchronized void blockedUsers() throws InterruptedException, IOException {
         int choice;
-        try {
             do {
                 request.writeObject(new Request(ReqType.GET_BLOCKED_USERS));
                 wait();
-                System.out.println("1-select\n2-block a user\n3-back");
-                choice = scanner.nextInt();
+                System.out.println(ANSI_PURPLE + "1-select\n2-block a user\n3-back" + ANSI_RESET);
+                try {
+                    choice = scanner.nextInt();
+                } catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
+                }
                 switch (choice) {
                     case 1 -> selectBlockedUser();
                     case 2 -> blockUser();
-                    case 3 -> System.out.println("Ok!");
-                    default -> System.out.println("Invalid Choice!");
+                    case 3 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                    default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
             } while (choice != 3);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**
@@ -393,7 +401,13 @@ public class Client {
             }
         } while (choice > 2 || choice < 1);
     }
-    private void blockUser() {
+
+    /**
+     * This method is used to block a user.
+     * @throws IOException If an I/O error occurs while sending the request.
+     * @throws InterruptedException If interrupted while waiting for the response.
+     */
+    private void blockUser() throws IOException, InterruptedException {
         int choice;
         do {
             System.out.println(ANSI_PURPLE + "1-enter username\n2-back" + ANSI_RESET);
@@ -407,17 +421,13 @@ public class Client {
                 case 1 -> {
                     System.out.println(ANSI_WHITE +"Enter username: " + ANSI_RESET);
                     String username = scanner.next();
-                    try {
-                        request.writeObject(new StringRequest(username, ReqType.BLOCK_USER));
-                        wait();
-                    } catch (IOException | InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+                    request.writeObject(new StringRequest(username, ReqType.BLOCK_USER));
+                    wait();
                 }
-                case 2 -> System.out.println("Ok!");
-                default -> System.out.println("Invalid Choice!");
+                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
             }
-        } while (choice > 2 || choice < 1);
+        } while (choice != 2);
     }
 
     /**
@@ -959,47 +969,70 @@ public class Client {
             }
         } while (choice > 2 || choice < 1);
     }
-    private void setting() {
+
+    /**
+     * Settings page.
+     */
+    private void setting() throws IOException, InterruptedException {
         int choice;
         do {
-            System.out.println("1-change password\n2-change email\n3-change status\n4-log out\n5-back");
-            choice = scanner.nextInt();
+            System.out.println(ANSI_WHITE + "1-change password\n2-change mail\n3-back" + ANSI_RESET);
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                choice = -1;
+                scanner.nextLine();
+            }
             switch (choice) {
                 case 1 -> changePassword();
                 case 2 -> changeEmail();
-                case 3 -> changeStatus();
-                case 4 -> logOut();
-                case 5 -> System.out.println("Ok!");
-                default -> System.out.println("Invalid Choice!");
+                case 5 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
             }
-        } while(choice != 5);
+        } while(choice != 3);
     }
     private void changeStatus() {
 
     }
-    private void changePassword() {
+
+    /**
+     * This method is used to change the password.
+     * @throws InterruptedException if the current thread is interrupted while waiting.
+     * @throws IOException if an I/O error occurs while sending the request.
+     */
+    private void changePassword() throws InterruptedException, IOException {
         String password;
-        do {
-            System.out.println("Enter new password: ");
-            password = scanner.next();
-        } while (password.isEmpty());
-        try {
-            request.writeObject(new StringRequest(password, ReqType.CHANGE_PASSWORD));
-            wait();
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    private void changeEmail() {
-
+        System.out.println("Enter new password: ");
+        password = scanner.next();
+        request.writeObject(new StringRequest(password, ReqType.CHANGE_PASSWORD));
+        wait();
     }
 
-    public  static void clearConsole()
-    {
-        for (int i = 0; i < 50; ++i) System.out.println();
-
+    /**
+     * This method is used to change the email.
+     * @throws InterruptedException if the current thread is interrupted while waiting.
+     * @throws IOException if an I/O error occurs while sending the request.
+     */
+    private void changeEmail() throws InterruptedException, IOException {
+        String password;
+        System.out.println("Enter new email: ");
+        password = scanner.next();
+        request.writeObject(new StringRequest(password, ReqType.CHANGE_EMAIL));
+        wait();
     }
 
+    /**
+     * This method is used to select a friend to remove.
+     * @throws InterruptedException if the current thread is interrupted while waiting.
+     * @throws IOException if an I/O error occurs while sending the request.
+     */
+    private void changePhoneNumber() throws InterruptedException, IOException {
+        String password;
+        System.out.println("Enter new phone number: ");
+        password = scanner.next();
+        request.writeObject(new StringRequest(password, ReqType.CHANGE_PHONE_NUMBER));
+        wait();
+    }
     /**
      * closes the connection with the server
      */

@@ -19,6 +19,7 @@ import shared.responses.newprivatechat.NewPrivateChatStatus;
 import shared.responses.signup.SignUpResponse;
 import shared.responses.signup.SignUpStatus;
 import shared.user.User;
+import shared.user.UserStatus;
 import shared.user.data.message.Message;
 import shared.user.data.message.TextMessage;
 
@@ -249,7 +250,7 @@ public class ClientHandler implements Runnable{
             System.err.println("Can not send new server response!");
         }
     }
-    private void blockUser(StringRequest requested) {
+    private void blockUser(StringRequest requested) throws IOException {
         User blockingUser = searchUser(requested.getValue());
         boolean success;
         if (blockingUser == null || blockingUser == servingUser)
@@ -258,11 +259,7 @@ public class ClientHandler implements Runnable{
             userData.get(servingUser).blockUser(blockingUser.getUsername());
             success = true;
         }
-        try {
-            response.writeObject(new BlockResponse(success));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        response.writeObject(new BlockResponse(success));
     }
     private void unblockUser(StringRequest requested) { //TODO : Failed to unblock user
         userData.get(servingUser).unblockUser(requested.getValue());
@@ -441,21 +438,15 @@ public class ClientHandler implements Runnable{
         response.writeObject(new ReactResponse(true));
     }
     private void logOut() {} //TODO : log out
-    private void login(LoginRequest info) {
+    private void login(LoginRequest info) throws IOException {
         String username, password;
         username = info.getUsername();
         password = info.getPassword();
         User loginClient = searchUser(username);
-        if(loginClient == null || !userData.get(loginClient).getPassword().equals(password)) {
-            try {
-                response.writeObject(new LoginResponse(LoginStatus.FAILURE, null));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        if(loginClient == null || !userData.get(loginClient).getPassword().equals(password))
+            response.writeObject(new LoginResponse(LoginStatus.FAILURE, null));
         else {
-            System.out.println("Welcome Back!");
-            try {
+                loginClient.setStatus(UserStatus.ONLINE);
                 response.writeObject(new LoginResponse(LoginStatus.SUCCESS, loginClient));
                 servingUser = loginClient;
                 if(onlineUsers.containsKey(username))
@@ -465,18 +456,14 @@ public class ClientHandler implements Runnable{
                     clients.add(this);
                     onlineUsers.put(username, clients);
                 }
-            } catch (IOException e) {
-                System.out.println("Damn!(login)");
-            }
         }
     } //Done
-    private void signUP(SignUpRequest info) {
+    private void signUP(SignUpRequest info) throws IOException {
         String username , password , mail, phoneNumber;
         username = info.getUsername();
         password = info.getPassword();
         mail = info.getMail();
         phoneNumber = info.getPhoneNumber();
-        try {
             SignUpStatus status = checkRegex(username, password, mail, phoneNumber);
             User newUser = null;
             if(status == SignUpStatus.VALID) {
@@ -490,11 +477,9 @@ public class ClientHandler implements Runnable{
                     clients.add(this);
                     onlineUsers.put(username, clients);
                 }
+                servingUser.setStatus(UserStatus.ONLINE);
             }
-                response.writeObject(new SignUpResponse(status, newUser ));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+            response.writeObject(new SignUpResponse(status, newUser ));
     } //Done
     private SignUpStatus checkRegex(String username, String password, String mail, String phoneNumber) {
         if(searchUser(username) == null) {
