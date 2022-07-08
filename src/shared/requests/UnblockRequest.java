@@ -1,14 +1,14 @@
 package shared.requests;
 
 public class UnblockRequest extends Request{
-    private final String username;
+    private final String value;
     //constructor
-    public UnblockRequest(String username) {
+    public UnblockRequest(String value) {
         super(ReqType.UNBLOCK_USER);
-        this.username = username;
+        this.value = value;
     }
     //getters
-    public String getUsername() {
-        return username;
+    public String getValue() {
+        return value;
     }
 }

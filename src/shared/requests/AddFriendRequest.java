@@ -1,14 +1,14 @@
 package shared.requests;
 
 public class AddFriendRequest extends Request {
-    private final String requestedUser;
+    private final String value;
     //constructor
-    public AddFriendRequest( String requestedUser) {
+    public AddFriendRequest( String value) {
         super(ReqType.ADD_FRIEND);
-        this.requestedUser = requestedUser;
+        this.value = value;
     }
     //getters
-    public String getRequestedUser() {
-        return requestedUser;
+    public String getValue() {
+        return value;
     }
 }

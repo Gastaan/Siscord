@@ -324,8 +324,23 @@ public class Client {
                 }
             } while (choice != 2);
         }
-     //TODO : cancel friend request
-    //Blocked users can not send message or see profile photo
+        private void cancelFriendRequest() throws IOException, InterruptedException {
+        int choice;
+            do {
+                System.out.println("1-cancel\n2-back");
+                try {
+                    choice = scanner.nextInt();
+                } catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
+                }
+                switch (choice) {
+                    case 1 ->  list.getList().get(selectFromList()- 1);
+                    case 2 ->  System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                    default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+                }
+            } while(choice < 1 || choice > 2);
+        }
     private synchronized void blockedUsers() {
         int choice;
         try {
@@ -888,7 +903,7 @@ public class Client {
             }
         } while(choice != 2);
     }
-    private synchronized void friends()  {
+    private synchronized void friends() throws IOException {
         int choice;
         do {
             try {
@@ -902,29 +917,35 @@ public class Client {
             System.out.println("1-select friend\n2-Back to the main page");
             choice = scanner.nextInt();
             switch (choice) {
-                case 1 -> selectFriend();
+                case 1 -> removeFriend();
                 case 2 -> System.out.println("Ok");
                 default -> System.out.println("Invalid Choice!");
             }
         } while (choice != 2);
     }
-    private void selectFriend() {
+
+    /**
+     * This method is used to select a friend to remove.
+     * @throws IOException if an I/O error occurs while sending the request.
+     */
+    private void removeFriend() throws IOException {
         int friendIndex, choice;
-        System.out.println();
         do {
-            System.out.println("1-remove\n2-back");
-            choice = scanner.nextInt();
+            System.out.println(ANSI_WHITE + "1-remove\n2-back" + ANSI_RESET);
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                choice = -1;
+                scanner.nextLine();
+            }
             switch (choice) {
                 case 1 -> {
-                    try {
-                        request.writeObject(new RemoveFriendRequest(user.getUsername(), list.getFriends().get(friendIndex - 1)));
-                        System.out.println("Ok!");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    System.out.println("Enter friend index: ");
+                    friendIndex = selectFromList();
+                    request.writeObject(new RemoveFriendRequest(list.getList().get(friendIndex - 1)));
                 }
-                case 2 -> System.out.println("Bye Bye!");
-                default -> System.out.println("Invalid Choice!");
+                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println( ANSI_RED + "Invalid" + ANSI_RESET);
             }
         } while (choice > 2 || choice < 1);
     }

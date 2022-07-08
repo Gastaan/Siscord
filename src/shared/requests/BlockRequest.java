@@ -1,15 +1,15 @@
 package shared.requests;
 
 public class BlockRequest extends Request {
-    private final String username;
+    private final String value;
     //constructor
-    public BlockRequest(String username) {
+    public BlockRequest(String value) {
         super(ReqType.BLOCK_USER);
-        this.username = username;
+        this.value = value;
     }
     //getters
-    public String getUsername() {
-        return username;
+    public String getValue() {
+        return value;
     }
 }
 

@@ -1,14 +1,14 @@
 package shared.requests;
 
 public class NewServerRequest extends Request{
-    private final String serverName;
+    private final String value;
     //constructor
-    public NewServerRequest(String serverName) {
+    public NewServerRequest(String value) {
         super(ReqType.NEW_SERVER);
-        this.serverName = serverName;
+        this.value = value;
     }
     //getters
-    public String getServerName() {
-        return serverName;
+    public String getValue() {
+        return value;
     }
 }

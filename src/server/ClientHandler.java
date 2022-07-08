@@ -166,8 +166,8 @@ public class ClientHandler implements Runnable{
      * @param requested the change password request from the client.
      */
     private void changePassword(ChangePasswordRequest requested) {
-         if(match(requested.getNewPassword(), passwordRegex)) {
-             userData.get(servingUser).changePassword(requested.getNewPassword());
+         if(match(requested.getValue(), passwordRegex)) {
+             userData.get(servingUser).changePassword(requested.getValue());
              try {
                  response.writeObject(new ChangePasswordResponse(true));
              } catch (IOException e) {
@@ -233,7 +233,7 @@ public class ClientHandler implements Runnable{
         }
     } //Done
     private void newServer(NewServerRequest requested) { //TODO : here
-        SocialServer server = new SocialServer(requested.getServerName(), servingUser.getUsername());
+        SocialServer server = new SocialServer(requested.getValue(), servingUser.getUsername());
         servers.add(server);
         userData.get(servingUser).addServer(server.getServerID());
         try {
@@ -244,7 +244,7 @@ public class ClientHandler implements Runnable{
         }
     }
     private void blockUser(BlockRequest requested) {
-        User blockingUser = searchUser(requested.getUsername());
+        User blockingUser = searchUser(requested.getValue());
         boolean success;
         if (blockingUser == null || blockingUser == servingUser)
             success = false;
@@ -259,7 +259,7 @@ public class ClientHandler implements Runnable{
         }
     }
     private void unblockUser(UnblockRequest requested) { //TODO : Failed to unblock user
-        userData.get(servingUser).unblockUser(requested.getUsername());
+        userData.get(servingUser).unblockUser(requested.getValue());
         try {
             response.writeObject(new UnblockResponse(true));
         }
@@ -270,11 +270,16 @@ public class ClientHandler implements Runnable{
     private void getBlockedUsers() throws IOException {
         response.writeObject(new ListResponse(userData.get(servingUser).getBlockedUsers()));
     }
+
+    /**
+     * This method is used to send outgoing friend requests to the client.
+     * @throws IOException if the response can not be sent to the client.
+     */
     private void getOutgoingFriend() throws IOException {
         response.writeObject(new ListResponse(userData.get(servingUser).getOutgoingFriendRequests()));
-    } //Done
+    }
     private void removeFriend(RemoveFriendRequest request) {
-        User requestedUser = searchUser(request.getRequestedUser());
+        User requestedUser = searchUser(request.getValue());
         userData.get(servingUser).deleteFriend(requestedUser.getUsername());
         userData.get(requestedUser).deleteFriend(servingUser.getUsername());
     } //Done
@@ -293,7 +298,7 @@ public class ClientHandler implements Runnable{
      */
     private void addFriend(AddFriendRequest requested) throws IOException {
         User requesting = servingUser;
-        User requestedFriend = searchUser(requested.getRequestedUser());
+        User requestedFriend = searchUser(requested.getValue());
         AddFriendResponseStatus  status;
         if(requestedFriend == null || requesting == requestedFriend)
             status = AddFriendResponseStatus.USER_NOT_FOUND;
@@ -309,6 +314,11 @@ public class ClientHandler implements Runnable{
         }
         response.writeObject(new AddFriendResponse(status, requesting.getUsername()));
     }
+
+    /**
+     * This method gives response for friend request answer.
+     * @param requested the friend request answer from the client.
+     */
     private void  friendRequestAnswer(FriendRequestAnswerRequest requested) {
         User requestingUser = servingUser;
         User requestedUser = searchUser(requested.getRequestedUser());
@@ -324,11 +334,12 @@ public class ClientHandler implements Runnable{
             for(ClientHandler ch : onlineUsers.get(requestedUser.getUsername()))
                 ch.getNotification(notificationForRequestedUser);
     }
+
     private void getFriendRequests() throws IOException {
         response.writeObject(new ListResponse(userData.get(servingUser).getIncomingFriendRequests()));
     }
     private void newPrivateChat(NewPrivateChatRequest request) {
-        User wantedUser = searchUser(request.getUsername());
+        User wantedUser = searchUser(request.getValue());
         NewPrivateChatStatus status;
         if (wantedUser == null)
             status = NewPrivateChatStatus.USER_NOT_FOUND;

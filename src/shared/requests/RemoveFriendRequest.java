@@ -1,19 +1,14 @@
 package shared.requests;
 
 public class RemoveFriendRequest extends Request{
-    private final String requestingUser;
-    private final String requestedUser;
+    private final String value;
     //constructor
-    public RemoveFriendRequest(String requestingUser, String requestedUser) {
+    public RemoveFriendRequest(String value) {
         super(ReqType.REMOVE_FRIEND);
-        this.requestingUser = requestingUser;
-        this.requestedUser = requestedUser;
+        this.value = value;
     }
     //getters
-    public String getRequestingUser() {
-        return requestingUser;
-    }
-    public String getRequestedUser() {
-        return requestedUser;
+    public String getValue() {
+        return value;
     }
 }

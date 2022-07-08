@@ -1,15 +1,15 @@
 package shared.requests;
 
 public class NewPrivateChatRequest extends Request {
-    private final String username;
+    private final String value;
 
-    public NewPrivateChatRequest(String username) {
+    public NewPrivateChatRequest(String value) {
         super(ReqType.NEW_PRIVATE_CHAT);
-        this.username = username;
+        this.value = value;
     }
     //getters
-    public String getUsername() {
-        return username;
+    public String getValue() {
+        return value;
     }
 }
 
