@@ -34,12 +34,8 @@ public class Client {
     private ObjectInputStream response;
     private ObjectOutputStream request;
     private ResponseHandler responseHandler;
-    private ListResponse chatList;
+    private ListResponse list;
     private ChatResponse chat;
-    private GetFriendsListResponse friends;
-    private IncomingFriendRequestsResponse friendRequests;
-    private GetOutgoingFriendResponse outgoingFriendRequests;
-    private GetBlockedUsersResponse blockedUsers;
     private ServerListResponse serverList;
     private ChanelListResponse chanels;
     //colors
@@ -96,20 +92,17 @@ public class Client {
      * @param response The response from the server.
      */
     private synchronized void handleResponse(Response response) {
-        if(response.getResType() == ResType.SIGNUP) {
+        ResType type = response.getResType();
+        if(type == ResType.SIGNUP) {
             user = responseHandler.signUpResponse((SignUpResponse) response);
             notify();
         }
-        else if(response.getResType() == ResType.LOGIN) {
+        else if(type == ResType.LOGIN) {
             user = responseHandler.loginResponse((LoginResponse) response);
             notify();
         }
         else if(response.getResType() == ResType.LIST) {
-            chatList = (ListResponse) response;
-            int index = 1;
-            for(String chatName : chatList.getList()) {
-                System.out.println(index++  + ": " + chatName);
-            }
+            list = (ListResponse) response;
             notify();
         }
         else if(response.getResType() == ResType.CHAT) {
@@ -122,39 +115,8 @@ public class Client {
             System.out.println(((Notification) response).getDescription());
             System.out.flush();
         }
-        else if(response.getResType() == ResType.INCOMING_FRIEND_REQUESTS) {
-            friendRequests = (IncomingFriendRequestsResponse) response;
-            int index = 1;
-            for(String request : friendRequests.getIncomingFriendRequests()) {
-                System.out.println(index + "-" + request);
-                index++;
-            }
-            notify();
-        }
         else if(response.getResType() == ResType.ADD_FRIEND) {
             System.out.println(response);
-            notify();
-        }
-        else if(response.getResType() == ResType.GET_FRIENDS_LIST) {
-            friends = (GetFriendsListResponse) response;
-            int index = 1;
-            for(String friend : friends.getFriends()) {
-                System.out.println(index + "-" + friend);
-                index++;
-            }
-            notify();
-        }
-        else if(response.getResType() == ResType.GET_OUTGOING_FRIEND) {
-            outgoingFriendRequests = (GetOutgoingFriendResponse) response;
-            for(String outgoingFriend : outgoingFriendRequests.getOutgoingFriendRequests())
-                System.out.println(outgoingFriend);
-            notify();
-        }
-        else if(response.getResType() == ResType.GET_BLOCKED_USERS) {
-            int index = 1;
-            blockedUsers = (GetBlockedUsersResponse) response;
-            for(String blockedUser : blockedUsers.getBlockedUsers())
-                System.out.println(index++ + "-" +blockedUser);
             notify();
         }
         else if(response.getResType() == ResType.UNBLOCK_USER) {
@@ -383,27 +345,31 @@ public class Client {
             throw new RuntimeException(e);
         }
     }
-    private synchronized void selectBlockedUser() {
-        int requestID, choice;
+
+    /**
+     * This method is used to unblock a user.
+     * @throws IOException If an I/O error occurs while sending the request.
+     * @throws InterruptedException If interrupted while waiting for the response.
+     */
+    private synchronized void selectBlockedUser() throws IOException, InterruptedException {
+        int blockedUserIndex, choice;
+        System.out.println(ANSI_WHITE + "Select a blocked user: " + ANSI_RESET);
+        blockedUserIndex = selectFromList();
         do {
-            System.out.println("Enter blocked id: ");
-            requestID = scanner.nextInt();
-        }
-        while (requestID >  blockedUsers.getBlockedUsers().size()|| requestID < 1);
-        do {
-            System.out.println("1-unblock\n2-back");
-            choice = scanner.nextInt();
+            System.out.println(ANSI_PURPLE + "1-unblock\n2-back" + ANSI_RESET);
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                scanner.nextLine();
+                choice = -1;
+            }
             switch (choice) {
                 case 1 ->  {
-                    try {
-                        request.writeObject(new UnblockRequest( blockedUsers.getBlockedUsers().get(requestID - 1)));
-                        wait();
-                    } catch (IOException | InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+                    request.writeObject(new UnblockRequest(list.getList().get(blockedUserIndex - 1)));
+                    wait();
                 }
-                case 2 -> System.out.println("Ok!");
-                default -> System.out.println("Invalid Choice!");
+                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
             }
         } while (choice > 2 || choice < 1);
     }
@@ -454,7 +420,7 @@ public class Client {
             System.out.println("Enter request id: ");
             requestID = scanner.nextInt();
         }
-        while (requestID >  friendRequests.getIncomingFriendRequests().size() || requestID < 1);
+        while (requestID >  list.getIncomingFriendRequests().size() || requestID < 1);
         do {
             System.out.println("1-accept\n2-decline\n3-back");
             choice = scanner.nextInt();
@@ -467,7 +433,7 @@ public class Client {
         } while (choice > 3 || choice < 1);
         if(accepted != null) {
             try {
-                request.writeObject(new FriendRequestAnswerRequest(user.getUsername(),friendRequests.getIncomingFriendRequests().get(requestID - 1), accepted));
+                request.writeObject(new FriendRequestAnswerRequest(user.getUsername(), list.getIncomingFriendRequests().get(requestID - 1), accepted));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -481,9 +447,9 @@ public class Client {
      */
     private synchronized void privateChatPage() throws IOException, InterruptedException {
         int choice, chatIndex;
-        chatIndex = select();
+        chatIndex = selectFromList();
             do {
-                request.writeObject(new ChatRequest(chatList.getList().get(chatIndex - 1)));
+                request.writeObject(new ChatRequest(list.getList().get(chatIndex - 1)));
                 wait();
                 System.out.println(ANSI_YELLOW + "1-sendMessage\n2-React\n3-pin\n4-voice call\n5-pinned messages\n6-back to home page"+ ANSI_RESET);
                 try {
@@ -733,9 +699,15 @@ public class Client {
                 }
             } while (choice != 3);
     }
-    private int select() {
+
+    /**
+     * Select an element from the list.
+     * @return The index of the selected element.
+     */
+    private int selectFromList() {
         int  index;
         do {
+            list.printList();
             System.out.println(ANSI_WHITE + "Enter index: " + ANSI_RESET);
             try {
                 index = scanner.nextInt();
@@ -744,7 +716,7 @@ public class Client {
                 scanner.nextLine();
                 index = -1;
             }
-        } while (index > chatList.getList().size() || index < 1);
+        } while (index > list.getList().size() || index < 1);
         return index;
     }
     private void voiceChanel(int chatIndex) {} //TODO : play music
@@ -931,14 +903,14 @@ public class Client {
             System.out.println("Enter request id: ");
             requestID = scanner.nextInt();
         }
-        while (requestID >  friends.getFriends().size() || requestID < 1);
+        while (requestID >  list.getFriends().size() || requestID < 1);
         do {
             System.out.println("1-remove\n2-back");
             choice = scanner.nextInt();
             switch (choice) {
                 case 1 -> {
                     try {
-                        request.writeObject(new RemoveFriendRequest(user.getUsername(), friends.getFriends().get(requestID - 1)));
+                        request.writeObject(new RemoveFriendRequest(user.getUsername(), list.getFriends().get(requestID - 1)));
                         System.out.println("Ok!");
                     } catch (IOException e) {
                         e.printStackTrace();
