@@ -62,7 +62,7 @@ public class Client {
             listener();
         } catch (IOException e) {
             System.err.println("Can not connect to server!");
-            close();
+            closeConnection();
             System.exit(404);
         }
     }
@@ -192,7 +192,7 @@ public class Client {
             e.printStackTrace();
         }
         finally {
-            close();
+            closeConnection();
         }
     }
 
@@ -976,7 +976,7 @@ public class Client {
     private void setting() throws IOException, InterruptedException {
         int choice;
         do {
-            System.out.println(ANSI_WHITE + "1-change password\n2-change mail\n3-back" + ANSI_RESET);
+            System.out.println(ANSI_WHITE + "1-change password\n2-change mail\n3-change phone number\n4-back" + ANSI_RESET);
             try {
                 choice = scanner.nextInt();
             } catch (InputMismatchException e) {
@@ -986,7 +986,8 @@ public class Client {
             switch (choice) {
                 case 1 -> changePassword();
                 case 2 -> changeEmail();
-                case 5 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                case 3 -> changePhoneNumber();
+                case 4 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                 default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
             }
         } while(choice != 3);
@@ -1036,7 +1037,7 @@ public class Client {
     /**
      * closes the connection with the server
      */
-    private void close() {
+    private void closeConnection() {
         try {
             if (request != null)
                 request.close();
