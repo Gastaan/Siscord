@@ -324,7 +324,12 @@ public class Client {
                 }
             } while (choice != 2);
         }
-        private void cancelFriendRequest() throws IOException, InterruptedException {
+
+    /**
+     * This method is used to cancel a friend request.
+     * @throws IOException If an I/O error occurs while sending the request.
+     */
+    private void cancelFriendRequest() throws IOException {
         int choice;
             do {
                 System.out.println("1-cancel\n2-back");
@@ -335,7 +340,7 @@ public class Client {
                     choice = -1;
                 }
                 switch (choice) {
-                    case 1 ->  list.getList().get(selectFromList()- 1);
+                    case 1 ->  request.writeObject(new StringRequest(list.getList().get(selectFromList()- 1) , ReqType.CANCEL_FRIEND_REQUEST));
                     case 2 ->  System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
@@ -391,11 +396,16 @@ public class Client {
     private void blockUser() {
         int choice;
         do {
-            System.out.println("1-enter username\n2-back");
-            choice = scanner.nextInt();
+            System.out.println(ANSI_PURPLE + "1-enter username\n2-back" + ANSI_RESET);
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                scanner.nextLine();
+                choice = -1;
+            }
             switch (choice) {
                 case 1 -> {
-                    System.out.println("Enter username: ");
+                    System.out.println(ANSI_WHITE +"Enter username: " + ANSI_RESET);
                     String username = scanner.next();
                     try {
                         request.writeObject(new StringRequest(username, ReqType.BLOCK_USER));

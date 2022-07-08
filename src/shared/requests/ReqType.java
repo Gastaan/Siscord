@@ -27,5 +27,6 @@ public enum ReqType implements Serializable {
     SERVER_LIST,
     SERVER_CHANELS,
     CHANGE_PASSWORD,
-    PIN_MESSAGE
+    PIN_MESSAGE,
+    CANCEL_FRIEND_REQUEST,
 }

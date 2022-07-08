@@ -144,6 +144,12 @@ public class ClientHandler implements Runnable{
             changePassword((StringRequest) requested);
         else if(requested.getType() == ReqType.PIN_MESSAGE)
             pin((PinRequest) requested);
+        else if(requested.getType() == ReqType.CANCEL_FRIEND_REQUEST)
+            cancelFriendRequest((StringRequest) requested);
+    }
+    private void cancelFriendRequest(StringRequest requested) {
+        userData.get(servingUser).deleteOutgoingFriendRequest(requested.getValue());
+        userData.get(searchUser(requested.getValue())).deleteIncomingFriendRequest(servingUser.getUsername());
     }
     private void pin(PinRequest request) throws IOException {
         String[] placeholders = request.getPlaceHolder();
