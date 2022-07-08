@@ -107,7 +107,7 @@ public class ClientHandler implements Runnable{
         else if(requested.getType() == ReqType.PRIVATE_CHAT_LIST)
             privateChatList();
         else if(requested.getType() == ReqType.CHAT_REQUEST)
-            chat((ChatRequest) requested);
+            chat((PlaceholderRequest) requested);
         else if(requested.getType() == ReqType.CHAT_REACT)
             react((ReactRequest) requested);
         else if(requested.getType() == ReqType.NEW_PRIVATE_CHAT)
@@ -139,7 +139,7 @@ public class ClientHandler implements Runnable{
         else if(requested.getType() == ReqType.SERVER_CHANELS)
             serverChanels((GetChanelsRequest) requested);
         else if(requested.getType() == ReqType.IS_TYPING)
-            isTyping((IsTypingRequest) requested);
+            isTyping((PlaceholderRequest) requested);
         else if(requested.getType() == ReqType.CHANGE_PASSWORD)
             changePassword((StringRequest) requested);
         else if(requested.getType() == ReqType.PIN_MESSAGE)
@@ -195,7 +195,7 @@ public class ClientHandler implements Runnable{
         else
             return notifyingServer.getMembers();
     }
-    private void isTyping(IsTypingRequest requested) {
+    private void isTyping(PlaceholderRequest requested) {
         String[] placeholder = requested.getPlaceholder();
       if(placeholder.length == 1)
               sendNotification(servingUser.getUsername() + "is typing...", placeholder[0]);
@@ -363,7 +363,7 @@ public class ClientHandler implements Runnable{
         ArrayList<String> chatNames = userData.get(servingUser).getPrivateChatList();
         response.writeObject(new ListResponse(chatNames));
     }
-    private void chat(ChatRequest request) {
+    private void chat(PlaceholderRequest request) {
         Chat chat = getChat(request.getPlaceholder());
         try {
             response.writeObject(new ChatResponse(chat.getMessages(), chat.getPinnedMessages(), request.getPlaceholder()));

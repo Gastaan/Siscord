@@ -470,7 +470,7 @@ public class Client {
         int choice, chatIndex;
         chatIndex = selectFromList();
             do {
-                request.writeObject(new ChatRequest(list.getList().get(chatIndex - 1)));
+                request.writeObject(new PlaceholderRequest(ReqType.CHAT_REQUEST, list.getList().get(chatIndex - 1)));
                 wait();
                 System.out.println(ANSI_YELLOW + "1-sendMessage\n2-React\n3-pin\n4-voice call\n5-pinned messages\n6-back to home page"+ ANSI_RESET);
                 try {
@@ -535,7 +535,7 @@ public class Client {
         int choice;
         try {
             do {
-                request.writeObject(new ChatRequest( chanels.getServerID() +  chanels.getChanelNames().get(chatIndex - 1)));
+                request.writeObject(new PlaceholderRequest(ReqType.CHAT_REQUEST, String.valueOf(chanels.getServerID()) ,  chanels.getChanelNames().get(chatIndex - 1)));
                 wait();
                 System.out.println("1-sendMessage\n2-React\n3-back to home page");
                 choice = scanner.nextInt();
@@ -570,7 +570,7 @@ public class Client {
             }
             switch (choice) {
                 case 1 -> {
-                    request.writeObject(new IsTypingRequest(chat.getPlaceholder()));
+                    request.writeObject(new PlaceholderRequest(ReqType.NEW_MESSAGE, chat.getPlaceholder()));
 
                     System.out.println(ANSI_WHITE + "Enter your message: " + ANSI_RESET);
                     scanner.nextLine();

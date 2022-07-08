@@ -1,10 +1,10 @@
 package shared.requests;
 
-public class IsTypingRequest extends Request {
+public class PlaceholderRequest extends Request {
     private final String[] placeholder;
     //constructor
-    public IsTypingRequest(String... placeholder) {
-        super(ReqType.IS_TYPING);
+    public PlaceholderRequest(ReqType type, String... placeholder) {
+        super(type);
         this.placeholder = placeholder;
     }
     //getters
