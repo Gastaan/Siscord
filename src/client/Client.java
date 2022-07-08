@@ -380,7 +380,7 @@ public class Client {
             }
             switch (choice) {
                 case 1 ->  {
-                    request.writeObject(new UnblockRequest(list.getList().get(blockedUserIndex - 1)));
+                    request.writeObject(new StringRequest(list.getList().get(blockedUserIndex - 1) , ReqType.UNBLOCK_USER));
                     wait();
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
@@ -398,7 +398,7 @@ public class Client {
                     System.out.println("Enter username: ");
                     String username = scanner.next();
                     try {
-                        request.writeObject(new BlockRequest(username));
+                        request.writeObject(new StringRequest(username, ReqType.BLOCK_USER));
                         wait();
                     } catch (IOException | InterruptedException e) {
                         throw new RuntimeException(e);
@@ -848,7 +848,7 @@ public class Client {
             serverName = scanner.nextLine();
         } while (serverName.isEmpty());
         try {
-            request.writeObject(new NewServerRequest(serverName));
+            request.writeObject(new StringRequest(serverName, ReqType.NEW_SERVER));
             wait();
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
@@ -869,7 +869,7 @@ public class Client {
                 case 1 -> {
                     System.out.println(ANSI_WHITE + "Enter username: " + ANSI_RESET);
                     String username = scanner.next();
-                    request.writeObject(new NewPrivateChatRequest(username));
+                    request.writeObject(new StringRequest(username, ReqType.NEW_PRIVATE_CHAT));
                     wait();
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "Ok" + ANSI_RESET);
@@ -895,7 +895,7 @@ public class Client {
                 case 1 -> {
                     System.out.println(ANSI_WHITE + "Enter username: " + ANSI_RESET);
                     String username = scanner.next();
-                    request.writeObject(new AddFriendRequest(username));
+                    request.writeObject(new StringRequest(username, ReqType.ADD_FRIEND));
                     wait();
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
@@ -942,7 +942,7 @@ public class Client {
                 case 1 -> {
                     System.out.println("Enter friend index: ");
                     friendIndex = selectFromList();
-                    request.writeObject(new RemoveFriendRequest(list.getList().get(friendIndex - 1)));
+                    request.writeObject(new StringRequest(list.getList().get(friendIndex - 1), ReqType.REMOVE_FRIEND));
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                 default -> System.out.println( ANSI_RED + "Invalid" + ANSI_RESET);
@@ -974,7 +974,7 @@ public class Client {
             password = scanner.next();
         } while (password.isEmpty());
         try {
-            request.writeObject(new ChangePasswordRequest(password));
+            request.writeObject(new StringRequest(password, ReqType.CHANGE_PASSWORD));
             wait();
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);

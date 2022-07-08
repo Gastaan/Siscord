@@ -1,10 +1,10 @@
 package shared.requests;
 
-public class ChangePasswordRequest extends Request{
+public class StringRequest extends Request{
     private final String value;
     //constructor
-    public ChangePasswordRequest(String value) {
-        super(ReqType.CHANGE_PASSWORD);
+    public StringRequest(String value, ReqType type) {
+        super(type);
         this.value = value;
     }
     //getters

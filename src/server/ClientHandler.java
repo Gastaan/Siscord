@@ -111,7 +111,7 @@ public class ClientHandler implements Runnable{
         else if(requested.getType() == ReqType.CHAT_REACT)
             react((ReactRequest) requested);
         else if(requested.getType() == ReqType.NEW_PRIVATE_CHAT)
-            newPrivateChat((NewPrivateChatRequest) requested);
+            newPrivateChat((StringRequest) requested);
         else if(requested.getType() == ReqType.NEW_MESSAGE)
             sendMessage((NewMessageRequest) requested);
         else if(requested.getType() == ReqType.GET_INCOMING_FRIEND_REQUESTS)
@@ -119,21 +119,21 @@ public class ClientHandler implements Runnable{
         else if(requested.getType() == ReqType.FRIEND_REQUEST_ANSWER)
             friendRequestAnswer((FriendRequestAnswerRequest) requested);
         else if(requested.getType() == ReqType.ADD_FRIEND)
-            addFriend((AddFriendRequest) requested);
+            addFriend((StringRequest) requested);
         else if(requested.getType() == ReqType.GET_FRIENDS_LIST)
             getFriendsList();
         else if(requested.getType() == ReqType.REMOVE_FRIEND)
-            removeFriend((RemoveFriendRequest) requested);
+            removeFriend((StringRequest) requested);
         else if(requested.getType() == ReqType.GET_OUTGOING_FRIEND)
             getOutgoingFriend();
         else if(requested.getType() == ReqType.GET_BLOCKED_USERS)
             getBlockedUsers();
         else if(requested.getType() == ReqType.UNBLOCK_USER)
-            unblockUser((UnblockRequest)requested);
+            unblockUser((StringRequest)requested);
         else if (requested.getType() == ReqType.BLOCK_USER)
-            blockUser((BlockRequest)requested);
+            blockUser((StringRequest)requested);
         else if(requested.getType() == ReqType.NEW_SERVER)
-            newServer((NewServerRequest) requested);
+            newServer((StringRequest) requested);
         else if(requested.getType() == ReqType.SERVER_LIST)
             serverList();
         else if(requested.getType() == ReqType.SERVER_CHANELS)
@@ -141,7 +141,7 @@ public class ClientHandler implements Runnable{
         else if(requested.getType() == ReqType.IS_TYPING)
             isTyping((IsTypingRequest) requested);
         else if(requested.getType() == ReqType.CHANGE_PASSWORD)
-            changePassword((ChangePasswordRequest) requested);
+            changePassword((StringRequest) requested);
         else if(requested.getType() == ReqType.PIN_MESSAGE)
             pin((PinRequest) requested);
     }
@@ -165,7 +165,7 @@ public class ClientHandler implements Runnable{
      * This method changes the password of the user.
      * @param requested the change password request from the client.
      */
-    private void changePassword(ChangePasswordRequest requested) {
+    private void changePassword(StringRequest requested) {
          if(match(requested.getValue(), passwordRegex)) {
              userData.get(servingUser).changePassword(requested.getValue());
              try {
@@ -232,7 +232,7 @@ public class ClientHandler implements Runnable{
             System.err.println("Can not send server list to client!");
         }
     } //Done
-    private void newServer(NewServerRequest requested) { //TODO : here
+    private void newServer(StringRequest requested) { //TODO : here
         SocialServer server = new SocialServer(requested.getValue(), servingUser.getUsername());
         servers.add(server);
         userData.get(servingUser).addServer(server.getServerID());
@@ -243,7 +243,7 @@ public class ClientHandler implements Runnable{
             System.err.println("Can not send new server response!");
         }
     }
-    private void blockUser(BlockRequest requested) {
+    private void blockUser(StringRequest requested) {
         User blockingUser = searchUser(requested.getValue());
         boolean success;
         if (blockingUser == null || blockingUser == servingUser)
@@ -258,7 +258,7 @@ public class ClientHandler implements Runnable{
             throw new RuntimeException(e);
         }
     }
-    private void unblockUser(UnblockRequest requested) { //TODO : Failed to unblock user
+    private void unblockUser(StringRequest requested) { //TODO : Failed to unblock user
         userData.get(servingUser).unblockUser(requested.getValue());
         try {
             response.writeObject(new UnblockResponse(true));
@@ -278,7 +278,7 @@ public class ClientHandler implements Runnable{
     private void getOutgoingFriend() throws IOException {
         response.writeObject(new ListResponse(userData.get(servingUser).getOutgoingFriendRequests()));
     }
-    private void removeFriend(RemoveFriendRequest request) {
+    private void removeFriend(StringRequest request) {
         User requestedUser = searchUser(request.getValue());
         userData.get(servingUser).deleteFriend(requestedUser.getUsername());
         userData.get(requestedUser).deleteFriend(servingUser.getUsername());
@@ -296,7 +296,7 @@ public class ClientHandler implements Runnable{
      * @param requested the add friend request from the client.
      * @throws IOException if the response can not be sent to the client.
      */
-    private void addFriend(AddFriendRequest requested) throws IOException {
+    private void addFriend(StringRequest requested) throws IOException {
         User requesting = servingUser;
         User requestedFriend = searchUser(requested.getValue());
         AddFriendResponseStatus  status;
@@ -338,7 +338,7 @@ public class ClientHandler implements Runnable{
     private void getFriendRequests() throws IOException {
         response.writeObject(new ListResponse(userData.get(servingUser).getIncomingFriendRequests()));
     }
-    private void newPrivateChat(NewPrivateChatRequest request) {
+    private void newPrivateChat(StringRequest request) {
         User wantedUser = searchUser(request.getValue());
         NewPrivateChatStatus status;
         if (wantedUser == null)
