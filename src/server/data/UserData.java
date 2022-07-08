@@ -51,8 +51,10 @@ public class UserData implements Serializable {
             return   new ArrayList<>(blockedUsers);
         }
     }
-    public HashSet<String> getIncomingFriendRequests() {
-        return incomingFriendRequests;
+    public ArrayList<String> getIncomingFriendRequests() {
+        synchronized (incomingFriendRequests) {
+            return new ArrayList<>(incomingFriendRequests);
+        }
     }
     public void addOutgoingFriendRequest(String username) {
         synchronized (outgoingFriendRequests) {

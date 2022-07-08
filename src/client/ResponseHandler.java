@@ -1,7 +1,7 @@
 package client;
 
 import shared.responses.ChatResponse;
-import shared.responses.list.ChatListResponse;
+import shared.responses.list.ListResponse;
 import shared.responses.login.LoginResponse;
 import shared.responses.login.LoginStatus;
 import shared.responses.signup.SignUpResponse;
@@ -35,9 +35,9 @@ public class ResponseHandler {
             return null;
         }
     }
-    public int privateChatListResponse(ChatListResponse response) {
+    public int privateChatListResponse(ListResponse response) {
         int index = 1;
-        for (String chatName : response.getChatNames()) {
+        for (String chatName : response.getList()) {
             System.out.println(index + "-" + chatName);
             index++;
         }

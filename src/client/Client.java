@@ -3,7 +3,7 @@ package client;
 
 import shared.requests.*;
 import shared.responses.*;
-import shared.responses.list.ChatListResponse;
+import shared.responses.list.ListResponse;
 import shared.responses.login.LoginResponse;
 import shared.responses.signup.SignUpResponse;
 import shared.user.User;
@@ -34,7 +34,7 @@ public class Client {
     private ObjectInputStream response;
     private ObjectOutputStream request;
     private ResponseHandler responseHandler;
-    private ChatListResponse chatList;
+    private ListResponse chatList;
     private ChatResponse chat;
     private GetFriendsListResponse friends;
     private IncomingFriendRequestsResponse friendRequests;
@@ -105,9 +105,9 @@ public class Client {
             notify();
         }
         else if(response.getResType() == ResType.LIST) {
-            chatList = (ChatListResponse) response;
+            chatList = (ListResponse) response;
             int index = 1;
-            for(String chatName : chatList.getChatNames()) {
+            for(String chatName : chatList.getList()) {
                 System.out.println(index++  + ": " + chatName);
             }
             notify();
@@ -338,24 +338,31 @@ public class Client {
     }
     private void logOut() { //TODO : clear all the data
         user = null;
-    }
-    private synchronized void outGoingFriendRequests() {
+    } //TODO : clear all the data
+
+    /**
+     * This method is used to see outgoing friend requests and cancel them.
+     */
+    private synchronized void outGoingFriendRequests() throws IOException, InterruptedException {
         int choice;
-        try {
-            request.writeObject(new Request(ReqType.GET_OUTGOING_FRIEND));
-            wait();
             do {
-                System.out.println("1-back");
-                choice = scanner.nextInt();
-                if (choice == 1)
-                    System.out.println("Ok!");
-                else
-                    System.out.println("Invalid Choice!");
-            } while (choice != 1);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+                request.writeObject(new Request(ReqType.GET_OUTGOING_FRIEND));
+                wait();
+                System.out.println(ANSI_PURPLE +"1-cancel\n2-back" + ANSI_RESET);
+                try {
+                    choice = scanner.nextInt();
+                } catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
+                }
+                switch (choice) {
+                    case 1 -> cancelFriendRequest();
+                    case 2 ->  System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                    default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+                }
+            } while (choice != 2);
         }
-    } //TODO : cancel friend request
+     //TODO : cancel friend request
     //Blocked users can not send message or see profile photo
     private synchronized void blockedUsers() {
         int choice;
@@ -425,7 +432,7 @@ public class Client {
         int choice;
         try {
             do {
-                request.writeObject(new GetFriendRequestsRequest(user.getUsername()));
+                request.writeObject(new Request(ReqType.GET_INCOMING_FRIEND_REQUESTS));
                 wait();
                 System.out.println("1-select request\n2-back");
                 choice = scanner.nextInt();
@@ -476,7 +483,7 @@ public class Client {
         int choice, chatIndex;
         chatIndex = select();
             do {
-                request.writeObject(new ChatRequest(chatList.getChatNames().get(chatIndex - 1)));
+                request.writeObject(new ChatRequest(chatList.getList().get(chatIndex - 1)));
                 wait();
                 System.out.println(ANSI_YELLOW + "1-sendMessage\n2-React\n3-pin\n4-voice call\n5-pinned messages\n6-back to home page"+ ANSI_RESET);
                 try {
@@ -737,7 +744,7 @@ public class Client {
                 scanner.nextLine();
                 index = -1;
             }
-        } while (index > chatList.getChatNames().size() || index < 1);
+        } while (index > chatList.getList().size() || index < 1);
         return index;
     }
     private void voiceChanel(int chatIndex) {} //TODO : play music
@@ -902,7 +909,7 @@ public class Client {
         int choice;
         do {
             try {
-                request.writeObject(new GetFriendsListRequest(user.getUsername()));
+                request.writeObject(new Request(ReqType.GET_FRIENDS_LIST));
                 wait();
             }
              catch (IOException | InterruptedException e) {

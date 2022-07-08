@@ -11,7 +11,7 @@ import shared.requests.*;
 import shared.responses.*;
 import shared.responses.addfriend.AddFriendResponse;
 import shared.responses.addfriend.AddFriendResponseStatus;
-import shared.responses.list.ChatListResponse;
+import shared.responses.list.ListResponse;
 import shared.responses.login.LoginResponse;
 import shared.responses.login.LoginStatus;
 import shared.responses.newprivatechat.NewPrivateChatResponse;
@@ -114,14 +114,14 @@ public class ClientHandler implements Runnable{
             newPrivateChat((NewPrivateChatRequest) requested);
         else if(requested.getType() == ReqType.NEW_MESSAGE)
             sendMessage((NewMessageRequest) requested);
-        else if(requested.getType() == ReqType.GET_FRIEND_REQUESTS)
-            getFriendRequests((GetFriendRequestsRequest) requested);
+        else if(requested.getType() == ReqType.GET_INCOMING_FRIEND_REQUESTS)
+            getFriendRequests();
         else if(requested.getType() == ReqType.FRIEND_REQUEST_ANSWER)
             friendRequestAnswer((FriendRequestAnswerRequest) requested);
         else if(requested.getType() == ReqType.ADD_FRIEND)
             addFriend((AddFriendRequest) requested);
         else if(requested.getType() == ReqType.GET_FRIENDS_LIST)
-            getFriendsList((GetFriendsListRequest) requested);
+            getFriendsList();
         else if(requested.getType() == ReqType.REMOVE_FRIEND)
             removeFriend((RemoveFriendRequest) requested);
         else if(requested.getType() == ReqType.GET_OUTGOING_FRIEND)
@@ -267,38 +267,23 @@ public class ClientHandler implements Runnable{
             System.err.println("Can not send response to client!");
         }
     }
-    private void getBlockedUsers() {
-        try {
-            response.writeObject(new GetBlockedUsersResponse(userData.get(servingUser).getBlockedUsers()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private void getBlockedUsers() throws IOException {
+        response.writeObject(new ListResponse(userData.get(servingUser).getBlockedUsers()));
     }
-    private void getOutgoingFriend() {
-        try {
-            response.writeObject(new GetOutgoingFriendResponse(userData.get(servingUser).getOutgoingFriendRequests()));
-        }
-        catch (IOException e) {
-            System.err.println("Can not send outgoing friend to client!");
-        }
+    private void getOutgoingFriend() throws IOException {
+        response.writeObject(new ListResponse(userData.get(servingUser).getOutgoingFriendRequests()));
     } //Done
     private void removeFriend(RemoveFriendRequest request) {
         User requestedUser = searchUser(request.getRequestedUser());
         userData.get(servingUser).deleteFriend(requestedUser.getUsername());
         userData.get(requestedUser).deleteFriend(servingUser.getUsername());
     } //Done
-    private void getFriendsList(GetFriendsListRequest requested) {
-        User requestedUser = searchUser(requested.getUsername());
+    private void getFriendsList() throws IOException {
+        User requestedUser = searchUser(servingUser.getUsername());
         ArrayList<String> friends = new ArrayList<>();
-        for(String friend : userData.get(requestedUser).getFriends()) {
+        for(String friend : userData.get(requestedUser).getFriends())
             friends.add(searchUser(friend).userStatus());
-        }
-        try {
-            response.writeObject(new GetFriendsListResponse(friends));
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+        response.writeObject(new ListResponse(friends));
     }
     private void addFriend(AddFriendRequest requested) {
         User requesting = searchUser(requested.getRequestingUser());
@@ -337,13 +322,8 @@ public class ClientHandler implements Runnable{
             for(ClientHandler ch : onlineUsers.get(requestedUser.getUsername()))
                 ch.getNotification(notificationForRequestedUser);
     }
-    private void getFriendRequests(GetFriendRequestsRequest requested) {
-        User requestedUser = searchUser(requested.getRequestedUser());
-        try {
-            response.writeObject(new IncomingFriendRequestsResponse(userData.get(requestedUser).getIncomingFriendRequests()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private void getFriendRequests() throws IOException {
+        response.writeObject(new ListResponse(userData.get(servingUser).getIncomingFriendRequests()));
     }
     private void newPrivateChat(NewPrivateChatRequest request) {
         User wantedUser = searchUser(request.getUsername());
@@ -366,13 +346,9 @@ public class ClientHandler implements Runnable{
             throw new RuntimeException(e);
         }
     }
-    private void privateChatList() {
+    private void privateChatList() throws IOException {
         ArrayList<String> chatNames = userData.get(servingUser).getPrivateChatList();
-        try {
-            response.writeObject(new ChatListResponse(chatNames));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        response.writeObject(new ListResponse(chatNames));
     }
     private void chat(ChatRequest request) {
         Chat chat = getChat(request.getPlaceholder());

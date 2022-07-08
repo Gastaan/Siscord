@@ -14,7 +14,7 @@ public enum ReqType implements Serializable {
     IS_TYPING,
     NEW_PRIVATE_CHAT,
     NEW_MESSAGE,
-    GET_FRIEND_REQUESTS,
+    GET_INCOMING_FRIEND_REQUESTS,
     FRIEND_REQUEST_ANSWER,
     ADD_FRIEND,
     REMOVE_FRIEND,
