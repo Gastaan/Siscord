@@ -101,56 +101,56 @@ public class ClientHandler implements Runnable{
      * @param requested the request from the client.
      */
     private void giveResponse(Request requested) throws IOException {
-        ReqType requestType = requested.getType();
-        if(requestType == ReqType.LOGIN)
+        RequestType requestType = requested.getType();
+        if(requestType == RequestType.LOGIN)
             login((LoginRequest) requested);
-        else if(requestType == ReqType.SIGN_UP)
+        else if(requestType == RequestType.SIGN_UP)
             signUP((SignUpRequest)requested);
-        else if(requestType == ReqType.PRIVATE_CHAT_LIST)
+        else if(requestType == RequestType.PRIVATE_CHAT_LIST)
             privateChatList();
-        else if(requestType == ReqType.CHAT_REQUEST)
+        else if(requestType == RequestType.CHAT_REQUEST)
             chat((PlaceholderRequest) requested);
-        else if(requestType == ReqType.CHAT_REACT)
+        else if(requestType == RequestType.CHAT_REACT)
             react((ReactRequest) requested);
-        else if(requestType == ReqType.NEW_PRIVATE_CHAT)
+        else if(requestType == RequestType.NEW_PRIVATE_CHAT)
             newPrivateChat((StringRequest) requested);
-        else if(requestType == ReqType.NEW_MESSAGE)
+        else if(requestType == RequestType.NEW_MESSAGE)
             sendMessage((NewMessageRequest) requested);
-        else if(requestType == ReqType.GET_INCOMING_FRIEND_REQUESTS)
+        else if(requestType == RequestType.GET_INCOMING_FRIEND_REQUESTS)
             getFriendRequests();
-        else if(requestType == ReqType.FRIEND_REQUEST_ANSWER)
+        else if(requestType == RequestType.FRIEND_REQUEST_ANSWER)
             friendRequestAnswer((FriendRequestAnswerRequest) requested);
-        else if(requestType == ReqType.ADD_FRIEND)
+        else if(requestType == RequestType.ADD_FRIEND)
             addFriend((StringRequest) requested);
-        else if(requestType == ReqType.GET_FRIENDS_LIST)
+        else if(requestType == RequestType.GET_FRIENDS_LIST)
             getFriendsList();
-        else if(requestType == ReqType.REMOVE_FRIEND)
+        else if(requestType == RequestType.REMOVE_FRIEND)
             removeFriend((StringRequest) requested);
-        else if(requestType == ReqType.GET_OUTGOING_FRIEND)
+        else if(requestType == RequestType.GET_OUTGOING_FRIEND)
             getOutgoingFriend();
-        else if(requestType == ReqType.GET_BLOCKED_USERS)
+        else if(requestType == RequestType.GET_BLOCKED_USERS)
             getBlockedUsers();
-        else if(requestType == ReqType.UNBLOCK_USER)
+        else if(requestType == RequestType.UNBLOCK_USER)
             unblockUser((StringRequest)requested);
-        else if (requestType == ReqType.BLOCK_USER)
+        else if (requestType == RequestType.BLOCK_USER)
             blockUser((StringRequest)requested);
-        else if(requestType == ReqType.NEW_SERVER)
+        else if(requestType == RequestType.NEW_SERVER)
             newServer((StringRequest) requested);
-        else if(requestType == ReqType.SERVER_LIST)
+        else if(requestType == RequestType.SERVER_LIST)
             serverList();
-        else if(requestType == ReqType.SERVER_CHANELS)
+        else if(requestType == RequestType.SERVER_CHANELS)
             serverChanels((GetChanelsRequest) requested);
-        else if(requestType == ReqType.IS_TYPING)
+        else if(requestType == RequestType.IS_TYPING)
             isTyping((PlaceholderRequest) requested);
-        else if(requestType == ReqType.CHANGE_PASSWORD)
+        else if(requestType == RequestType.CHANGE_PASSWORD)
             changePassword((StringRequest) requested);
-        else if(requestType == ReqType.PIN_MESSAGE)
+        else if(requestType == RequestType.PIN_MESSAGE)
             pin((PinRequest) requested);
-        else if(requestType == ReqType.CANCEL_FRIEND_REQUEST)
+        else if(requestType == RequestType.CANCEL_FRIEND_REQUEST)
             cancelFriendRequest((StringRequest) requested);
-        else if(requestType == ReqType.CHANGE_EMAIL)
+        else if(requestType == RequestType.CHANGE_EMAIL)
             changeEmail((StringRequest) requested);
-        else if(requestType == ReqType.CHANGE_PHONE_NUMBER)
+        else if(requestType == RequestType.CHANGE_PHONE_NUMBER)
             changePhoneNumber((StringRequest) requested);
     }
     private void changeEmail(StringRequest request) {

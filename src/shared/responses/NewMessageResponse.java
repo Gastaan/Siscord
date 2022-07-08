@@ -4,7 +4,7 @@ public class NewMessageResponse extends Response {
     private final boolean isDelivered;
     //constructor
     public NewMessageResponse(boolean isDelivered) {
-        super(ResType.NEW_MESSAGE);
+        super(ResponseType.NEW_MESSAGE);
         this.isDelivered = isDelivered;
     }
     //toString

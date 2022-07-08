@@ -3,14 +3,14 @@ package shared.requests;
 import java.io.Serializable;
 
  public class Request implements Serializable {
-    protected ReqType type;
+    protected RequestType type;
 
 
-    public Request(ReqType type) {
+    public Request(RequestType type) {
         this.type = type;
     }
 
-    public ReqType getType() {
+    public RequestType getType() {
         return type;
     }
 }

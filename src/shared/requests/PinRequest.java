@@ -5,7 +5,7 @@ public class PinRequest extends Request{
     private final String[] placeholder;
     //constructor
     public PinRequest(String time, String... placeholder) {
-        super(ReqType.PIN_MESSAGE);
+        super(RequestType.PIN_MESSAGE);
         this.time = time;
         this.placeholder = placeholder;
     }

@@ -5,7 +5,7 @@ public class NewServerResponse extends Response{
     private final int serverID;
     //constructor
     public NewServerResponse(boolean success, int serverID) {
-        super(ResType.NEW_SERVER);
+        super(ResponseType.NEW_SERVER);
         this.success = success;
         this.serverID = serverID;
     }

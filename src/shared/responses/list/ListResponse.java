@@ -1,6 +1,6 @@
 package shared.responses.list;
 
-import shared.responses.ResType;
+import shared.responses.ResponseType;
 import shared.responses.Response;
 
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ public class ListResponse extends Response {
      * @param list The list to be sent to the client.
      */
         public ListResponse(ArrayList<String> list) {
-            super(ResType.LIST);
+            super(ResponseType.LIST);
             this.list = list;
         }
 

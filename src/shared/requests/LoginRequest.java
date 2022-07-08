@@ -5,7 +5,7 @@ public class LoginRequest extends Request{
     private String password;
 
     public LoginRequest(String username, String password) {
-        super(ReqType.LOGIN);
+        super(RequestType.LOGIN);
         this.username = username;
         this.password = password;
     }

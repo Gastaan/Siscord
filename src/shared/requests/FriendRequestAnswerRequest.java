@@ -14,7 +14,7 @@ public class FriendRequestAnswerRequest extends Request{
      * @param accept Whether the request is accepted or rejected.
      */
     public FriendRequestAnswerRequest(String requestedUser, boolean accept) {
-        super(ReqType.FRIEND_REQUEST_ANSWER);
+        super(RequestType.FRIEND_REQUEST_ANSWER);
         this.requestedUser = requestedUser;
         this.accept = accept;
     }

@@ -16,7 +16,7 @@ public class NewMessageRequest extends  Request{
      */
     //constructor
     public NewMessageRequest(Message message, String... placeholder) {
-        super(ReqType.NEW_MESSAGE);
+        super(RequestType.NEW_MESSAGE);
         this.message = message;
         this.placeholder = placeholder;
     }

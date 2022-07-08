@@ -92,58 +92,58 @@ public class Client {
      * @param response The response from the server.
      */
     private synchronized void handleResponse(Response response) {
-        ResType type = response.getResType();
-        if(type == ResType.SIGNUP) {
+        ResponseType type = response.getResType();
+        if(type == ResponseType.SIGNUP) {
             user = responseHandler.signUpResponse((SignUpResponse) response);
             notify();
         }
-        else if(type == ResType.LOGIN) {
+        else if(type == ResponseType.LOGIN) {
             user = responseHandler.loginResponse((LoginResponse) response);
             notify();
         }
-        else if(type == ResType.LIST) {
+        else if(type == ResponseType.LIST) {
             list = (ListResponse) response;
             notify();
         }
-        else if(type == ResType.CHAT) {
+        else if(type == ResponseType.CHAT) {
             chat = (ChatResponse)response;
             responseHandler.chatResponse(chat);
             downLoadFileMessages();
             notify();
         }
-        else if(type == ResType.NOTIFICATION) {
+        else if(type == ResponseType.NOTIFICATION) {
             System.out.println(((Notification) response).getDescription());
             System.out.flush();
         }
-        else if(type  == ResType.ADD_FRIEND) {
+        else if(type  == ResponseType.ADD_FRIEND) {
             System.out.println(response);
             notify();
         }
-        else if(type == ResType.UNBLOCK_USER) {
+        else if(type == ResponseType.UNBLOCK_USER) {
             System.out.println(response);
             notify();
         }
-        else if(type == ResType.BLOCK_USER) {
+        else if(type == ResponseType.BLOCK_USER) {
             System.out.println(response);
             notify();
         }
-        else if(type == ResType.NEW_MESSAGE) {
+        else if(type == ResponseType.NEW_MESSAGE) {
             System.out.println(response);
             notify();
         }
-        else if(type == ResType.PRIVATE_CHAT_REACT)  {
+        else if(type == ResponseType.PRIVATE_CHAT_REACT)  {
             System.out.println(response);
             notify();
         }
-        else if(type == ResType.NEW_PRIVATE_CHAT) {
+        else if(type == ResponseType.NEW_PRIVATE_CHAT) {
             System.out.println(response);
             notify();
         }
-        else if(type == ResType.NEW_SERVER) {
+        else if(type == ResponseType.NEW_SERVER) {
             System.out.println(response);
             notify();
         }
-        else if(type == ResType.SERVER_LIST) {
+        else if(type == ResponseType.SERVER_LIST) {
             serverList = (ServerListResponse) response;
             int index = 1;
             for(String server : serverList.getServers()) {
@@ -151,7 +151,7 @@ public class Client {
             }
             notify();
         }
-        else if(type == ResType.CHANEL_LIST) {
+        else if(type == ResponseType.CHANEL_LIST) {
             chanels = (ChanelListResponse) response;
             int index = 1;
             for(String chanel : chanels.getChanelNames()) {
@@ -159,7 +159,7 @@ public class Client {
             }
             notify();
         }
-        else if(type == ResType.CHANGE_PASSWORD || type == ResType.PIN_MESSAGE) {
+        else if(type == ResponseType.CHANGE_PASSWORD || type == ResponseType.PIN_MESSAGE) {
             System.out.println(response);
             notify();
         }
@@ -309,7 +309,7 @@ public class Client {
     private synchronized void outGoingFriendRequests() throws IOException, InterruptedException {
         int choice;
             do {
-                request.writeObject(new Request(ReqType.GET_OUTGOING_FRIEND));
+                request.writeObject(new Request(RequestType.GET_OUTGOING_FRIEND));
                 wait();
                 System.out.println(ANSI_PURPLE +"1-cancel\n2-back" + ANSI_RESET);
                 try {
@@ -341,7 +341,7 @@ public class Client {
                     choice = -1;
                 }
                 switch (choice) {
-                    case 1 ->  request.writeObject(new StringRequest(list.getList().get(selectFromList()- 1) , ReqType.CANCEL_FRIEND_REQUEST));
+                    case 1 ->  request.writeObject(new StringRequest(list.getList().get(selectFromList()- 1) , RequestType.CANCEL_FRIEND_REQUEST));
                     case 2 ->  System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
@@ -356,7 +356,7 @@ public class Client {
     private synchronized void blockedUsers() throws InterruptedException, IOException {
         int choice;
             do {
-                request.writeObject(new Request(ReqType.GET_BLOCKED_USERS));
+                request.writeObject(new Request(RequestType.GET_BLOCKED_USERS));
                 wait();
                 System.out.println(ANSI_PURPLE + "1-select\n2-block a user\n3-back" + ANSI_RESET);
                 try {
@@ -393,7 +393,7 @@ public class Client {
             }
             switch (choice) {
                 case 1 ->  {
-                    request.writeObject(new StringRequest(list.getList().get(blockedUserIndex - 1) , ReqType.UNBLOCK_USER));
+                    request.writeObject(new StringRequest(list.getList().get(blockedUserIndex - 1) , RequestType.UNBLOCK_USER));
                     wait();
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
@@ -421,7 +421,7 @@ public class Client {
                 case 1 -> {
                     System.out.println(ANSI_WHITE +"Enter username: " + ANSI_RESET);
                     String username = scanner.next();
-                    request.writeObject(new StringRequest(username, ReqType.BLOCK_USER));
+                    request.writeObject(new StringRequest(username, RequestType.BLOCK_USER));
                     wait();
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
@@ -436,7 +436,7 @@ public class Client {
     private synchronized void incomingFriendRequests() throws InterruptedException, IOException {
         int choice;
             do {
-                request.writeObject(new Request(ReqType.GET_INCOMING_FRIEND_REQUESTS));
+                request.writeObject(new Request(RequestType.GET_INCOMING_FRIEND_REQUESTS));
                 wait();
                 System.out.println(ANSI_PURPLE + "1-select request\n2-back" + ANSI_RESET);
                 try {
@@ -490,7 +490,7 @@ public class Client {
         int choice, chatIndex;
         chatIndex = selectFromList();
             do {
-                request.writeObject(new PlaceholderRequest(ReqType.CHAT_REQUEST, list.getList().get(chatIndex - 1)));
+                request.writeObject(new PlaceholderRequest(RequestType.CHAT_REQUEST, list.getList().get(chatIndex - 1)));
                 wait();
                 System.out.println(ANSI_YELLOW + "1-sendMessage\n2-React\n3-pin\n4-voice call\n5-pinned messages\n6-back to home page"+ ANSI_RESET);
                 try {
@@ -555,7 +555,7 @@ public class Client {
         int choice;
         try {
             do {
-                request.writeObject(new PlaceholderRequest(ReqType.CHAT_REQUEST, String.valueOf(chanels.getServerID()) ,  chanels.getChanelNames().get(chatIndex - 1)));
+                request.writeObject(new PlaceholderRequest(RequestType.CHAT_REQUEST, String.valueOf(chanels.getServerID()) ,  chanels.getChanelNames().get(chatIndex - 1)));
                 wait();
                 System.out.println("1-sendMessage\n2-React\n3-back to home page");
                 choice = scanner.nextInt();
@@ -590,7 +590,7 @@ public class Client {
             }
             switch (choice) {
                 case 1 -> {
-                    request.writeObject(new PlaceholderRequest(ReqType.NEW_MESSAGE, chat.getPlaceholder()));
+                    request.writeObject(new PlaceholderRequest(RequestType.NEW_MESSAGE, chat.getPlaceholder()));
 
                     System.out.println(ANSI_WHITE + "Enter your message: " + ANSI_RESET);
                     scanner.nextLine();
@@ -722,7 +722,7 @@ public class Client {
     private synchronized void privateChats() throws IOException, InterruptedException {
         int choice;
             do {
-                request.writeObject(new Request(ReqType.PRIVATE_CHAT_LIST));
+                request.writeObject(new Request(RequestType.PRIVATE_CHAT_LIST));
                 wait();
                 System.out.println(ANSI_YELLOW + "1-select chat\n2-new chat\n3-back" + ANSI_RESET);
                 try {
@@ -828,7 +828,7 @@ public class Client {
         int choice;
         try {
             do {
-                request.writeObject(new Request(ReqType.SERVER_LIST));
+                request.writeObject(new Request(RequestType.SERVER_LIST));
                 wait();
                     System.out.println("1-select server\n2-back");
                     choice = scanner.nextInt();
@@ -868,7 +868,7 @@ public class Client {
             serverName = scanner.nextLine();
         } while (serverName.isEmpty());
         try {
-            request.writeObject(new StringRequest(serverName, ReqType.NEW_SERVER));
+            request.writeObject(new StringRequest(serverName, RequestType.NEW_SERVER));
             wait();
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
@@ -889,7 +889,7 @@ public class Client {
                 case 1 -> {
                     System.out.println(ANSI_WHITE + "Enter username: " + ANSI_RESET);
                     String username = scanner.next();
-                    request.writeObject(new StringRequest(username, ReqType.NEW_PRIVATE_CHAT));
+                    request.writeObject(new StringRequest(username, RequestType.NEW_PRIVATE_CHAT));
                     wait();
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "Ok" + ANSI_RESET);
@@ -915,7 +915,7 @@ public class Client {
                 case 1 -> {
                     System.out.println(ANSI_WHITE + "Enter username: " + ANSI_RESET);
                     String username = scanner.next();
-                    request.writeObject(new StringRequest(username, ReqType.ADD_FRIEND));
+                    request.writeObject(new StringRequest(username, RequestType.ADD_FRIEND));
                     wait();
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
@@ -927,7 +927,7 @@ public class Client {
         int choice;
         do {
             try {
-                request.writeObject(new Request(ReqType.GET_FRIENDS_LIST));
+                request.writeObject(new Request(RequestType.GET_FRIENDS_LIST));
                 wait();
             }
              catch (IOException | InterruptedException e) {
@@ -962,7 +962,7 @@ public class Client {
                 case 1 -> {
                     System.out.println("Enter friend index: ");
                     friendIndex = selectFromList();
-                    request.writeObject(new StringRequest(list.getList().get(friendIndex - 1), ReqType.REMOVE_FRIEND));
+                    request.writeObject(new StringRequest(list.getList().get(friendIndex - 1), RequestType.REMOVE_FRIEND));
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                 default -> System.out.println( ANSI_RED + "Invalid" + ANSI_RESET);
@@ -1005,7 +1005,7 @@ public class Client {
         String password;
         System.out.println("Enter new password: ");
         password = scanner.next();
-        request.writeObject(new StringRequest(password, ReqType.CHANGE_PASSWORD));
+        request.writeObject(new StringRequest(password, RequestType.CHANGE_PASSWORD));
         wait();
     }
 
@@ -1018,7 +1018,7 @@ public class Client {
         String password;
         System.out.println("Enter new email: ");
         password = scanner.next();
-        request.writeObject(new StringRequest(password, ReqType.CHANGE_EMAIL));
+        request.writeObject(new StringRequest(password, RequestType.CHANGE_EMAIL));
         wait();
     }
 
@@ -1031,7 +1031,7 @@ public class Client {
         String password;
         System.out.println("Enter new phone number: ");
         password = scanner.next();
-        request.writeObject(new StringRequest(password, ReqType.CHANGE_PHONE_NUMBER));
+        request.writeObject(new StringRequest(password, RequestType.CHANGE_PHONE_NUMBER));
         wait();
     }
     /**

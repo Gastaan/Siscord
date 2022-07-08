@@ -4,7 +4,7 @@ public class UnblockResponse extends Response{
     private final boolean success;
     //constructor
     public UnblockResponse(boolean success) {
-        super(ResType.UNBLOCK_USER);
+        super(ResponseType.UNBLOCK_USER);
         this.success = success;
     }
     //toString

@@ -4,7 +4,7 @@ public class ChangePasswordResponse extends Response{
     private final boolean success;
     //constructor
     public ChangePasswordResponse(boolean success) {
-        super(ResType.CHANGE_PASSWORD);
+        super(ResponseType.CHANGE_PASSWORD);
         this.success = success;
     }
     //toString

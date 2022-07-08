@@ -2,15 +2,18 @@ package shared.responses;
 
 import java.io.Serializable;
 
+/**
+ * @author saman hazemi
+ */
  public class Response implements Serializable {
-    private ResType resType;
+    private ResponseType responseType;
 
-    public Response(ResType resType) {
-        this.resType = resType;
+    public Response(ResponseType responseType) {
+        this.responseType = responseType;
     }
 
-    public ResType getResType() {
-        return resType;
+    public ResponseType getResType() {
+        return responseType;
     }
 
 }

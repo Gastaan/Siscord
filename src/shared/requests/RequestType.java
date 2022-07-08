@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * This class is used to represent request types.
  */
-public enum ReqType implements Serializable {
+public enum RequestType implements Serializable {
     LOGIN,
     SIGN_UP,
     PRIVATE_CHAT_LIST,

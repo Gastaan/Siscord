@@ -4,7 +4,7 @@ public class Notification extends Response{
     private final String description;
     //constructor
     public Notification(String description) {
-        super(ResType.NOTIFICATION);
+        super(ResponseType.NOTIFICATION);
         this.description = description;
     }
     //getters

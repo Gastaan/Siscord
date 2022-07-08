@@ -3,7 +3,7 @@ package shared.requests;
 public class PlaceholderRequest extends Request {
     private final String[] placeholder;
     //constructor
-    public PlaceholderRequest(ReqType type, String... placeholder) {
+    public PlaceholderRequest(RequestType type, String... placeholder) {
         super(type);
         this.placeholder = placeholder;
     }

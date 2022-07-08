@@ -2,7 +2,11 @@ package shared.responses;
 
 import java.io.Serializable;
 
-public enum ResType implements Serializable {
+/**
+ * @author saman hazemi
+ * The response type enum.
+ */
+public enum ResponseType implements Serializable {
     LOGIN,
     SIGNUP,
     LIST,

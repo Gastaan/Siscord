@@ -7,7 +7,7 @@ public class SignUpRequest extends Request{
     private final String phoneNumber;
     //constructor
     public SignUpRequest(String username, String password, String email, String phoneNumber) {
-        super(ReqType.SIGN_UP);
+        super(RequestType.SIGN_UP);
         this.username = username;
         this.password = password;
         this.mail = email;

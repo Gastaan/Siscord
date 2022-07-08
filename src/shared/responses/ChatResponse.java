@@ -23,7 +23,7 @@ public class ChatResponse extends Response{
      */
     //constructor
     public ChatResponse(ArrayList<Message> messages, ArrayList<Message> pinnedMessages,  String[] placeholder) {
-        super(ResType.CHAT);
+        super(ResponseType.CHAT);
         this.messages = messages;
         this.pinnedMessages = pinnedMessages;
         this.placeholder = placeholder;
