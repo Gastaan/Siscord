@@ -153,8 +153,19 @@ public class ClientHandler implements Runnable{
             changePhoneNumber((StringRequest) requested);
         else if(requestType == RequestType.CREATE_CHANEL)
             createChanel((CreateChanelRequest) requested);
+        else if(requestType == RequestType.DELETE_CHANEL)
+            deleteChanel((PlaceholderRequest) requested);
     }
-
+    private void deleteChanel(PlaceholderRequest requested) throws IOException {
+        SocialServer socialServer = servers.get(searchServerByID(Integer.parseInt(requested.getPlaceholder()[0])));
+        String chanelName = requested.getPlaceholder()[1];
+        boolean success = false;
+        if(socialServer.checkPermission(servingUser.getUsername(), Roles.DELETE_CHANEL)) {
+            socialServer.deleteChanel(chanelName);
+            success = true;
+        }
+        response.writeObject(new BooleanResponse(ResponseType.DELETE_CHANEL, success));
+    }
     /**
      * This method is used to create a new channel.
      * @param requested the request from the client.

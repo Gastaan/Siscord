@@ -70,7 +70,7 @@ public class SocialServer { //TODO : welcome message , delete server
         HashMap<String, Boolean> list = new HashMap<>();
         synchronized (chanels) {
             for (String chanelName : chanels.keySet()) {
-                list.put(chanelName, chanels.get(chanelName) instanceof TextChanel ? true : false);
+                list.put(chanelName, chanels.get(chanelName) instanceof TextChanel);
             }
         }
         return list;
@@ -99,5 +99,10 @@ public class SocialServer { //TODO : welcome message , delete server
             chanels.put(chanelName, new TextChanel());
         else
             chanels.put(chanelName, new VoiceChanel());
+    }
+    public void deleteChanel(String chanelName) {
+        synchronized (chanels) {
+            chanels.remove(chanelName);
+        }
     }
 }

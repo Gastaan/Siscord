@@ -595,7 +595,7 @@ public class Client {
             switch (choice) {
                 case 1 -> {
                     request.writeObject(new PlaceholderRequest(RequestType.DELETE_CHANEL, String.valueOf(chanels.getServerID()), chanels.getChanelNames().get(chatIndex - 1)));
-                    wait();
+                    wait(30000);
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                 default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);

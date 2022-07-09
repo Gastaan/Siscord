@@ -33,4 +33,5 @@ public enum ResponseType implements Serializable {
     CHANGE_PHONE_NUMBER,
     PERMISSION_DENIED,
     CREATE_CHANEL,
+    DELETE_CHANEL,
 }
