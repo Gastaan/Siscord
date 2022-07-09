@@ -122,4 +122,11 @@ public class SocialServer { //TODO : welcome message , delete server
            members.remove(username);
        }
     }
+    public void blockMember(String username) {
+        kickMember(username);
+        blockedUsers.add(username);
+    }
+    public String getServerOwner() {
+        return serverOwner;
+    }
 }

@@ -161,6 +161,17 @@ public class ClientHandler implements Runnable{
             serverMembers((ServerIDRequest) requested);
         else if(requestType == RequestType.KICK_MEMBER)
             kickMember((ServerMemberRequest) requested);
+        else if(requestType == RequestType.BLOCK_MEMBER)
+            blockMember((ServerMemberRequest) requested);
+    }
+    private void blockMember(ServerMemberRequest requested) throws IOException {
+        SocialServer socialServer = servers.get(searchServerByID(requested.getServerID()));
+        boolean success = false;
+        if(socialServer.checkPermission(servingUser.getUsername(), Roles.BLOCK_USER)){
+            socialServer.blockMember(requested.getName());
+            success = true;
+        }
+        response.writeObject(new BooleanResponse(ResponseType.BLOCK_MEMBER, success));
     }
     private void kickMember(ServerMemberRequest request) throws IOException {
         SocialServer socialServer = servers.get(searchServerByID(request.getServerID()));
