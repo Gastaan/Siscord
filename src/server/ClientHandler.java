@@ -154,16 +154,12 @@ public class ClientHandler implements Runnable{
     }
     private void changeEmail(StringRequest request) throws IOException {
         String email = request.getValue();
-        boolean success = false;
-        if(email.matches(mailRegex))
-            success = true;
+        boolean success = email.matches(mailRegex);
         response.writeObject(new BooleanResponse(ResponseType.CHANGE_EMAIL, success));
     }
     private void changePhoneNumber(StringRequest request) throws IOException {
         String phoneNumber = request.getValue();
-        boolean success = false;
-        if(phoneNumber.matches(phoneNumberRegex))
-            success = true;
+        boolean success = phoneNumber.matches(phoneNumberRegex);
         response.writeObject(new BooleanResponse(ResponseType.CHANGE_PHONE_NUMBER, success));
     }
     private void cancelFriendRequest(StringRequest requested) {

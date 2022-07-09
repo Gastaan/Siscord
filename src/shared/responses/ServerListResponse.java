@@ -5,17 +5,37 @@ import java.util.HashMap;
 
 /**
  * @author saman hazemi
+ * This class is used to send  list of servers to the client.
  */
 public class ServerListResponse extends Response{
     private final HashMap<Integer,String> servers;
     //constructor
+
+    /**
+     * Constructor for the ServerListResponse class.
+     * @param servers The list of servers to be sent to the client.
+     */
     public ServerListResponse(HashMap<Integer, String>servers) {
         super(ResponseType.SERVER_LIST);
         this.servers = servers;
     }
-    //getters
-    public ArrayList<String> getServers() {
-        return new ArrayList<>(servers.values());
+
+    /**
+     * Prints the list of servers.
+     */
+    public void printServer() {
+        int index = 1;
+        for (Integer i : servers.keySet()) {
+            System.out.println(index++ + "- " + i + " " + servers.get(i));
+        }
+    }
+
+    /**
+     * Getter for the list of servers.
+     * @return The list of servers.
+     */
+    public ArrayList<Integer> getServers() {
+        return new ArrayList<>(servers.keySet());
     }
     public int getID(String server) {
         for(Integer id : servers.keySet()) {

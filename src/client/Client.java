@@ -145,10 +145,7 @@ public class Client {
         }
         else if(type == ResponseType.SERVER_LIST) {
             serverList = (ServerListResponse) response;
-            int index = 1;
-            for(String server : serverList.getServers()) {
-                System.out.println(index++ + "-" + server);
-            }
+            serverList.printServer();
             notify();
         }
         else if(type == ResponseType.CHANEL_LIST) {
@@ -160,6 +157,10 @@ public class Client {
             notify();
         }
         else if(type == ResponseType.CHANGE_PASSWORD || type == ResponseType.PIN_MESSAGE) {
+            System.out.println(response);
+            notify();
+        }
+        else if(type == ResponseType.CHANGE_EMAIL || type == ResponseType.CHANGE_PHONE_NUMBER) {
             System.out.println(response);
             notify();
         }
@@ -760,50 +761,64 @@ public class Client {
         } while (index > list.getList().size() || index < 1);
         return index;
     }
-    private void voiceChanel(int chatIndex) {} //TODO : play music
-    private void servers() {
+    private void voiceChanel(int chatIndex) {} //TODO : play music _ At last
+
+    /**
+     * Servers page.
+     * @throws IOException if an I/O error occurs while sending a request to the server
+     * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
+     */
+    private void servers() throws IOException, InterruptedException {
         int choice;
         do {
-            System.out.println("1-select server\n2-new server\n3-back");
+            System.out.println(ANSI_PURPLE + "1-select server\n2-new server\n3-back" + ANSI_RESET);
             choice = scanner.nextInt();
             switch (choice) {
                 case 1 -> selectServerPage();
                 case 2 -> newServer();
-                case 3 -> System.out.println("Ok!");
-                default -> System.out.println("Invalid Choice!");
+                case 3 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
             }
         } while (choice != 3);
     }
-    private void serverPage(int serverIndex) {
+
+    /**
+     * Server page.
+     * @param serverID The index of the server in the list.
+     */
+    private void serverPage(int serverID) throws InterruptedException, IOException {
         int choice;
-        try {
             do {
-                request.writeObject(new GetChanelsRequest(serverList.getID(serverList.getServers().get(serverIndex - 1))));
-                wait();
-                System.out.println("1-select chanel\n2-add friend\n3-members\n4-setting\n5-leave server\n6-back");
-                choice = scanner.nextInt();
-                switch (choice) {
-                    case 1 -> selectChanel(serverList.getID(serverList.getServers().get(serverIndex - 1)));
-                 //   case 2 -> addFriend(serverList.getID(serverList.getServers().get(serverIndex - 1)));
-                 //    case 3 -> members(serverList.getID(serverList.getServers().get(serverIndex - 1)));
-                 //    case 4 -> serverSetting(serverList.getID(serverList.getServers().get(serverIndex - 1)));
-                 //    case 5 -> leaveServer(serverList.getID(serverList.getServers().get(serverIndex - 1)));
-                    case 6 -> System.out.println("Ok!");
-                    default -> System.out.println("Invalid Choice!");
+                System.out.println(ANSI_WHITE + "1-chanels\n2-add friend\n3-members\n4-setting\n5-leave server\n6-back" + ANSI_RESET);
+                try {
+                    choice = scanner.nextInt();
+                } catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
                 }
-            } while (choice != 2);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+                switch (choice) {
+                    case 1 -> chanels(serverID); //Create _ Delete chanel _ Limit member
+                  //  case 2 -> addFriend(serverList.getID(serverList.getServers().get(serverID - 1)));
+                 //    case 3 -> members(serverList.getID(serverList.getServers().get(serverID - 1))); //Delete member _ Block user _
+                 //    case 4 -> serverSetting(serverList.getID(serverList.getServers().get(serverID - 1)));
+                 //    case 5 -> leaveServer(serverList.getID(serverList.getServers().get(serverID - 1))); //Change server name
+                    case 6 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                    default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+                }
+            } while (choice != 6 && choice != 5);
     }
-    private synchronized void selectChanel(int serverID) {
+    private synchronized void chanels(int serverID) throws IOException, InterruptedException {
         int choice;
-        try {
             do {
                 request.writeObject(new GetChanelsRequest(serverID));
                 wait();
-                System.out.println("1-select chanel\n2-back");
-                choice = scanner.nextInt();
+                System.out.println(ANSI_PURPLE + "1-select chanel\n2-create chanel\n3-back" + ANSI_RESET);
+                try {
+                    choice = scanner.nextInt();
+                } catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
+                }
                 switch (choice) {
                     case 1 -> {
                         int chanelIndex;
@@ -816,64 +831,102 @@ public class Client {
                         else
                             textChanelPage(chanelIndex);
                     }
-                    case 2 -> System.out.println("Ok!");
+                    case 2 -> createChanel(serverID);
+                    case 3 -> System.out.println("Ok!");
                     default -> System.out.println("Invalid Choice!");
                 }
-            } while (choice != 2);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+            } while (choice != 3);
     }
-    private void selectServerPage() {
+    private void createChanel(int serverID) throws IOException, InterruptedException {
+        System.out.println(ANSI_WHITE + "Enter chanel name: " + ANSI_RESET);
+        String chanelName = scanner.next();
         int choice;
-        try {
+        do {
+            System.out.println("1-Voice Chanel\n2-Text Chanel");
+            try {
+                choice = scanner.nextInt();
+            }catch (InputMismatchException e) {
+                scanner.nextLine();
+                choice = -1;
+            }
+            if(choice < 1 || choice > 2)
+                System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+        } while(choice < 1 || choice > 2);
+        request.writeObject(new CreateChanelRequest(serverID, chanelName, choice == 1 ? true : false));
+        wait();
+        System.out.println("Chanel created!");
+    }
+    /**
+     * Select a server from the list.
+     * @throws IOException if an I/O error occurs while sending a request to the server
+     * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
+     */
+    private void selectServerPage() throws IOException, InterruptedException {
+        int choice;
             do {
                 request.writeObject(new Request(RequestType.SERVER_LIST));
                 wait();
-                    System.out.println("1-select server\n2-back");
-                    choice = scanner.nextInt();
+                    System.out.println(ANSI_PURPLE + "1-select server\n2-back" + ANSI_RESET);
+                    try {
+                        choice = scanner.nextInt();
+                    } catch (InputMismatchException e) {
+                        scanner.nextLine();
+                        choice = -1;
+                    }
                     switch (choice) {
                         case 1 -> selectServer();
-                        case 2 -> System.out.println("Ok!");
-                        default -> System.out.println("Invalid Choice!");
+                        case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                        default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                     }
             } while (choice != 2);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
     }
-    private void selectServer() {
-        int choice, serverID;
+
+    /**
+     * Select a server from the list.
+     */
+    private void selectServer() throws IOException, InterruptedException {
+        int choice, serverIndex;
         do {
-            System.out.println("1-select server\n2-back");
-            choice = scanner.nextInt();
+            System.out.println(ANSI_PURPLE + "1-select server\n2-back" + ANSI_RESET);
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                scanner.nextLine();
+                choice = -1;
+            }
             switch (choice) {
                 case 1 -> {
                     do {
-                        System.out.println("Enter server id: ");
-                        serverID = scanner.nextInt();
-                    } while (serverID > serverList.getServers().size() || serverID < 1);
-                    serverPage(serverID);
+                        System.out.println("Enter server index: ");
+                        serverIndex = scanner.nextInt();
+                    } while (serverIndex > serverList.getServers().size() || serverIndex < 1);
+                    serverPage(serverList.getServers().get(serverIndex - 1));
                 }
-                case 2 -> System.out.println("Ok!");
-                default -> System.out.println("Invalid Choice!");
+                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
             }
         } while (choice > 2 || choice < 1);
     }
-    public void newServer() {
+
+    /**
+     * This method is used to create a new server.
+     */
+    public void newServer() throws IOException, InterruptedException {
         String serverName;
         do {
             System.out.println("Enter server name: ");
             scanner.nextLine();
             serverName = scanner.nextLine();
         } while (serverName.isEmpty());
-        try {
-            request.writeObject(new StringRequest(serverName, RequestType.NEW_SERVER));
-            wait();
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        request.writeObject(new StringRequest(serverName, RequestType.NEW_SERVER));
+        wait();
     }
+
+    /**
+     * This method is used to create a new private chat.
+     * @throws IOException If an I/O error occurs while sending the request.
+     * @throws InterruptedException If the thread is interrupted while waiting for the response.
+     */
     private synchronized void newPrivateChat() throws IOException, InterruptedException {
         int choice;
         do {
@@ -923,23 +976,27 @@ public class Client {
             }
         } while(choice != 2);
     }
-    private synchronized void friends() throws IOException {
+
+    /**
+     * This method is used to get the list of friends.
+     * @throws IOException If an I/O error occurs while sending the request.
+     */
+    private synchronized void friends() throws IOException, InterruptedException {
         int choice;
         do {
+            request.writeObject(new Request(RequestType.GET_FRIENDS_LIST));
+            wait();
+            System.out.println(ANSI_PURPLE + "1-select friend\n2-Back to the main page" + ANSI_RESET);
             try {
-                request.writeObject(new Request(RequestType.GET_FRIENDS_LIST));
-                wait();
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                choice = -1;
+                scanner.nextLine();
             }
-             catch (IOException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-
-            System.out.println("1-select friend\n2-Back to the main page");
-            choice = scanner.nextInt();
             switch (choice) {
                 case 1 -> removeFriend();
-                case 2 -> System.out.println("Ok");
-                default -> System.out.println("Invalid Choice!");
+                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
             }
         } while (choice != 2);
     }
@@ -992,9 +1049,7 @@ public class Client {
             }
         } while(choice != 3);
     }
-    private void changeStatus() {
-
-    }
+    private void changeStatus() {} //TODO : change status
 
     /**
      * This method is used to change the password.
