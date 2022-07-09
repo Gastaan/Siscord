@@ -5,7 +5,7 @@ public enum Roles {
     DELETE_CHANEL,
     KICK_MEMBER,
     LIMIT_MEMBERS,
-    BLOCK_USER,
+    BLOCK_MEMBER,
     CHANGE_SERVERNAME,
     PIN_MESSAGE
 }

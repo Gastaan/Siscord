@@ -15,9 +15,6 @@ public enum ResponseType implements Serializable {
     NEW_MESSAGE,
     INCOMING_FRIEND_REQUESTS,
     ADD_FRIEND,
-    GET_FRIENDS_LIST,
-    GET_OUTGOING_FRIEND,
-    GET_BLOCKED_USERS,
     UNBLOCK_USER,
     BLOCK_USER,
     NEW_PRIVATE_CHAT,
@@ -37,5 +34,6 @@ public enum ResponseType implements Serializable {
     ADD_FRIEND_TO_SERVER,
     SERVER_MEMBERS,
     KICK_MEMBER,
-    BLOCK_MEMBER
+    BLOCK_MEMBER,
+    GIVE_ROLE
 }

@@ -163,11 +163,41 @@ public class ClientHandler implements Runnable{
             kickMember((ServerMemberRequest) requested);
         else if(requestType == RequestType.BLOCK_MEMBER)
             blockMember((ServerMemberRequest) requested);
+        else if(requestType == RequestType.GIVE_ROLE)
+            giveRole((ServerMemberRequest) requested);
+    }
+    private Roles getRole(int roleIndex) {
+        switch (roleIndex) {
+            case 1:
+                return Roles.CREATE_CHANEL;
+            case 2:
+                return Roles.DELETE_CHANEL;
+            case 3:
+                return Roles.KICK_MEMBER;
+            case 4:
+                return Roles.LIMIT_MEMBERS;
+            case 5:
+                return Roles.BLOCK_MEMBER;
+            case 6 :
+                return Roles.CHANGE_SERVERNAME;
+            case 7 :
+                return Roles.PIN_MESSAGE;
+        }
+        return null;
+    }
+    private void giveRole(ServerMemberRequest requested) throws IOException {
+        SocialServer socialServer = servers.get(searchServerByID(requested.getServerID()));
+        boolean success = false;
+        if(socialServer.getServerOwner().equals(servingUser.getUsername())) {
+            success = true;
+            socialServer.giveRole(requested.getName(), getRole(requested.getRoleIndex()));
+        }
+        response.writeObject(new BooleanResponse(ResponseType.GIVE_ROLE, success));
     }
     private void blockMember(ServerMemberRequest requested) throws IOException {
         SocialServer socialServer = servers.get(searchServerByID(requested.getServerID()));
         boolean success = false;
-        if(socialServer.checkPermission(servingUser.getUsername(), Roles.BLOCK_USER)){
+        if(socialServer.checkPermission(servingUser.getUsername(), Roles.BLOCK_MEMBER)){
             socialServer.blockMember(requested.getName());
             success = true;
         }

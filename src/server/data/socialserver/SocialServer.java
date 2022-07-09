@@ -28,7 +28,7 @@ public class SocialServer { //TODO : welcome message , delete server
         this.members = new ConcurrentHashMap<>();
         this.chanels = new ConcurrentHashMap<>();
         this.roles = new ConcurrentHashMap<>();
-        roles.put(Roles.BLOCK_USER, new HashSet<>());
+        roles.put(Roles.BLOCK_MEMBER, new HashSet<>());
         roles.put(Roles.CREATE_CHANEL, new HashSet<>());
         roles.put(Roles.DELETE_CHANEL, new HashSet<>());
         roles.put(Roles.KICK_MEMBER, new HashSet<>());
@@ -39,7 +39,7 @@ public class SocialServer { //TODO : welcome message , delete server
         roles.get(Roles.DELETE_CHANEL).add(serverOwner);
         roles.get(Roles.KICK_MEMBER).add(serverOwner);
         roles.get(Roles.LIMIT_MEMBERS).add(serverOwner);
-        roles.get(Roles.BLOCK_USER).add(serverOwner);
+        roles.get(Roles.BLOCK_MEMBER).add(serverOwner);
         roles.get(Roles.CHANGE_SERVERNAME).add(serverOwner);
         roles.get(Roles.PIN_MESSAGE).add(serverOwner);
     }
@@ -62,6 +62,7 @@ public class SocialServer { //TODO : welcome message , delete server
     }
     public void giveRole(String username, Roles role) {
         members.get(username).add(role);
+        roles.get(role).add(username);
     }
     public String getServerName() {
         return serverName;

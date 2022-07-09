@@ -21,4 +21,7 @@ public class ServerMemberRequest extends Request{
     public String getName() {
         return name;
     }
+    public int getRoleIndex() {
+        return roleIndex;
+    }
 }
