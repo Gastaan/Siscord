@@ -2,8 +2,10 @@ package server.data.socialserver;
 
 import server.data.socialserver.chanel.Chanel;
 import server.data.socialserver.chanel.TextChanel;
+import server.data.socialserver.chanel.VoiceChanel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,11 +66,11 @@ public class SocialServer { //TODO : welcome message , delete server
     public int getServerID() {
         return serverID;
     }
-    public ArrayList<String> getChanels() {
-        ArrayList<String> list = new ArrayList<>();
+    public HashMap<String, Boolean> getChanels() {
+        HashMap<String, Boolean> list = new HashMap<>();
         synchronized (chanels) {
             for (String chanelName : chanels.keySet()) {
-                list.add((chanels.get(chanelName) instanceof TextChanel ? "Text Chanel :  " : "Voice Chanel : ") + chanelName);
+                list.put(chanelName, chanels.get(chanelName) instanceof TextChanel ? true : false);
             }
         }
         return list;
@@ -81,5 +83,21 @@ public class SocialServer { //TODO : welcome message , delete server
     }
     public HashSet<String> getMembers() {
         return new HashSet<>(members.keySet());
+    }
+    public boolean checkPermission(String username, Roles role) {
+        return members.get(username).contains(role);
+    }
+    public ArrayList<String> getChanelNames() {
+        ArrayList<String> list;
+        synchronized (chanels) {
+            list = new ArrayList<>(chanels.keySet());
+        }
+        return list;
+    }
+    public void createChanel(String chanelName, boolean isText) {
+        if(isText)
+            chanels.put(chanelName, new TextChanel());
+        else
+            chanels.put(chanelName, new VoiceChanel());
     }
 }

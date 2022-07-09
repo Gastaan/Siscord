@@ -15,5 +15,9 @@ import java.io.Serializable;
     public ResponseType getResType() {
         return responseType;
     }
-
+    //toString
+    @Override
+    public String toString() {
+        return responseType.toString();
+    }
 }

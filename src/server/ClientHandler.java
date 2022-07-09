@@ -151,6 +151,26 @@ public class ClientHandler implements Runnable{
             changeEmail((StringRequest) requested);
         else if(requestType == RequestType.CHANGE_PHONE_NUMBER)
             changePhoneNumber((StringRequest) requested);
+        else if(requestType == RequestType.CREATE_CHANEL)
+            createChanel((CreateChanelRequest) requested);
+    }
+
+    /**
+     * This method is used to create a new channel.
+     * @param requested the request from the client.
+     * @throws IOException if the client is disconnected.
+     */
+    private void createChanel(CreateChanelRequest requested) throws IOException {
+        SocialServer socialServer = servers.get(searchServerByID(requested.getServerId()));
+        String chanelName = requested.getChanelName();
+        if(!socialServer.checkPermission(servingUser.getUsername(), Roles.CREATE_CHANEL))
+            response.writeObject(new Response(ResponseType.PERMISSION_DENIED));
+        else if(socialServer.getChanelNames().contains(chanelName))
+            response.writeObject(new BooleanResponse(ResponseType.CREATE_CHANEL, false));
+        else {
+           response.writeObject(new BooleanResponse(ResponseType.CREATE_CHANEL, true));
+           socialServer.createChanel(chanelName, requested.isTextChanel());
+        }
     }
     private void changeEmail(StringRequest request) throws IOException {
         String email = request.getValue();
@@ -218,16 +238,11 @@ public class ClientHandler implements Runnable{
               sendNotification(servingUser.getUsername() + "is typing...", username);
       }
     }
-    private void serverChanels(GetChanelsRequest requested) {
+    private void serverChanels(GetChanelsRequest requested) throws IOException {
         int serverID = requested.getServerID();
         SocialServer server = servers.get(serverID);
-        ArrayList<String> chanels = server.getChanels();
-        try {
-            response.writeObject(new ChanelListResponse(serverID, chanels));
-        }
-        catch (IOException e) {
-            System.err.println("Can not send response to client!");
-        }
+        HashMap<String, Boolean> chanels = server.getChanels();
+        response.writeObject(new ChanelListResponse(serverID, chanels));
     }
     private void serverList() {
         HashMap<Integer, String> serverList = new HashMap<>();

@@ -1,15 +1,16 @@
 package shared.responses;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author saman hazemi
  */
 public class ChanelListResponse extends Response{
-    private int serverID;
-    private final ArrayList<String> chanelNames;
+    private final int serverID;
+    private final HashMap<String, Boolean> chanelNames;
     //constructor
-    public ChanelListResponse(int serverID, ArrayList<String> chanelNames) {
+    public ChanelListResponse(int serverID, HashMap<String, Boolean> chanelNames) {
         super(ResponseType.CHANEL_LIST);
         this.serverID = serverID;
         this.chanelNames = chanelNames;
@@ -19,6 +20,9 @@ public class ChanelListResponse extends Response{
         return serverID;
     }
     public ArrayList<String> getChanelNames() {
-        return chanelNames;
+        return new ArrayList<>(chanelNames.keySet());
+    }
+    public boolean getChanelType(String chanelName) {
+        return chanelNames.get(chanelName);
     }
 }

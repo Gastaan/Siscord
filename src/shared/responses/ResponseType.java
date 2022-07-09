@@ -31,4 +31,6 @@ public enum ResponseType implements Serializable {
     REACTED_TO_MESSAGE,
     CHANGE_EMAIL,
     CHANGE_PHONE_NUMBER,
+    PERMISSION_DENIED,
+    CREATE_CHANEL,
 }

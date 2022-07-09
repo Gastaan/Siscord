@@ -164,6 +164,10 @@ public class Client {
             System.out.println(response);
             notify();
         }
+        else  {
+            System.out.println(response);
+            notify();
+        }
     }
 
     /**
@@ -552,25 +556,57 @@ public class Client {
     private void showPinnedMessages() {
             chat.printPinnedMessages();
         }
-    private void textChanelPage(int chatIndex) {
+
+    /**
+     * Text chat page.
+     * @param chatIndex The index of the chat.
+     */
+    private void textChanelPage(int chatIndex) throws IOException, InterruptedException {
         int choice;
-        try {
             do {
                 request.writeObject(new PlaceholderRequest(RequestType.CHAT_REQUEST, String.valueOf(chanels.getServerID()) ,  chanels.getChanelNames().get(chatIndex - 1)));
-                wait();
-                System.out.println("1-sendMessage\n2-React\n3-back to home page");
+                wait(30000);
+                System.out.println("1-sendMessage\n2-React\n3-delete chanel\n4-limit members\n5-back to home page");
                 choice = scanner.nextInt();
                 switch (choice) {
                     case 1 -> sendMessage();
                     case 2 -> react();
-                    case 3 -> System.out.println("OK!");
-                    default -> System.out.println("Invalid Choice!");
+                    case 3 -> deleteChanel(chatIndex);
+                    case 4 -> limitMembers();
+                    case 5 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                    default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
             } while (choice != 3);
         }
-        catch (InterruptedException | IOException e) {
-            throw new RuntimeException(e);
-        }
+
+    /**
+     * This method is used to delete a chanel.
+     */
+    private void deleteChanel(int chatIndex) throws IOException, InterruptedException {
+        System.out.println(ANSI_WHITE + "Are you sure you want to delete this chanel?\n1-yes\n2-no" + ANSI_RESET);
+        int choice;
+        do {
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                scanner.nextLine();
+                choice = -1;
+            }
+            switch (choice) {
+                case 1 -> {
+                    request.writeObject(new PlaceholderRequest(RequestType.DELETE_CHANEL, String.valueOf(chanels.getServerID()), chanels.getChanelNames().get(chatIndex - 1)));
+                    wait();
+                }
+                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+            }
+        } while (choice != 2);
+    }
+    /**
+     * This method is used to limit access to a chanel.
+     */
+     private void limitMembers() {
+
     }
 
     /**
@@ -797,11 +833,11 @@ public class Client {
                     choice = -1;
                 }
                 switch (choice) {
-                    case 1 -> chanels(serverID); //Create _ Delete chanel _ Limit member
+                    case 1 -> chanels(serverID);
                   //  case 2 -> addFriend(serverList.getID(serverList.getServers().get(serverID - 1)));
                  //    case 3 -> members(serverList.getID(serverList.getServers().get(serverID - 1))); //Delete member _ Block user _
-                 //    case 4 -> serverSetting(serverList.getID(serverList.getServers().get(serverID - 1)));
-                 //    case 5 -> leaveServer(serverList.getID(serverList.getServers().get(serverID - 1))); //Change server name
+                 //    case 4 -> serverSetting(serverList.getID(serverList.getServers().get(serverID - 1)));  //Change server name
+                 //    case 5 -> leaveServer(serverList.getID(serverList.getServers().get(serverID - 1)));
                     case 6 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
@@ -826,17 +862,24 @@ public class Client {
                             System.out.println("Enter chanel index: ");
                             chanelIndex = scanner.nextInt();
                         } while (chanelIndex > chanels.getChanelNames().size() || chanelIndex < 1);
-                        if(chanels.getChanelNames().get(chanelIndex - 1).contains("Voice Channel"))
-                            voiceChanel(serverID);
+                        if(!chanels.getChanelType(chanels.getChanelNames().get(chanelIndex - 1)))
+                            voiceChanel(chanelIndex);
                         else
                             textChanelPage(chanelIndex);
                     }
                     case 2 -> createChanel(serverID);
-                    case 3 -> System.out.println("Ok!");
-                    default -> System.out.println("Invalid Choice!");
+                    case 3 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                    default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
             } while (choice != 3);
     }
+
+    /**
+     * Create a new chanel.
+     * @param serverID The server ID.
+     * @throws IOException if an I/O error occurs while sending a request to the server
+     * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
+     */
     private void createChanel(int serverID) throws IOException, InterruptedException {
         System.out.println(ANSI_WHITE + "Enter chanel name: " + ANSI_RESET);
         String chanelName = scanner.next();
@@ -853,8 +896,7 @@ public class Client {
                 System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
         } while(choice < 1 || choice > 2);
         request.writeObject(new CreateChanelRequest(serverID, chanelName, choice == 1 ? true : false));
-        wait();
-        System.out.println("Chanel created!");
+        wait(10000);
     }
     /**
      * Select a server from the list.
