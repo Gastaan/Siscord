@@ -32,5 +32,6 @@ public enum RequestType implements Serializable {
     CHANGE_EMAIL,
     CHANGE_PHONE_NUMBER,
     CREATE_CHANEL,
-    DELETE_CHANEL
+    DELETE_CHANEL,
+    ADD_FRIEND_TO_SERVER
 }

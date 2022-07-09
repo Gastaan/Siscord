@@ -566,14 +566,16 @@ public class Client {
             do {
                 request.writeObject(new PlaceholderRequest(RequestType.CHAT_REQUEST, String.valueOf(chanels.getServerID()) ,  chanels.getChanelNames().get(chatIndex - 1)));
                 wait(30000);
-                System.out.println("1-sendMessage\n2-React\n3-delete chanel\n4-limit members\n5-back to home page");
+                System.out.println("1-sendMessage\n2-React\n3-pin\n4-see pinned messages\n5-delete chanel\n6-limit members\n7-back to home page");
                 choice = scanner.nextInt();
                 switch (choice) {
                     case 1 -> sendMessage();
                     case 2 -> react();
-                    case 3 -> deleteChanel(chatIndex);
-                    case 4 -> limitMembers();
-                    case 5 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                    case 3 -> pin();
+                    case 4 -> showPinnedMessages();
+                    case 5 -> deleteChanel(chatIndex);
+                    case 6 -> limitMembers();
+                    case 7 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
             } while (choice != 3);
@@ -605,7 +607,7 @@ public class Client {
     /**
      * This method is used to limit access to a chanel.
      */
-     private void limitMembers() {
+     private void limitMembers() { //TODO : AFTER MEMBERS IN MAIN PAGE OF SERVER
 
     }
 
@@ -834,7 +836,7 @@ public class Client {
                 }
                 switch (choice) {
                     case 1 -> chanels(serverID);
-                  //  case 2 -> addFriend(serverList.getID(serverList.getServers().get(serverID - 1)));
+                    case 2 -> addFriendToServer(serverID); //TODO : add friend to server
                  //    case 3 -> members(serverList.getID(serverList.getServers().get(serverID - 1))); //Delete member _ Block user _
                  //    case 4 -> serverSetting(serverList.getID(serverList.getServers().get(serverID - 1)));  //Change server name
                  //    case 5 -> leaveServer(serverList.getID(serverList.getServers().get(serverID - 1)));
@@ -842,6 +844,37 @@ public class Client {
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
             } while (choice != 6 && choice != 5);
+    }
+
+    /**
+     * Add a friend to a server.
+     * @param serverID ID of the server.
+     * @throws IOException if an I/O error occurs while sending a request to the server
+     * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
+     */
+    private void addFriendToServer(int serverID) throws IOException, InterruptedException {
+        int choice;
+        do {
+            System.out.println("1-select a friend to add to the server\n2-back");
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                scanner.nextLine();
+                choice = -1;
+            }
+            switch (choice) {
+                case 1 -> {
+                    request.writeObject(new Request(RequestType.GET_FRIENDS_LIST));
+                    wait(15000);
+                    System.out.println("Friends :");
+                    int index = selectFromList();
+                    request.writeObject(new AddFriendToServerRequest(serverID, list.getList().get(index - 1)));
+                    wait();
+                }
+                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+            }
+        } while(choice != 2);
     }
     private synchronized void chanels(int serverID) throws IOException, InterruptedException {
         int choice;
