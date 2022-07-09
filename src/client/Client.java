@@ -37,6 +37,7 @@ public class Client {
     private ListResponse list;
     private ChatResponse chat;
     private ServerListResponse serverList;
+    private ServerMembersResponse serverMembers;
     private ChanelListResponse chanels;
     //colors
     public static final String ANSI_RESET = "\u001B[0m";
@@ -165,6 +166,7 @@ public class Client {
             notify();
         }
         else if(type == ResponseType.SERVER_MEMBERS) {
+            serverMembers = (ServerMembersResponse) response;
             System.out.println(ANSI_CYAN + response + ANSI_RESET);
             notify();
         }
@@ -869,8 +871,30 @@ public class Client {
             }
         } while (choice != 4);
     }
-    private void kick(int serverID) {
-
+    private void kick(int serverID) throws IOException, InterruptedException {
+        int choice;
+        do {
+            System.out.println("1-kick member\n2-back");
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                scanner.nextLine();
+                choice = -1;
+            }
+            switch (choice) {
+                case 1 -> {
+                    String memberName;
+                    do {
+                        System.out.println(ANSI_WHITE + "Enter member name: " + ANSI_RESET);
+                        memberName = scanner.next();
+                    } while (!serverMembers.getMembers().contains(memberName));
+                    request.writeObject(new ServerMemberRequest(RequestType.KICK_MEMBER, serverID, memberName));
+                    wait();
+                }
+                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+            }
+        } while (choice < 1 || choice > 2);
     }
     private void blockUserFromServer(int serverID) {
 
@@ -900,7 +924,7 @@ public class Client {
                     wait(15000);
                     System.out.println("Friends :");
                     int index = selectFromList();
-                    request.writeObject(new AddFriendToServerRequest(serverID, list.getList().get(index - 1)));
+                    request.writeObject(new ServerMemberRequest(RequestType.ADD_FRIEND_TO_SERVER, serverID, list.getList().get(index - 1)));
                     wait();
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);

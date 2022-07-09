@@ -1,5 +1,6 @@
 package shared.responses;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ServerMembersResponse extends Response{
@@ -15,12 +16,15 @@ public class ServerMembersResponse extends Response{
     public int getServerId() {
         return serverId;
     }
+    public ArrayList<String> getMembers() {
+        return new ArrayList<>(members.keySet());
+    }
     //toString
     @Override
     public String toString() {
-        return "ServerMembersResponse{" +
-                "serverId=" + serverId +
-                ", members=" + members +
-                '}';
+        String value = "Members: \n";
+        for(String member : members.keySet())
+            value += member + " : " + members.get(member) + "\n";
+        return value;
     }
 }
