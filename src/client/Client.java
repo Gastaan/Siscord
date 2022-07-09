@@ -925,8 +925,42 @@ public class Client {
             }
         } while (choice < 1 || choice > 2);
     }
-    private void giveRole(int serverID) {
 
+    /**
+     * This method is used to give a role to a member.
+     * @param serverID The server ID.
+     * @throws IOException if an I/O error occurs while sending a request to the server
+     * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
+     */
+    private void giveRole(int serverID) throws IOException, InterruptedException {
+    int choice;
+        do {
+            System.out.println("1-give role\n2-back");
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                scanner.nextLine();
+                choice = -1;
+            }
+            switch (choice) {
+                case 1 -> {
+                    int roleIndex;
+                    do {
+                        System.out.println("1-creat chanel\n2-delete chanel\n3-kick member\n4-limit member access\n5-block member\n6-change server name\n7-pin message");
+                        try {
+                            roleIndex = scanner.nextInt();
+                        } catch (InputMismatchException e) {
+                            scanner.nextLine();
+                            roleIndex = -1;
+                        }
+                    } while (roleIndex < 1 || roleIndex > 7);
+                    request.writeObject(new ServerMemberRequest(RequestType.GIVE_ROLE, serverID, selectMember(), roleIndex));
+                    wait(15000);
+                }
+                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+            }
+        } while (choice < 1 || choice > 2);
     }
     private String selectMember() {
         String memberName;
