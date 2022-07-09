@@ -1,8 +1,5 @@
 package shared.responses;
 
-import shared.responses.ResponseType;
-import shared.responses.Response;
-import shared.responses.login.LoginStatus;
 import shared.user.User;
 
 public class LoginResponse extends Response {
@@ -16,7 +13,7 @@ public class LoginResponse extends Response {
     public User getUser() {
         return user;
     }
-    public LoginStatus getStatus() {
+    public boolean getStatus() {
         return success;
     }
 }

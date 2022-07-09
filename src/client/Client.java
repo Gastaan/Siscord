@@ -164,6 +164,10 @@ public class Client {
             System.out.println(response);
             notify();
         }
+        else if(type == ResponseType.SERVER_MEMBERS) {
+            System.out.println(ANSI_CYAN + response + ANSI_RESET);
+            notify();
+        }
         else  {
             System.out.println(response);
             notify();
@@ -836,8 +840,8 @@ public class Client {
                 }
                 switch (choice) {
                     case 1 -> chanels(serverID);
-                    case 2 -> addFriendToServer(serverID); //TODO : add friend to server
-                 //    case 3 -> members(serverList.getID(serverList.getServers().get(serverID - 1))); //Delete member _ Block user _
+                    case 2 -> addFriendToServer(serverID);
+                    case 3 -> members(serverID);
                  //    case 4 -> serverSetting(serverList.getID(serverList.getServers().get(serverID - 1)));  //Change server name
                  //    case 5 -> leaveServer(serverList.getID(serverList.getServers().get(serverID - 1)));
                     case 6 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
@@ -845,7 +849,35 @@ public class Client {
                 }
             } while (choice != 6 && choice != 5);
     }
+    private void members(int serverID) throws InterruptedException, IOException {
+        int choice;
+        do {
+            request.writeObject(new ServerIDRequest(RequestType.SERVER_MEMBERS, serverID));
+            System.out.println(ANSI_WHITE + "1-kick member\n2-block user\n3-give role\n4-back" + ANSI_RESET);
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                scanner.nextLine();
+                choice = -1;
+            }
+            switch (choice) {
+                case 1 -> kick(serverID);
+                case 2 -> blockUserFromServer(serverID);
+                case 3 -> giveRole(serverID);
+                case 4 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+            }
+        } while (choice != 4);
+    }
+    private void kick(int serverID) {
 
+    }
+    private void blockUserFromServer(int serverID) {
+
+    }
+    private void giveRole(int serverID) {
+
+    }
     /**
      * Add a friend to a server.
      * @param serverID ID of the server.
@@ -879,7 +911,7 @@ public class Client {
     private synchronized void chanels(int serverID) throws IOException, InterruptedException {
         int choice;
             do {
-                request.writeObject(new GetChanelsRequest(serverID));
+                request.writeObject(new ServerIDRequest(RequestType.SERVER_CHANELS , serverID));
                 wait();
                 System.out.println(ANSI_PURPLE + "1-select chanel\n2-create chanel\n3-back" + ANSI_RESET);
                 try {

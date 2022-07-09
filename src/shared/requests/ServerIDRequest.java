@@ -1,10 +1,10 @@
 package shared.requests;
 
-public class GetChanelsRequest extends Request{
+public class ServerIDRequest extends Request{
     private final int serverID;
     //constructor
-    public GetChanelsRequest(int serverID) {
-        super(RequestType.SERVER_CHANELS);
+    public ServerIDRequest(RequestType type, int serverID) {
+        super(type);
         this.serverID = serverID;
     }
     //getters

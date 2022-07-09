@@ -138,7 +138,7 @@ public class ClientHandler implements Runnable{
         else if(requestType == RequestType.SERVER_LIST)
             serverList();
         else if(requestType == RequestType.SERVER_CHANELS)
-            serverChanels((GetChanelsRequest) requested);
+            serverChanels((ServerIDRequest) requested);
         else if(requestType == RequestType.IS_TYPING)
             isTyping((PlaceholderRequest) requested);
         else if(requestType == RequestType.CHANGE_PASSWORD)
@@ -157,6 +157,15 @@ public class ClientHandler implements Runnable{
             deleteChanel((PlaceholderRequest) requested);
         else if(requestType == RequestType.ADD_FRIEND_TO_SERVER)
             addFriendToServer((AddFriendToServerRequest) requested);
+        else if(requestType == RequestType.SERVER_MEMBERS)
+            serverMembers((ServerIDRequest) requested);
+    }
+    private void serverMembers(ServerIDRequest requested) throws IOException {
+        SocialServer socialServer = servers.get(searchServerByID(requested.getServerID()));
+        HashMap<String, String> members = new HashMap<>();
+        for(String member : socialServer.getMembersUsername())
+            members.put(member, searchUser(member).userStatus());
+        response.writeObject(new ServerMembersResponse(socialServer.getServerID(), members));
     }
     private void addFriendToServer(AddFriendToServerRequest requested) throws IOException {
         SocialServer socialServer = servers.get(searchServerByID(requested.getServerID()));
@@ -243,7 +252,7 @@ public class ClientHandler implements Runnable{
             return accessUsers;
         }
         else
-            return notifyingServer.getMembers();
+            return notifyingServer.getMembersUsername();
     }
     private void isTyping(PlaceholderRequest requested) {
         String[] placeholder = requested.getPlaceholder();
@@ -256,7 +265,7 @@ public class ClientHandler implements Runnable{
               sendNotification(servingUser.getUsername() + "is typing...", username);
       }
     }
-    private void serverChanels(GetChanelsRequest requested) throws IOException {
+    private void serverChanels(ServerIDRequest requested) throws IOException {
         int serverID = requested.getServerID();
         SocialServer server = servers.get(serverID);
         HashMap<String, Boolean> chanels = server.getChanels();

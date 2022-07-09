@@ -22,6 +22,9 @@ public class User implements Serializable {
     public String userStatus() {
         return username + " : " + status;
     }
+    public String getStatus() {
+        return status.toString();
+    }
     public void setStatus(UserStatus status) {
         this.status = status;
     }

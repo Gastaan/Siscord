@@ -35,4 +35,5 @@ public enum ResponseType implements Serializable {
     CREATE_CHANEL,
     DELETE_CHANEL,
     ADD_FRIEND_TO_SERVER,
+    SERVER_MEMBERS
 }

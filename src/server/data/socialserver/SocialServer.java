@@ -31,13 +31,13 @@ public class SocialServer { //TODO : welcome message , delete server
         roles.put(Roles.BLOCK_USER, new HashSet<>());
         roles.put(Roles.CREATE_CHANEL, new HashSet<>());
         roles.put(Roles.DELETE_CHANEL, new HashSet<>());
-        roles.put(Roles.DELETE_MEMBER, new HashSet<>());
+        roles.put(Roles.KICK_MEMBER, new HashSet<>());
         roles.put(Roles.LIMIT_MEMBERS, new HashSet<>());
         roles.put(Roles.CHANGE_SERVERNAME, new HashSet<>());
         roles.put(Roles.PIN_MESSAGE, new HashSet<>());
         roles.get(Roles.CREATE_CHANEL).add(serverOwner);
         roles.get(Roles.DELETE_CHANEL).add(serverOwner);
-        roles.get(Roles.DELETE_MEMBER).add(serverOwner);
+        roles.get(Roles.KICK_MEMBER).add(serverOwner);
         roles.get(Roles.LIMIT_MEMBERS).add(serverOwner);
         roles.get(Roles.BLOCK_USER).add(serverOwner);
         roles.get(Roles.CHANGE_SERVERNAME).add(serverOwner);
@@ -84,7 +84,12 @@ public class SocialServer { //TODO : welcome message , delete server
         }
         return null;
     }
-    public HashSet<String> getMembers() {
+    public HashMap<String, HashSet<Roles>> getMembers() {
+        synchronized (members) {
+            return  new HashMap<>(members);
+        }
+    }
+    public HashSet<String> getMembersUsername() {
         return new HashSet<>(members.keySet());
     }
     public boolean checkPermission(String username, Roles role) {
@@ -108,4 +113,5 @@ public class SocialServer { //TODO : welcome message , delete server
             chanels.remove(chanelName);
         }
     }
+
 }
