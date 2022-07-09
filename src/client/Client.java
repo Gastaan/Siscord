@@ -3,8 +3,8 @@ package client;
 
 import shared.requests.*;
 import shared.responses.*;
-import shared.responses.list.ListResponse;
-import shared.responses.login.LoginResponse;
+import shared.responses.ListResponse;
+import shared.responses.LoginResponse;
 import shared.responses.signup.SignUpResponse;
 import shared.user.User;
 import shared.user.data.message.FileMessage;

@@ -1,8 +1,8 @@
 package client;
 
 import shared.responses.ChatResponse;
-import shared.responses.list.ListResponse;
-import shared.responses.login.LoginResponse;
+import shared.responses.ListResponse;
+import shared.responses.LoginResponse;
 import shared.responses.login.LoginStatus;
 import shared.responses.signup.SignUpResponse;
 import shared.responses.signup.SignUpStatus;

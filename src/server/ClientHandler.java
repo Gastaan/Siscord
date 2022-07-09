@@ -11,9 +11,8 @@ import shared.requests.*;
 import shared.responses.*;
 import shared.responses.addfriend.AddFriendResponse;
 import shared.responses.addfriend.AddFriendResponseStatus;
-import shared.responses.list.ListResponse;
-import shared.responses.login.LoginResponse;
-import shared.responses.login.LoginStatus;
+import shared.responses.ListResponse;
+import shared.responses.LoginResponse;
 import shared.responses.newprivatechat.NewPrivateChatResponse;
 import shared.responses.newprivatechat.NewPrivateChatStatus;
 import shared.responses.signup.SignUpResponse;
@@ -153,17 +152,25 @@ public class ClientHandler implements Runnable{
         else if(requestType == RequestType.CHANGE_PHONE_NUMBER)
             changePhoneNumber((StringRequest) requested);
     }
-    private void changeEmail(StringRequest request) {
-
+    private void changeEmail(StringRequest request) throws IOException {
+        String email = request.getValue();
+        boolean success = false;
+        if(email.matches(mailRegex))
+            success = true;
+        response.writeObject(new BooleanResponse(ResponseType.CHANGE_EMAIL, success));
     }
-    private void changePhoneNumber(StringRequest request) {
-
+    private void changePhoneNumber(StringRequest request) throws IOException {
+        String phoneNumber = request.getValue();
+        boolean success = false;
+        if(phoneNumber.matches(phoneNumberRegex))
+            success = true;
+        response.writeObject(new BooleanResponse(ResponseType.CHANGE_PHONE_NUMBER, success));
     }
     private void cancelFriendRequest(StringRequest requested) {
         userData.get(servingUser).deleteOutgoingFriendRequest(requested.getValue());
         userData.get(searchUser(requested.getValue())).deleteIncomingFriendRequest(servingUser.getUsername());
     }
-    private void pin(PinRequest request) throws IOException {
+    private void pin(PinRequest request){
         String[] placeholders = request.getPlaceHolder();
         if(placeholders.length == 1) {
             User user =  searchUser(placeholders[0]);
@@ -176,28 +183,19 @@ public class ClientHandler implements Runnable{
             TextChanel chanel = socialServer.getTextChanel(placeholders[1]);
             chanel.getChat().pinMessage(request.getTime());
         }
-        response.writeObject(new PinResponse(true));
     }
 
     /**
      * This method changes the password of the user.
      * @param requested the change password request from the client.
      */
-    private void changePassword(StringRequest requested) {
+    private void changePassword(StringRequest requested) throws IOException {
+        boolean success = false;
          if(match(requested.getValue(), passwordRegex)) {
              userData.get(servingUser).changePassword(requested.getValue());
-             try {
-                 response.writeObject(new ChangePasswordResponse(true));
-             } catch (IOException e) {
-                 throw new RuntimeException(e);
-             }
+             success = true;
          }
-         else
-                try {
-                    response.writeObject(new ChangePasswordResponse(false));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+        response.writeObject(new BooleanResponse(ResponseType.CHANGE_PASSWORD, success));
     }
     private void sendNotification(String notification, String username) {
         if(!username.equals(servingUser.getUsername()))
@@ -270,16 +268,10 @@ public class ClientHandler implements Runnable{
             userData.get(servingUser).blockUser(blockingUser.getUsername());
             success = true;
         }
-        response.writeObject(new BlockResponse(success));
+        response.writeObject(new BooleanResponse(ResponseType.BLOCK_USER ,success));
     }
     private void unblockUser(StringRequest requested) { //TODO : Failed to unblock user
         userData.get(servingUser).unblockUser(requested.getValue());
-        try {
-            response.writeObject(new UnblockResponse(true));
-        }
-        catch (IOException e) {
-            System.err.println("Can not send response to client!");
-        }
     }
     private void getBlockedUsers() throws IOException {
         response.writeObject(new ListResponse(userData.get(servingUser).getBlockedUsers()));
@@ -431,7 +423,7 @@ public class ClientHandler implements Runnable{
                         sendNotification(servingUser.getUsername() + "mentioned you : " + socialServer.getServerName(), user);
             }
         }
-        response.writeObject(new NewMessageResponse(true));
+        response.writeObject(new Response(ResponseType.MESSAGE_DELIVERED));
     }
     private void react(ReactRequest request) throws IOException {
         String time = request.getTime();
@@ -446,7 +438,7 @@ public class ClientHandler implements Runnable{
             TextChanel chanel = socialServer.getTextChanel(request.getPlaceholder()[1]);
             chanel.getChat().addReaction(servingUser.getUsername(), time, request.getReaction());
         }
-        response.writeObject(new ReactResponse(true));
+        response.writeObject(new Response(ResponseType.REACTED_TO_MESSAGE));
     }
     private void logOut() {} //TODO : log out
     private void login(LoginRequest info) throws IOException {
@@ -455,10 +447,10 @@ public class ClientHandler implements Runnable{
         password = info.getPassword();
         User loginClient = searchUser(username);
         if(loginClient == null || !userData.get(loginClient).getPassword().equals(password))
-            response.writeObject(new LoginResponse(LoginStatus.FAILURE, null));
+            response.writeObject(new LoginResponse(false, null));
         else {
                 loginClient.setStatus(UserStatus.ONLINE);
-                response.writeObject(new LoginResponse(LoginStatus.SUCCESS, loginClient));
+                response.writeObject(new LoginResponse(true, loginClient));
                 servingUser = loginClient;
                 if(onlineUsers.containsKey(username))
                     onlineUsers.get(username).add(this);

@@ -26,5 +26,9 @@ public enum ResponseType implements Serializable {
     SERVER_LIST,
     CHANEL_LIST,
     CHANGE_PASSWORD,
-    PIN_MESSAGE
+    PIN_MESSAGE,
+    MESSAGE_DELIVERED,
+    REACTED_TO_MESSAGE,
+    CHANGE_EMAIL,
+    CHANGE_PHONE_NUMBER,
 }

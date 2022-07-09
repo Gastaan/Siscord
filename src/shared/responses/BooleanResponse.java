@@ -1,16 +1,16 @@
 package shared.responses;
 
-public class ChangePasswordResponse extends Response{
+public class BooleanResponse extends Response{
     private final boolean success;
     //constructor
-    public ChangePasswordResponse(boolean success) {
-        super(ResponseType.CHANGE_PASSWORD);
+    public BooleanResponse(ResponseType type ,boolean success) {
+        super(type);
         this.success = success;
     }
     //toString
     @Override
     public String toString() {
-        return "ChangePasswordResponse{" +
+        return getResType() + "{" +
                 "success=" + success +
                 '}';
     }

@@ -1,4 +1,4 @@
-package shared.responses.list;
+package shared.responses;
 
 import shared.responses.ResponseType;
 import shared.responses.Response;
