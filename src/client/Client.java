@@ -890,12 +890,7 @@ public class Client {
             }
             switch (choice) {
                 case 1 -> {
-                    String memberName;
-                    do {
-                        System.out.println(ANSI_WHITE + "Enter member name: " + ANSI_RESET);
-                        memberName = scanner.next();
-                    } while (!serverMembers.getMembers().contains(memberName));
-                    request.writeObject(new ServerMemberRequest(RequestType.KICK_MEMBER, serverID, memberName));
+                    request.writeObject(new ServerMemberRequest(RequestType.KICK_MEMBER, serverID, selectMember()));
                     wait();
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
@@ -903,11 +898,43 @@ public class Client {
             }
         } while (choice < 1 || choice > 2);
     }
-    private void blockUserFromServer(int serverID) {
 
+    /**
+     * This method is used to block a user from a server.
+     * @param serverID The server ID.
+     * @throws IOException if an I/O error occurs while sending a request to the server
+     * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
+     */
+    private void blockUserFromServer(int serverID) throws IOException, InterruptedException {
+        int choice;
+        do {
+            System.out.println("1-block member\n2-back");
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                scanner.nextLine();
+                choice = -1;
+            }
+            switch (choice) {
+                case 1 -> {
+                    request.writeObject(new ServerMemberRequest(RequestType.BLOCK_MEMBER, serverID, selectMember()));
+                    wait();
+                }
+                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+            }
+        } while (choice < 1 || choice > 2);
     }
     private void giveRole(int serverID) {
 
+    }
+    private String selectMember() {
+        String memberName;
+        do {
+            System.out.println(ANSI_WHITE + "Enter member name: " + ANSI_RESET);
+            memberName = scanner.next();
+        } while (!serverMembers.getMembers().contains(memberName));
+        return memberName;
     }
     /**
      * Add a friend to a server.

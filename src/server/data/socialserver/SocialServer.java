@@ -113,17 +113,13 @@ public class SocialServer { //TODO : welcome message , delete server
             chanels.remove(chanelName);
         }
     }
-    public void removeMember(String username) {
-        synchronized (members) {
-            for(Roles role : members.get(username))
-                roles.get(role).remove(username);
-        }
-    }
     public void kickMember(String username) {
-       removeMember(username);
        synchronized (members) {
+           synchronized (members) {
+               for(Roles role : members.get(username))
+                   roles.get(role).remove(username);
+           }
            members.remove(username);
        }
-       blockedUsers.add(username);
     }
 }
