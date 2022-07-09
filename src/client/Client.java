@@ -871,6 +871,13 @@ public class Client {
             }
         } while (choice != 4);
     }
+
+    /**
+     * This method is used to kick a member from a server.
+     * @param serverID The server ID.
+     * @throws IOException if an I/O error occurs while sending a request to the server
+     * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
+     */
     private void kick(int serverID) throws IOException, InterruptedException {
         int choice;
         do {

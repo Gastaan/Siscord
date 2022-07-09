@@ -159,6 +159,17 @@ public class ClientHandler implements Runnable{
             addFriendToServer((ServerMemberRequest) requested);
         else if(requestType == RequestType.SERVER_MEMBERS)
             serverMembers((ServerIDRequest) requested);
+        else if(requestType == RequestType.KICK_MEMBER)
+            kickMember((ServerMemberRequest) requested);
+    }
+    private void kickMember(ServerMemberRequest request) throws IOException {
+        SocialServer socialServer = servers.get(searchServerByID(request.getServerID()));
+        boolean success = false;
+        if(socialServer.checkPermission(servingUser.getUsername(), Roles.KICK_MEMBER)) {
+            socialServer.kickMember(request.getName());
+            success = true;
+        }
+        response.writeObject(new BooleanResponse(ResponseType.KICK_MEMBER, success));
     }
     private void serverMembers(ServerIDRequest requested) throws IOException {
         SocialServer socialServer = servers.get(searchServerByID(requested.getServerID()));
