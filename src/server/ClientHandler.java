@@ -155,6 +155,13 @@ public class ClientHandler implements Runnable{
             createChanel((CreateChanelRequest) requested);
         else if(requestType == RequestType.DELETE_CHANEL)
             deleteChanel((PlaceholderRequest) requested);
+        else if(requestType == RequestType.ADD_FRIEND_TO_SERVER)
+            addFriendToServer((AddFriendToServerRequest) requested);
+    }
+    private void addFriendToServer(AddFriendToServerRequest requested) throws IOException {
+        SocialServer socialServer = servers.get(searchServerByID(requested.getServerID()));
+        String friendName = requested.getFriendName();
+        response.writeObject(new BooleanResponse(ResponseType.ADD_FRIEND_TO_SERVER, socialServer.addMember(friendName)));
     }
     private void deleteChanel(PlaceholderRequest requested) throws IOException {
         SocialServer socialServer = servers.get(searchServerByID(Integer.parseInt(requested.getPlaceholder()[0])));

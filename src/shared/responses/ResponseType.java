@@ -34,4 +34,5 @@ public enum ResponseType implements Serializable {
     PERMISSION_DENIED,
     CREATE_CHANEL,
     DELETE_CHANEL,
+    ADD_FRIEND_TO_SERVER,
 }

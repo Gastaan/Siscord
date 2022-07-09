@@ -54,8 +54,11 @@ public class SocialServer { //TODO : welcome message , delete server
     private void blockUser(String username) {
         blockedUsers.add(username);
     }
-    public void addMember(String username) {
+    public boolean addMember(String username) {
+        if(members.keySet().contains(username) || blockedUsers.contains(username))
+            return false;
         members.put(username, new HashSet<>());
+        return true;
     }
     public void giveRole(String username, Roles role) {
         members.get(username).add(role);
