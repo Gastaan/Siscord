@@ -202,7 +202,11 @@ public class UserData implements Serializable {
             servers.add(serverID);
         }
     }
-
+    public void deleteServer(int serverID) {
+        synchronized (servers) {
+            servers.remove(serverID);
+        }
+    }
     /**
      * @return The servers list.
      */

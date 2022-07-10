@@ -13,10 +13,7 @@ import shared.user.data.message.Message;
 import shared.user.data.message.Reacts;
 import shared.user.data.message.TextMessage;
 
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.TargetDataLine;
+import javax.sound.sampled.*;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -44,6 +41,7 @@ public class Client {
     private ServerListResponse serverList;
     private ServerMembersResponse serverMembers;
     private ChanelListResponse chanels;
+    private SourceDataLine speaker;
     private String inVoiceCall = null;
     //colors
     public static final String ANSI_RESET = "\u001B[0m";
@@ -160,10 +158,7 @@ public class Client {
         }
         else if(type == ResponseType.CHANEL_LIST) {
             chanels = (ChanelListResponse) response;
-            int index = 1;
-            for(String chanel : chanels.getChanelNames()) {
-                System.out.println(index++ + "-" + chanel);
-            }
+            System.out.println(ANSI_CYAN + chanels + ANSI_RESET);
             notify();
         }
         else if(type == ResponseType.CHANGE_PASSWORD || type == ResponseType.PIN_MESSAGE) {
@@ -177,6 +172,17 @@ public class Client {
         else if(type == ResponseType.SERVER_MEMBERS) {
             serverMembers = (ServerMembersResponse) response;
             System.out.println(ANSI_CYAN + response + ANSI_RESET);
+            notify();
+        }
+        else if(type == ResponseType.VOICE) {
+            VoiceResponse voice = (VoiceResponse) response;
+            if(inVoiceCall != null) {
+                byte[] buffer = voice.getBufferedVoice();
+                speaker.write(buffer, 0, voice.getBytesRead());
+            }
+        }
+        else if(response instanceof BooleanResponse) {
+            System.out.println(response);
             notify();
         }
         else  {
@@ -721,21 +727,36 @@ public class Client {
     }
     //This method sends voice to server using source data line .
     private void voiceCall() {
+        AudioFormat format = new AudioFormat(8000.0f, 16, 1, true, true);
+        DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
+        try {
+            speaker = (SourceDataLine) AudioSystem.getLine(info);
+            speaker.open(format);
+        } catch (LineUnavailableException e) {
+            throw new RuntimeException(e);
+        }
+        speaker.start();
         inVoiceCall = chat.getPlaceholder()[0];
         new Thread(new Runnable() {
          @Override
          public void run() {
              try {
-                 AudioFormat format = new AudioFormat(8000.0f, 16, 1, true, true);
+                 Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
                  TargetDataLine microphone;
                  DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
                  microphone = (TargetDataLine) AudioSystem.getLine(info);
                  microphone.open(format);
-                 byte[] buffer = new byte[1024];
-                 int count;
-                 while ((count = System.in.read(buffer, 0, buffer.length)) > 0 && inVoiceCall != null) {
-                     request.writeObject(new VoiceRequest(buffer, chat.getPlaceholder()[0]));
+                 int CHUNK_SIZE = 1024;
+                 byte[] data = new byte[microphone.getBufferSize() / 5];
+                 microphone.start();
+                 int bytesRead = 0, count;
+                 while ((count = microphone.read(data, 0, CHUNK_SIZE)) > 0 && inVoiceCall != null) {
+                     bytesRead += count;
+                     synchronized (request) {
+                         request.writeObject(new Voice(data, bytesRead, chat.getPlaceholder()[0]));
+                     }
                  }
+                 System.out.println("Closed!");
                  microphone.close();
              } catch (Exception e) {
                  System.out.println("Error");
@@ -746,8 +767,10 @@ public class Client {
         do {
             System.out.println("Enter zero to stop voice call");
         } while (scanner.nextInt() != 0);
+        speaker.drain();
+        speaker.close();
         inVoiceCall = null;
-    }
+    } //TODO : DEBUGGING
     /**
      * React to a message.
      * @throws IOException If an I/O error occurs while sending the message.
@@ -891,6 +914,8 @@ public class Client {
     private void serverPage(int serverID) throws InterruptedException, IOException {
         int choice;
             do {
+                request.writeObject(new ServerIDRequest(RequestType.SERVER_CHANELS , serverID));
+                wait();
                 System.out.println(ANSI_WHITE + "1-chanels\n2-add friend\n3-members\n4-setting\n5-leave server\n6-back" + ANSI_RESET);
                 try {
                     choice = scanner.nextInt();
@@ -899,25 +924,25 @@ public class Client {
                     choice = -1;
                 }
                 switch (choice) {
-                    case 1 -> chanels(serverID);
-                    case 2 -> addFriendToServer(serverID);
-                    case 3 -> members(serverID);
-                    case 4 -> serverSetting(serverID);  //Change server name
-                    case 5 -> leaveServer(serverID);
+                    case 1 -> chanels();
+                    case 2 -> addFriendToServer();
+                    case 3 -> members();
+                    case 4 -> serverSetting();  //Change server name
+                    case 5 -> leaveServer();
                     case 6 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
             } while (choice != 6 && choice != 5);
     }
-    private void serverSetting(int serverID) {
+    private void serverSetting() {
 
     }
-    private void leaveServer(int serverID) throws InterruptedException, IOException {
+    private void leaveServer() throws InterruptedException, IOException {
     }
-    private void members(int serverID) throws InterruptedException, IOException {
+    private void members() throws InterruptedException, IOException {
         int choice;
         do {
-            request.writeObject(new ServerIDRequest(RequestType.SERVER_MEMBERS, serverID));
+            request.writeObject(new ServerIDRequest(RequestType.SERVER_MEMBERS, chanels.getServerID()));
             wait();
             System.out.println(ANSI_WHITE + "1-kick member\n2-block user\n3-give role\n4-back" + ANSI_RESET);
             try {
@@ -927,9 +952,9 @@ public class Client {
                 choice = -1;
             }
             switch (choice) {
-                case 1 -> kick(serverID);
-                case 2 -> blockUserFromServer(serverID);
-                case 3 -> giveRole(serverID);
+                case 1 -> kick();
+                case 2 -> blockUserFromServer();
+                case 3 -> giveRole();
                 case 4 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                 default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
             }
@@ -938,11 +963,10 @@ public class Client {
 
     /**
      * This method is used to kick a member from a server.
-     * @param serverID The server ID.
      * @throws IOException if an I/O error occurs while sending a request to the server
      * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
      */
-    private void kick(int serverID) throws IOException, InterruptedException {
+    private void kick() throws IOException, InterruptedException {
         int choice;
         do {
             System.out.println("1-kick member\n2-back");
@@ -954,8 +978,11 @@ public class Client {
             }
             switch (choice) {
                 case 1 -> {
-                    request.writeObject(new ServerMemberRequest(RequestType.KICK_MEMBER, serverID, selectMember()));
-                    wait();
+                    String member = selectMember();
+                    if(member != null) {
+                        request.writeObject(new ServerMemberRequest(RequestType.KICK_MEMBER, chanels.getServerID(), member));
+                        wait();
+                    }
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                 default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
@@ -965,11 +992,10 @@ public class Client {
 
     /**
      * This method is used to block a user from a server.
-     * @param serverID The server ID.
      * @throws IOException if an I/O error occurs while sending a request to the server
      * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
      */
-    private void blockUserFromServer(int serverID) throws IOException, InterruptedException {
+    private void blockUserFromServer() throws IOException, InterruptedException {
         int choice;
         do {
             System.out.println("1-block member\n2-back");
@@ -981,8 +1007,11 @@ public class Client {
             }
             switch (choice) {
                 case 1 -> {
-                    request.writeObject(new ServerMemberRequest(RequestType.BLOCK_MEMBER, serverID, selectMember()));
-                    wait();
+                    String member = selectMember();
+                    if(member != null) {
+                        request.writeObject(new ServerMemberRequest(RequestType.BLOCK_MEMBER, chanels.getServerID(), member));
+                        wait();
+                    }
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                 default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
@@ -992,11 +1021,10 @@ public class Client {
 
     /**
      * This method is used to give a role to a member.
-     * @param serverID The server ID.
      * @throws IOException if an I/O error occurs while sending a request to the server
      * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
      */
-    private void giveRole(int serverID) throws IOException, InterruptedException {
+    private void giveRole() throws IOException, InterruptedException {
     int choice;
         do {
             System.out.println("1-give role\n2-back");
@@ -1018,16 +1046,28 @@ public class Client {
                             roleIndex = -1;
                         }
                     } while (roleIndex < 1 || roleIndex > 7);
-                    request.writeObject(new ServerMemberRequest(RequestType.GIVE_ROLE, serverID, selectMember(), roleIndex));
-                    wait(15000);
+                    String member = selectMember();
+                    if(member != null) {
+                        request.writeObject(new ServerMemberRequest(RequestType.GIVE_ROLE, chanels.getServerID(), member, roleIndex));
+                        wait(15000);
+                    }
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                 default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
             }
         } while (choice < 1 || choice > 2);
     }
+
+    /**
+     * This method is used to select a member from the list of members.
+     * @return the name of the member selected by the client
+     */
     private String selectMember() {
         String memberName;
+        if(serverMembers.getMembers().size() == 1) {
+            System.out.println(ANSI_BLACK + "No members" + ANSI_RESET);
+            return null;
+        }
         do {
             System.out.println(ANSI_WHITE + "Enter member name: " + ANSI_RESET);
             memberName = scanner.next();
@@ -1036,11 +1076,10 @@ public class Client {
     }
     /**
      * Add a friend to a server.
-     * @param serverID ID of the server.
      * @throws IOException if an I/O error occurs while sending a request to the server
      * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
      */
-    private void addFriendToServer(int serverID) throws IOException, InterruptedException {
+    private void addFriendToServer() throws IOException, InterruptedException {
         int choice;
         do {
             System.out.println("1-select a friend to add to the server\n2-back");
@@ -1057,7 +1096,7 @@ public class Client {
                     System.out.println("Friends :");
                     int index = selectFromList();
                     if(index != -1) {
-                        request.writeObject(new ServerMemberRequest(RequestType.ADD_FRIEND_TO_SERVER, serverID, list.getList().get(index - 1)));
+                        request.writeObject(new ServerMemberRequest(RequestType.ADD_FRIEND_TO_SERVER, chanels.getServerID(), list.getList().get(index - 1).substring(0, list.getList().get(index - 1).indexOf(" "))));
                         wait();
                     }
                 }
@@ -1066,10 +1105,10 @@ public class Client {
             }
         } while(choice != 2);
     }
-    private synchronized void chanels(int serverID) throws IOException, InterruptedException {
+    private synchronized void chanels() throws IOException, InterruptedException {
         int choice;
             do {
-                request.writeObject(new ServerIDRequest(RequestType.SERVER_CHANELS , serverID));
+                request.writeObject(new ServerIDRequest(RequestType.SERVER_CHANELS , chanels.getServerID()));
                 wait();
                 System.out.println(ANSI_PURPLE + "1-select chanel\n2-create chanel\n3-back" + ANSI_RESET);
                 try {
@@ -1090,7 +1129,7 @@ public class Client {
                         else
                             textChanelPage(chanelIndex);
                     }
-                    case 2 -> createChanel(serverID);
+                    case 2 -> createChanel();
                     case 3 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
@@ -1099,11 +1138,10 @@ public class Client {
 
     /**
      * Create a new chanel.
-     * @param serverID The server ID.
      * @throws IOException if an I/O error occurs while sending a request to the server
      * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
      */
-    private void createChanel(int serverID) throws IOException, InterruptedException {
+    private void createChanel() throws IOException, InterruptedException {
         System.out.println(ANSI_WHITE + "Enter chanel name: " + ANSI_RESET);
         String chanelName = scanner.next();
         int choice;
@@ -1118,7 +1156,7 @@ public class Client {
             if(choice < 1 || choice > 2)
                 System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
         } while(choice < 1 || choice > 2);
-        request.writeObject(new CreateChanelRequest(serverID, chanelName, choice == 1 ? true : false));
+        request.writeObject(new CreateChanelRequest(chanels.getServerID(), chanelName, choice == 1));
         wait(10000);
     }
     /**
@@ -1150,27 +1188,17 @@ public class Client {
      * Select a server from the list.
      */
     private void selectServer() throws IOException, InterruptedException {
-        int choice, serverIndex;
+        int  serverIndex;
+        if(serverList.getServers().size() == 0) {
+            System.out.println(ANSI_BLACK + "No servers" + ANSI_RESET);
+            return;
+        }
         do {
-            System.out.println(ANSI_PURPLE + "1-select server\n2-back" + ANSI_RESET);
-            try {
-                choice = scanner.nextInt();
-            } catch (InputMismatchException e) {
-                scanner.nextLine();
-                choice = -1;
-            }
-            switch (choice) {
-                case 1 -> {
-                    do {
-                        System.out.println("Enter server index: ");
-                        serverIndex = scanner.nextInt();
-                    } while (serverIndex > serverList.getServers().size() || serverIndex < 1);
-                    serverPage(serverList.getServers().get(serverIndex - 1));
-                }
-                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
-                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
-            }
-        } while (choice > 2 || choice < 1);
+            serverList.printServer();
+            System.out.println("Enter server index: ");
+            serverIndex = scanner.nextInt();
+        } while (serverIndex > serverList.getServers().size() || serverIndex < 1);
+        serverPage(serverList.getServers().get(serverIndex - 1));
     }
 
     /**

@@ -38,5 +38,6 @@ public enum ResponseType implements Serializable {
     GIVE_ROLE,
     STATUS_CHANGED,
     LOGGED_OUT,
-    IS_TYPING
+    IS_TYPING,
+    VOICE
 }

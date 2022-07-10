@@ -25,4 +25,13 @@ public class ChanelListResponse extends Response{
     public boolean getChanelType(String chanelName) {
         return chanelNames.get(chanelName);
     }
+    //toString
+    @Override
+    public String toString() {
+        int index = 1;
+        String value = "Chanels: \n";
+        for(String chanelName : chanelNames.keySet())
+            value += index++ + "- " + chanelName + " : " + chanelNames.get(chanelName) + "\n";
+        return value;
+    }
 }

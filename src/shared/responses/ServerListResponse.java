@@ -26,7 +26,7 @@ public class ServerListResponse extends Response{
     public void printServer() {
         int index = 1;
         for (Integer i : servers.keySet()) {
-            System.out.println(index++ + "- " + i + " " + servers.get(i));
+            System.out.println(index++ + "- id: " + i + " " + servers.get(i));
         }
     }
 

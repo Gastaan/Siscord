@@ -42,6 +42,14 @@ public class SocialServer { //TODO : welcome message , delete server
         roles.get(Roles.BLOCK_MEMBER).add(serverOwner);
         roles.get(Roles.CHANGE_SERVERNAME).add(serverOwner);
         roles.get(Roles.PIN_MESSAGE).add(serverOwner);
+        members.put(serverOwner, new HashSet<>());
+        members.get(serverOwner).add(Roles.CREATE_CHANEL);
+        members.get(serverOwner).add(Roles.DELETE_CHANEL);
+        members.get(serverOwner).add(Roles.KICK_MEMBER);
+        members.get(serverOwner).add(Roles.LIMIT_MEMBERS);
+        members.get(serverOwner).add(Roles.BLOCK_MEMBER);
+        members.get(serverOwner).add(Roles.CHANGE_SERVERNAME);
+        members.get(serverOwner).add(Roles.PIN_MESSAGE);
     }
     public HashSet<String> getRoles(Roles role) {
         synchronized (roles) {
@@ -55,7 +63,7 @@ public class SocialServer { //TODO : welcome message , delete server
         blockedUsers.add(username);
     }
     public boolean addMember(String username) {
-        if(members.keySet().contains(username) || blockedUsers.contains(username))
+        if(members.containsKey(username) || blockedUsers.contains(username))
             return false;
         members.put(username, new HashSet<>());
         return true;

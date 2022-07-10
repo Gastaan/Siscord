@@ -84,6 +84,7 @@ public class ClientHandler implements Runnable{
         Request requested;
         try {
             while (socket.isConnected()) {
+                reset();
                 requested = (Request) request.readObject();
                 giveResponse(requested);
             }
@@ -174,7 +175,21 @@ public class ClientHandler implements Runnable{
             changeStatus((StringRequest) requested);
         else if(requestType == RequestType.LOGOUT)
             logOut();
-        reset();
+        else if(requestType == RequestType.VOICE)
+            sendVoiceCall((Voice) requested);
+    }
+    private void sendVoiceCall(Voice requested) throws IOException {
+        String receiver = requested.getUsername();
+        VoiceResponse response = new VoiceResponse(requested.getBufferedVoice(), requested.getBytesRead(), servingUser.getUsername());
+        for(ClientHandler client : onlineUsers.get(receiver)) {
+            client.getVoiceCall(response);
+        }
+    }
+    private void getVoiceCall(VoiceResponse voice) throws IOException {
+        synchronized (response) {
+            response.writeObject(voice);
+            reset();
+        }
     }
     private UserStatus findStatus(String status) {
         return switch (status) {
@@ -214,8 +229,9 @@ public class ClientHandler implements Runnable{
     private void blockMember(ServerMemberRequest requested) throws IOException {
         SocialServer socialServer = servers.get(searchServerByID(requested.getServerID()));
         boolean success = false;
-        if(socialServer.checkPermission(servingUser.getUsername(), Roles.BLOCK_MEMBER)){
+        if(socialServer.checkPermission(servingUser.getUsername(), Roles.BLOCK_MEMBER) && !socialServer.getServerOwner().equals(requested.getName())) {
             socialServer.blockMember(requested.getName());
+            userData.get(searchUser(requested.getName())).deleteServer(requested.getServerID());
             success = true;
         }
         response.writeObject(new BooleanResponse(ResponseType.BLOCK_MEMBER, success));
@@ -223,8 +239,9 @@ public class ClientHandler implements Runnable{
     private void kickMember(ServerMemberRequest request) throws IOException {
         SocialServer socialServer = servers.get(searchServerByID(request.getServerID()));
         boolean success = false;
-        if(socialServer.checkPermission(servingUser.getUsername(), Roles.KICK_MEMBER)) {
+        if(socialServer.checkPermission(servingUser.getUsername(), Roles.KICK_MEMBER) && !socialServer.getServerOwner().equals(request.getName())) {
             socialServer.kickMember(request.getName());
+            userData.get(searchUser(request.getName())).deleteServer(request.getServerID());
             success = true;
         }
         response.writeObject(new BooleanResponse(ResponseType.KICK_MEMBER, success));
@@ -233,13 +250,17 @@ public class ClientHandler implements Runnable{
         SocialServer socialServer = servers.get(searchServerByID(requested.getServerID()));
         HashMap<String, String> members = new HashMap<>();
         for(String member : socialServer.getMembersUsername())
-            members.put(member, searchUser(member).userStatus());
+            members.put(member, searchUser(member).getStatus().toString());
         response.writeObject(new ServerMembersResponse(socialServer.getServerID(), members));
     }
     private void addFriendToServer(ServerMemberRequest requested) throws IOException {
         SocialServer socialServer = servers.get(searchServerByID(requested.getServerID()));
         String friendName = requested.getName();
-        response.writeObject(new BooleanResponse(ResponseType.ADD_FRIEND_TO_SERVER, socialServer.addMember(friendName)));
+        boolean success = socialServer.addMember(friendName);
+        if(success)
+            userData.get(searchUser(friendName)).addServer(socialServer.getServerID());
+        response.writeObject(new BooleanResponse(ResponseType.ADD_FRIEND_TO_SERVER, success));
+
     }
     private void deleteChanel(PlaceholderRequest requested) throws IOException {
         SocialServer socialServer = servers.get(searchServerByID(Integer.parseInt(requested.getPlaceholder()[0])));
@@ -350,10 +371,9 @@ public class ClientHandler implements Runnable{
       response.writeObject(new Response(ResponseType.IS_TYPING));
     }
     private void serverChanels(ServerIDRequest requested) throws IOException {
-        int serverID = requested.getServerID();
-        SocialServer server = servers.get(serverID);
+        SocialServer server = servers.get(searchServerByID(requested.getServerID()));
         HashMap<String, Boolean> chanels = server.getChanels();
-        response.writeObject(new ChanelListResponse(serverID, chanels));
+        response.writeObject(new ChanelListResponse(requested.getServerID(), chanels));
     }
     private void serverList() {
         HashMap<Integer, String> serverList = new HashMap<>();
@@ -370,16 +390,17 @@ public class ClientHandler implements Runnable{
             System.err.println("Can not send server list to client!");
         }
     } //Done
-    private void newServer(StringRequest requested) {
+
+    /**
+     * This method is used to create a new server.
+     * @param requested
+     * @throws IOException
+     */
+    private void newServer(StringRequest requested) throws IOException {
         SocialServer server = new SocialServer(requested.getValue(), servingUser.getUsername());
         servers.add(server);
         userData.get(servingUser).addServer(server.getServerID());
-        try {
-            response.writeObject(new NewServerResponse(true, server.getServerID()));
-        }
-        catch (IOException e) {
-            System.err.println("Can not send new server response!");
-        }
+        response.writeObject(new NewServerResponse(true, server.getServerID()));
     }
     private void blockUser(StringRequest requested) throws IOException {
         User blockingUser = searchUser(requested.getValue());
@@ -640,6 +661,7 @@ public class ClientHandler implements Runnable{
         synchronized (response) {
             try {
                 response.writeObject(new Notification(notification));
+                reset();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
