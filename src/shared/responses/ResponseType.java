@@ -37,5 +37,6 @@ public enum ResponseType implements Serializable {
     BLOCK_MEMBER,
     GIVE_ROLE,
     STATUS_CHANGED,
-    LOGGED_OUT
+    LOGGED_OUT,
+    IS_TYPING
 }

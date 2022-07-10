@@ -554,11 +554,14 @@ public class Client {
                             int messageIndex;
                             do {
                                 messageIndex = selectMessage();
-                                if(chat.getMessages().get(messageIndex - 1).isPinned())
-                                    System.out.println(ANSI_RED + "Message is already pinned" + ANSI_RESET);
-                            } while(chat.getMessages().get(messageIndex - 1).isPinned());
-                            request.writeObject(new PinRequest(chat.getMessages().get(messageIndex - 1).getTime(), chat.getPlaceholder()));
-                            wait();
+                                if(messageIndex != -1)
+                                    if (chat.getMessages().get(messageIndex - 1).isPinned())
+                                        System.out.println(ANSI_RED + "Message is already pinned" + ANSI_RESET);
+                            } while(chat.getMessages().get(messageIndex - 1).isPinned() && messageIndex != -1);
+                            if(messageIndex != -1) {
+                                request.writeObject(new PinRequest(chat.getMessages().get(messageIndex - 1).getTime(), chat.getPlaceholder()));
+                                wait();
+                            }
                         }
                         case 2 -> System.out.println(ANSI_BLUE + "Ok" + ANSI_RESET);
                         default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
@@ -646,8 +649,9 @@ public class Client {
             }
             switch (choice) {
                 case 1 -> {
-                    request.writeObject(new PlaceholderRequest(RequestType.NEW_MESSAGE, chat.getPlaceholder()));
+                    request.writeObject(new PlaceholderRequest(RequestType.IS_TYPING, chat.getPlaceholder()));
                     wait();
+
                     System.out.println(ANSI_WHITE + "Enter your message: " + ANSI_RESET);
                     scanner.nextLine();
                     String message = scanner.nextLine();
@@ -728,26 +732,28 @@ public class Client {
                 switch (choice) {
                     case 1 ->  {
                         int messageIndex = selectMessage();
-                        Message message = chat.getMessages().get(messageIndex - 1);
-                        Reacts reaction = null;
-                        do {
-                            System.out.println(ANSI_WHITE + "Enter your reaction: \n1-like\n2-dislike\n3-lol" + ANSI_RESET);
-                            try {
-                                reactChoice = scanner.nextInt();
-                            } catch (InputMismatchException e) {
-                                scanner.nextLine();
-                                reactChoice = -1;
+                        if(messageIndex != -1) {
+                            Message message = chat.getMessages().get(messageIndex - 1);
+                            Reacts reaction = null;
+                            do {
+                                System.out.println(ANSI_WHITE + "Enter your reaction: \n1-like\n2-dislike\n3-lol" + ANSI_RESET);
+                                try {
+                                    reactChoice = scanner.nextInt();
+                                } catch (InputMismatchException e) {
+                                    scanner.nextLine();
+                                    reactChoice = -1;
+                                }
+                                switch (reactChoice) {
+                                    case 1 -> reaction = Reacts.LIKE;
+                                    case 2 -> reaction = Reacts.DISLIKE;
+                                    case 3 -> reaction = Reacts.LOL;
+                                    default -> System.out.println(ANSI_RED + "Invalid !" + ANSI_RESET);
+                                }
                             }
-                            switch (reactChoice) {
-                                case 1 -> reaction = Reacts.LIKE;
-                                case 2 -> reaction = Reacts.DISLIKE;
-                                case 3 -> reaction = Reacts.LOL;
-                                default -> System.out.println(ANSI_RED + "Invalid !" + ANSI_RESET);
-                            }
+                            while (reactChoice > 3 || reactChoice < 1);
+                            request.writeObject(new ReactRequest(message.getTime(), reaction, chat.getPlaceholder()));
+                            wait();
                         }
-                        while (reactChoice > 3 || reactChoice < 1);
-                        request.writeObject(new ReactRequest(message.getTime(), reaction, chat.getPlaceholder()));
-                        wait();
                     }
                     case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
@@ -755,8 +761,9 @@ public class Client {
         } while(choice != 2);
     }
     private int selectMessage() {
-    int messageIndex;
+    int messageIndex = -1;
     chat.printAllMessages();
+    if(chat.getMessages().size() != 0) {
         do {
             System.out.println(ANSI_WHITE + "Enter message index: " + ANSI_RESET);
             try {
@@ -765,9 +772,12 @@ public class Client {
                 scanner.nextLine();
                 messageIndex = -1;
             }
-            if(messageIndex > chat.getMessages().size() || messageIndex < 1)
+            if (messageIndex > chat.getMessages().size() || messageIndex < 1)
                 System.out.println(ANSI_RED + "Invalid!" + ANSI_RESET);
         } while (messageIndex < 1 || messageIndex > chat.getMessages().size());
+    }
+    else
+        System.out.println(ANSI_BLACK + "No messages!" + ANSI_RESET);
         return messageIndex;
     }
     /**

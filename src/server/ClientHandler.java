@@ -332,7 +332,7 @@ public class ClientHandler implements Runnable{
         else
             return notifyingServer.getMembersUsername();
     }
-    private void isTyping(PlaceholderRequest requested) {
+    private void isTyping(PlaceholderRequest requested) throws IOException {
         String[] placeholder = requested.getPlaceholder();
       if(placeholder.length == 1)
               sendNotification(servingUser.getUsername() + "is typing...", placeholder[0]);
@@ -342,6 +342,7 @@ public class ClientHandler implements Runnable{
           for(String username : qualifyServerMembersToGetNotification(notifyingServer, textChanel))
               sendNotification(servingUser.getUsername() + "is typing...", username);
       }
+      response.writeObject(new Response(ResponseType.IS_TYPING));
     }
     private void serverChanels(ServerIDRequest requested) throws IOException {
         int serverID = requested.getServerID();
