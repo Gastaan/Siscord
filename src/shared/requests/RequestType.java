@@ -39,5 +39,6 @@ public enum RequestType implements Serializable {
     BLOCK_MEMBER,
     GIVE_ROLE,
     CHANGE_STATUS,
-    LOGOUT
+    LOGOUT,
+    VOICE
 }

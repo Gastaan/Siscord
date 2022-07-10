@@ -13,6 +13,10 @@ import shared.user.data.message.Message;
 import shared.user.data.message.Reacts;
 import shared.user.data.message.TextMessage;
 
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.TargetDataLine;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -40,6 +44,7 @@ public class Client {
     private ServerListResponse serverList;
     private ServerMembersResponse serverMembers;
     private ChanelListResponse chanels;
+    private String inVoiceCall = null;
     //colors
     public static final String ANSI_RESET = "\u001B[0m";
     public static final String ANSI_BLACK = "\u001B[30m";
@@ -559,6 +564,7 @@ public class Client {
                                         System.out.println(ANSI_RED + "Message is already pinned" + ANSI_RESET);
                             } while(chat.getMessages().get(messageIndex - 1).isPinned() && messageIndex != -1);
                             if(messageIndex != -1) {
+                                chat.getMessages().get(messageIndex - 1).setPinned();
                                 request.writeObject(new PinRequest(chat.getMessages().get(messageIndex - 1).getTime(), chat.getPlaceholder()));
                                 wait();
                             }
@@ -713,7 +719,35 @@ public class Client {
             }
         }).start();
     }
-    private void voiceCall() { } //TODO : voice call _ At last
+    //This method sends voice to server using source data line .
+    private void voiceCall() {
+        inVoiceCall = chat.getPlaceholder()[0];
+        new Thread(new Runnable() {
+         @Override
+         public void run() {
+             try {
+                 AudioFormat format = new AudioFormat(8000.0f, 16, 1, true, true);
+                 TargetDataLine microphone;
+                 DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
+                 microphone = (TargetDataLine) AudioSystem.getLine(info);
+                 microphone.open(format);
+                 byte[] buffer = new byte[1024];
+                 int count;
+                 while ((count = System.in.read(buffer, 0, buffer.length)) > 0 && inVoiceCall != null) {
+                     request.writeObject(new VoiceRequest(buffer, chat.getPlaceholder()[0]));
+                 }
+                 microphone.close();
+             } catch (Exception e) {
+                 System.out.println("Error");
+                 e.printStackTrace();
+             }
+         }
+     }).start();
+        do {
+            System.out.println("Enter zero to stop voice call");
+        } while (scanner.nextInt() != 0);
+        inVoiceCall = null;
+    }
     /**
      * React to a message.
      * @throws IOException If an I/O error occurs while sending the message.

@@ -11,6 +11,7 @@ abstract public class Message implements Serializable {
     private final HashMap<Reacts, HashSet<String>> reacts;
     private boolean isPinned;
     public Message(String writer) {
+        isPinned = false;
         this.writer = writer;
         this.time = LocalDateTime.now();
         this.reacts = new HashMap<>();
@@ -40,6 +41,6 @@ abstract public class Message implements Serializable {
         return isPinned;
     }
     public void setPinned() {
-        isPinned = !isPinned;
+        isPinned = true;
     }
 }

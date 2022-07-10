@@ -290,21 +290,25 @@ public class ClientHandler implements Runnable{
         userData.get(servingUser).deleteOutgoingFriendRequest(requested.getValue());
         userData.get(searchUser(requested.getValue())).deleteIncomingFriendRequest(servingUser.getUsername());
     }
-    private void pin(PinRequest request){
+    private void pin(PinRequest request) throws IOException {
         String[] placeholders = request.getPlaceHolder();
+        boolean success = false;
         if(placeholders.length == 1) {
             User user =  searchUser(placeholders[0]);
             userData.get(servingUser).getPrivateChat(user.getUsername()).pinMessage(request.getTime());
             userData.get(user).getPrivateChat(servingUser.getUsername()).pinMessage(request.getTime());
+            success = true;
         }
         else {
             int serverID = Integer.parseInt(placeholders[0]);
             SocialServer socialServer = servers.get(searchServerByID(serverID));
             if(socialServer.checkPermission(servingUser.getUsername(), Roles.PIN_MESSAGE)) {
+                success = true;
                 TextChanel chanel = socialServer.getTextChanel(placeholders[1]);
                 chanel.getChat().pinMessage(request.getTime());
             }
         }
+        response.writeObject(new BooleanResponse(ResponseType.PIN_MESSAGE, success));
     }
 
     /**
