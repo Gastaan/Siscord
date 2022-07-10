@@ -40,5 +40,6 @@ public enum RequestType implements Serializable {
     GIVE_ROLE,
     CHANGE_STATUS,
     LOGOUT,
-    VOICE
+    VOICE,
+    CHANGE_SERVER_NAME
 }

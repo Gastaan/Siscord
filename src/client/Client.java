@@ -927,15 +927,30 @@ public class Client {
                     case 1 -> chanels();
                     case 2 -> addFriendToServer();
                     case 3 -> members();
-                    case 4 -> serverSetting();  //Change server name
+                    case 4 -> serverSetting();
                     case 5 -> leaveServer();
                     case 6 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
             } while (choice != 6 && choice != 5);
     }
-    private void serverSetting() {
-
+    private void serverSetting() throws IOException, InterruptedException {
+        int choice;
+        do {
+            System.out.println("1-change name\n2-back");
+            choice = scanner.nextInt();
+            switch (choice) {
+                case 1 ->  {
+                    System.out.println(ANSI_WHITE + "Enter new name: " + ANSI_RESET);
+                    scanner.nextLine();
+                    String name = scanner.nextLine();
+                    request.writeObject(new StringRequest(name, RequestType.CHANGE_SERVER_NAME));
+                    wait();
+                }
+                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+            }
+        } while(choice < 1 || choice > 2);
     }
     private void leaveServer() throws InterruptedException, IOException {
     }
