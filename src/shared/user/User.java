@@ -25,6 +25,12 @@ public class User implements Serializable {
     public String getStatus() {
         return status.toString();
     }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
     public void setStatus(UserStatus status) {
         this.status = status;
     }

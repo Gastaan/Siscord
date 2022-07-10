@@ -3,7 +3,6 @@ package client;
 import shared.responses.ChatResponse;
 import shared.responses.ListResponse;
 import shared.responses.LoginResponse;
-import shared.responses.login.LoginStatus;
 import shared.responses.signup.SignUpResponse;
 import shared.responses.signup.SignUpStatus;
 import shared.user.User;
@@ -14,7 +13,7 @@ import java.util.Scanner;
 public class ResponseHandler {
     private static final Scanner scanner = new Scanner(System.in);
     public User loginResponse(LoginResponse loginResponse) {
-        if (loginResponse.getStatus() == LoginStatus.SUCCESS) {
+        if (loginResponse.getStatus()) {
             return loginResponse.getUser();
         } else {
             return null;

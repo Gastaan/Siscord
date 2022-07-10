@@ -307,7 +307,7 @@ public class Client {
                 case 10 -> System.out.println(ANSI_BLUE + "Bye Bye!" + ANSI_RESET);
                 default -> System.out.println(ANSI_RED + "Invalid Choice!" + ANSI_RESET);
             }
-        } while (choice != 9);
+        } while (choice != 10);
         logOut();
     }
     private void logOut() { //TODO : clear all the data
@@ -580,7 +580,7 @@ public class Client {
                     case 3 -> pin();
                     case 4 -> showPinnedMessages();
                     case 5 -> deleteChanel(chatIndex);
-                    case 6 -> limitMembers();
+                    case 6 -> limitMembers(5);
                     case 7 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
@@ -613,8 +613,9 @@ public class Client {
     /**
      * This method is used to limit access to a chanel.
      */
-     private void limitMembers() { //TODO : AFTER MEMBERS IN MAIN PAGE OF SERVER
-
+     private void limitMembers(int serverID) throws IOException, InterruptedException {
+         request.writeObject(new ServerIDRequest(RequestType.SERVER_MEMBERS, serverID));
+         wait();
     }
 
     /**
@@ -844,17 +845,23 @@ public class Client {
                     case 1 -> chanels(serverID);
                     case 2 -> addFriendToServer(serverID);
                     case 3 -> members(serverID);
-                 //    case 4 -> serverSetting(serverList.getID(serverList.getServers().get(serverID - 1)));  //Change server name
-                 //    case 5 -> leaveServer(serverList.getID(serverList.getServers().get(serverID - 1)));
+                    case 4 -> serverSetting(serverID);  //Change server name
+                    case 5 -> leaveServer(serverID);
                     case 6 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
             } while (choice != 6 && choice != 5);
     }
+    private void serverSetting(int serverID) {
+
+    }
+    private void leaveServer(int serverID) throws InterruptedException, IOException {
+    }
     private void members(int serverID) throws InterruptedException, IOException {
         int choice;
         do {
             request.writeObject(new ServerIDRequest(RequestType.SERVER_MEMBERS, serverID));
+            wait();
             System.out.println(ANSI_WHITE + "1-kick member\n2-block user\n3-give role\n4-back" + ANSI_RESET);
             try {
                 choice = scanner.nextInt();
@@ -1225,6 +1232,7 @@ public class Client {
             }
         } while (choice > 2 || choice < 1);
     }
+    private void changeStatus() {} //TODO : change status
 
     /**
      * Settings page.
@@ -1246,9 +1254,8 @@ public class Client {
                 case 4 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                 default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
             }
-        } while(choice != 3);
+        } while(choice != 4);
     }
-    private void changeStatus() {} //TODO : change status
 
     /**
      * This method is used to change the password.
@@ -1282,10 +1289,10 @@ public class Client {
      * @throws IOException if an I/O error occurs while sending the request.
      */
     private void changePhoneNumber() throws InterruptedException, IOException {
-        String password;
+        String newPhoneNumber;
         System.out.println("Enter new phone number: ");
-        password = scanner.next();
-        request.writeObject(new StringRequest(password, RequestType.CHANGE_PHONE_NUMBER));
+        newPhoneNumber = scanner.next();
+        request.writeObject(new StringRequest(newPhoneNumber, RequestType.CHANGE_PHONE_NUMBER));
         wait();
     }
     /**

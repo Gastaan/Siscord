@@ -51,7 +51,7 @@ public class ClientHandler implements Runnable{
     private final String usernameRegex = "[a-zA-Z0-9]{6,}";
     private final String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9]{8,}$";
     private final String mailRegex = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
-    private final String phoneNumberRegex = " ^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$ ";
+    private final String phoneNumberRegex = "^(\\+98|0)?9\\d{9}$";
 
     /**
      * constructor of the client handler class.
@@ -253,12 +253,20 @@ public class ClientHandler implements Runnable{
     }
     private void changeEmail(StringRequest request) throws IOException {
         String email = request.getValue();
-        boolean success = email.matches(mailRegex);
+        boolean success = match(email, mailRegex);
+        if(success)
+            synchronized (servingUser) {
+                servingUser.setEmail(email);
+            }
         response.writeObject(new BooleanResponse(ResponseType.CHANGE_EMAIL, success));
     }
     private void changePhoneNumber(StringRequest request) throws IOException {
         String phoneNumber = request.getValue();
-        boolean success = phoneNumber.matches(phoneNumberRegex);
+        boolean success = match(phoneNumber, phoneNumberRegex);
+        if(success)
+            synchronized (servingUser) {
+                servingUser.setPhoneNumber(phoneNumber);
+            }
         response.writeObject(new BooleanResponse(ResponseType.CHANGE_PHONE_NUMBER, success));
     }
     private void cancelFriendRequest(StringRequest requested) {
@@ -275,8 +283,10 @@ public class ClientHandler implements Runnable{
         else {
             int serverID = Integer.parseInt(placeholders[0]);
             SocialServer socialServer = servers.get(searchServerByID(serverID));
-            TextChanel chanel = socialServer.getTextChanel(placeholders[1]);
-            chanel.getChat().pinMessage(request.getTime());
+            if(socialServer.checkPermission(servingUser.getUsername(), Roles.PIN_MESSAGE)) {
+                TextChanel chanel = socialServer.getTextChanel(placeholders[1]);
+                chanel.getChat().pinMessage(request.getTime());
+            }
         }
     }
 
