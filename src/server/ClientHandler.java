@@ -434,7 +434,7 @@ public class ClientHandler implements Runnable{
                 for(ClientHandler ch : onlineUsers.get(requestedFriend.getUsername()))
                     ch.getNotification("Friend request from " + requesting.getUsername());
         }
-        response.writeObject(new AddFriendResponse(status, requestedFriend.getUsername()));
+        response.writeObject(new AddFriendResponse(status, requestedFriend == null ? null : requestedFriend.getUsername()));
     }
 
     /**

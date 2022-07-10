@@ -359,21 +359,7 @@ public class Client {
      * @throws IOException If an I/O error occurs while sending the request.
      */
     private void cancelFriendRequest() throws IOException {
-        int choice;
-            do {
-                System.out.println("1-cancel\n2-back");
-                try {
-                    choice = scanner.nextInt();
-                } catch (InputMismatchException e) {
-                    scanner.nextLine();
-                    choice = -1;
-                }
-                switch (choice) {
-                    case 1 ->  request.writeObject(new StringRequest(list.getList().get(selectFromList()- 1) , RequestType.CANCEL_FRIEND_REQUEST));
-                    case 2 ->  System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
-                    default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
-                }
-            } while(choice < 1 || choice > 2);
+        request.writeObject(new StringRequest(list.getList().get(selectFromList()- 1) , RequestType.CANCEL_FRIEND_REQUEST));
         }
 
     /**
@@ -820,7 +806,7 @@ public class Client {
                 scanner.nextLine();
                 index = -1;
             }
-        } while (index > list.getList().size() || index < 1);
+        } while ((index > list.getList().size() || index < 1) && list.getList().size() != 0);
         return index;
     }
     private void voiceChanel(int chatIndex) {} //TODO : play music _ At last
@@ -1242,7 +1228,8 @@ public class Client {
                 case 1 -> {
                     System.out.println("Enter friend index: ");
                     friendIndex = selectFromList();
-                    request.writeObject(new StringRequest(list.getList().get(friendIndex - 1), RequestType.REMOVE_FRIEND));
+                    String friend = list.getList().get(friendIndex - 1).substring(0, list.getList().get(friendIndex - 1).indexOf(" "));
+                    request.writeObject(new StringRequest(friend, RequestType.REMOVE_FRIEND));
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                 default -> System.out.println( ANSI_RED + "Invalid" + ANSI_RESET);
