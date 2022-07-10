@@ -314,9 +314,15 @@ public class Client {
         } while (choice != 10);
         logOut();
     }
-    private void logOut() { //TODO : clear all the data
+    private void logOut() throws IOException { //TODO : clear all the data
         user = null;
-    }  //TODO : clear all the data _ at last
+         ListResponse list = null;
+         ChatResponse chat = null;
+         ServerListResponse serverList = null;
+         ServerMembersResponse serverMembers = null;
+         ChanelListResponse chanels = null;
+         request.writeObject(new Request(RequestType.LOGOUT));
+    }
 
     /**
      * This method is used to see outgoing friend requests and cancel them.

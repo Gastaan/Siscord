@@ -38,5 +38,6 @@ public enum RequestType implements Serializable {
     KICK_MEMBER,
     BLOCK_MEMBER,
     GIVE_ROLE,
-    CHANGE_STATUS
+    CHANGE_STATUS,
+    LOGOUT
 }
