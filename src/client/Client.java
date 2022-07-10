@@ -359,7 +359,9 @@ public class Client {
      * @throws IOException If an I/O error occurs while sending the request.
      */
     private void cancelFriendRequest() throws IOException {
-        request.writeObject(new StringRequest(list.getList().get(selectFromList()- 1) , RequestType.CANCEL_FRIEND_REQUEST));
+        String username = list.getList().get(selectFromList()- 1);
+        if(username != null)
+          request.writeObject(new StringRequest(username , RequestType.CANCEL_FRIEND_REQUEST));
         }
 
     /**
