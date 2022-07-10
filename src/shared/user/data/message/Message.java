@@ -26,9 +26,9 @@ abstract public class Message implements Serializable {
         synchronized (reacts) {
             for(Reacts reacted : reacts.keySet()) {
                 sb.append(reacted.toString()).append(": ").append(reacts.get(reacted).size()).append("\n");
-                for(String username : reacts.get(reacted)) {
+                for(String username : reacts.get(reacted))
                     sb.append(username).append(" ");
-                }
+                sb.append("\n");
             }
         }
         return sb.toString();

@@ -55,10 +55,10 @@ public class ChatResponse extends Response{
      * This method prints all the messages in the chat.
      */
     public void printAllMessages() {
+        int index = 1;
         System.out.println("messages: ");
-        for (Message message : messages) {
-            System.out.println(message);
-        }
+        for (Message message : messages)
+            System.out.println(index++ + "- " + message);
     }
     /**
      * This method prints all pinned messages in the chat.

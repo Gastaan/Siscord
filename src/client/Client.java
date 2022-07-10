@@ -655,7 +655,7 @@ public class Client {
                     System.out.println(ANSI_WHITE + "Enter your message: " + ANSI_RESET);
                     scanner.nextLine();
                     String message = scanner.nextLine();
-                    Message newMessage = new TextMessage(message, user.getUsername());
+                    Message newMessage = new TextMessage(user.getUsername(), message);
                     request.writeObject(new NewMessageRequest(newMessage, chat.getPlaceholder()));
                     wait();
                 }

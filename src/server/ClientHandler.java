@@ -174,6 +174,7 @@ public class ClientHandler implements Runnable{
             changeStatus((StringRequest) requested);
         else if(requestType == RequestType.LOGOUT)
             logOut();
+        reset();
     }
     private UserStatus findStatus(String status) {
         return switch (status) {
@@ -365,7 +366,7 @@ public class ClientHandler implements Runnable{
             System.err.println("Can not send server list to client!");
         }
     } //Done
-    private void newServer(StringRequest requested) { //TODO : here
+    private void newServer(StringRequest requested) {
         SocialServer server = new SocialServer(requested.getValue(), servingUser.getUsername());
         servers.add(server);
         userData.get(servingUser).addServer(server.getServerID());
@@ -487,13 +488,9 @@ public class ClientHandler implements Runnable{
         ArrayList<String> chatNames = userData.get(servingUser).getPrivateChatList();
         response.writeObject(new ListResponse(chatNames));
     }
-    private void chat(PlaceholderRequest request) {
+    private void chat(PlaceholderRequest request) throws IOException {
         Chat chat = getChat(request.getPlaceholder());
-        try {
-            response.writeObject(new ChatResponse(chat.getMessages(), chat.getPinnedMessages(), request.getPlaceholder()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        response.writeObject(new ChatResponse(chat.getMessages(), chat.getPinnedMessages(), request.getPlaceholder()));
     }
     public Chat getChat(String[] placeholder) {
         Chat chat;
@@ -634,6 +631,7 @@ public class ClientHandler implements Runnable{
                 return user;
         return null;
     } //Done
+
     private  void getNotification(String notification) {
         synchronized (response) {
             try {
