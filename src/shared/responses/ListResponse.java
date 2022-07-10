@@ -35,7 +35,7 @@ public class ListResponse extends Response {
     public void  printList() {
         int index = 1;
         for (String s : list) {
-            System.out.println(index++ + s);
+            System.out.println(index++ + "- " + s);
         }
     }
 }

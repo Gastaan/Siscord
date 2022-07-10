@@ -48,7 +48,6 @@ public class ClientHandler implements Runnable{
     private ObjectInputStream request;
     private ObjectOutputStream response;
     private User servingUser;
-    private final String usernameRegex = "[a-zA-Z0-9]{6,}";
     private final String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])[a-zA-Z0-9]{8,}$";
     private final String mailRegex = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
     private final String phoneNumberRegex = "^(\\+98|0)?9\\d{9}$";
@@ -165,25 +164,34 @@ public class ClientHandler implements Runnable{
             blockMember((ServerMemberRequest) requested);
         else if(requestType == RequestType.GIVE_ROLE)
             giveRole((ServerMemberRequest) requested);
+        else if(requestType == RequestType.CHANGE_STATUS)
+            changeStatus((StringRequest) requested);
+    }
+    private UserStatus findStatus(String status) {
+        return switch (status) {
+            case "1" -> UserStatus.ONLINE;
+            case "2" -> UserStatus.IDLE;
+            case "3" -> UserStatus.DO_NOT_DISTURB;
+            case "4" -> UserStatus.OFFLINE;
+            default -> null;
+        };
+    }
+    private void changeStatus(StringRequest requested) throws IOException {
+        String status = requested.getValue();
+        servingUser.setStatus(findStatus(status));
+        response.writeObject(new Response(ResponseType.STATUS_CHANGED));
     }
     private Roles getRole(int roleIndex) {
-        switch (roleIndex) {
-            case 1:
-                return Roles.CREATE_CHANEL;
-            case 2:
-                return Roles.DELETE_CHANEL;
-            case 3:
-                return Roles.KICK_MEMBER;
-            case 4:
-                return Roles.LIMIT_MEMBERS;
-            case 5:
-                return Roles.BLOCK_MEMBER;
-            case 6 :
-                return Roles.CHANGE_SERVERNAME;
-            case 7 :
-                return Roles.PIN_MESSAGE;
-        }
-        return null;
+        return switch (roleIndex) {
+            case 1 -> Roles.CREATE_CHANEL;
+            case 2 -> Roles.DELETE_CHANEL;
+            case 3 -> Roles.KICK_MEMBER;
+            case 4 -> Roles.LIMIT_MEMBERS;
+            case 5 -> Roles.BLOCK_MEMBER;
+            case 6 -> Roles.CHANGE_SERVERNAME;
+            case 7 -> Roles.PIN_MESSAGE;
+            default -> null;
+        };
     }
     private void giveRole(ServerMemberRequest requested) throws IOException {
         SocialServer socialServer = servers.get(searchServerByID(requested.getServerID()));
@@ -390,7 +398,7 @@ public class ClientHandler implements Runnable{
         userData.get(requestedUser).deleteFriend(servingUser.getUsername());
     } //Done
     private void getFriendsList() throws IOException {
-        User requestedUser = searchUser(servingUser.getUsername());
+        User requestedUser = servingUser;
         ArrayList<String> friends = new ArrayList<>();
         for(String friend : userData.get(requestedUser).getFriends())
             friends.add(searchUser(friend).userStatus());
@@ -586,6 +594,7 @@ public class ClientHandler implements Runnable{
     } //Done
     private SignUpStatus checkRegex(String username, String password, String mail, String phoneNumber) {
         if(searchUser(username) == null) {
+            String usernameRegex = "[a-zA-Z0-9]{6,}";
             if(match(username, usernameRegex) && match(password, passwordRegex) && match(mail, mailRegex) && (match(phoneNumber, phoneNumberRegex) || phoneNumber.equals("")))
                 return SignUpStatus.VALID;
             else

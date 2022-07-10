@@ -22,8 +22,8 @@ public class User implements Serializable {
     public String userStatus() {
         return username + " : " + status;
     }
-    public String getStatus() {
-        return status.toString();
+    public UserStatus getStatus() {
+        return status;
     }
     public void setEmail(String email) {
         this.email = email;

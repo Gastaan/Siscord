@@ -7,6 +7,7 @@ import shared.responses.ListResponse;
 import shared.responses.LoginResponse;
 import shared.responses.signup.SignUpResponse;
 import shared.user.User;
+import shared.user.UserStatus;
 import shared.user.data.message.FileMessage;
 import shared.user.data.message.Message;
 import shared.user.data.message.Reacts;
@@ -104,6 +105,7 @@ public class Client {
         }
         else if(type == ResponseType.LIST) {
             list = (ListResponse) response;
+            list.printList();
             notify();
         }
         else if(type == ResponseType.CHAT) {
@@ -113,8 +115,10 @@ public class Client {
             notify();
         }
         else if(type == ResponseType.NOTIFICATION) {
-            System.out.println(((Notification) response).getDescription());
-            System.out.flush();
+            if(user.getStatus() !=  UserStatus.DO_NOT_DISTURB) {
+                System.out.println(((Notification) response).getDescription());
+                System.out.flush();
+            }
         }
         else if(type  == ResponseType.ADD_FRIEND) {
             System.out.println(response);
@@ -1232,7 +1236,31 @@ public class Client {
             }
         } while (choice > 2 || choice < 1);
     }
-    private void changeStatus() {} //TODO : change status
+
+    /**
+     * This method is used to set the status of the user.
+     * @throws IOException If an I/O error occurs while sending the request.
+     * @throws InterruptedException If the thread is interrupted while waiting for the response.
+     */
+    private void changeStatus() throws IOException, InterruptedException {
+        int choice;
+        do {
+            System.out.println("1-online\n2-Idle\n3-Do not disturb\n4-invisible\n5-back");
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                choice = -1;
+                scanner.nextLine();
+            }
+            if(choice > 5 || choice < 1)
+                System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+            else if(choice != 5){
+                request.writeObject(new StringRequest(String.valueOf(choice), RequestType.CHANGE_STATUS));
+                wait();
+            }
+        }
+        while (choice > 5 || choice < 1);
+    }
 
     /**
      * Settings page.

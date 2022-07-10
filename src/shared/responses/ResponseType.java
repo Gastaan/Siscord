@@ -35,5 +35,6 @@ public enum ResponseType implements Serializable {
     SERVER_MEMBERS,
     KICK_MEMBER,
     BLOCK_MEMBER,
-    GIVE_ROLE
+    GIVE_ROLE,
+    STATUS_CHANGED
 }
