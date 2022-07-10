@@ -1252,6 +1252,21 @@ public class Client {
     }
 
     /**
+     * This method is used to return the status.
+     * @param status The new status of the user.
+     * @return The new status of the user.
+     */
+    private UserStatus findStatus(String status) {
+        return switch (status) {
+            case "1" -> UserStatus.ONLINE;
+            case "2" -> UserStatus.IDLE;
+            case "3" -> UserStatus.DO_NOT_DISTURB;
+            case "4" -> UserStatus.OFFLINE;
+            default -> null;
+        };
+    }
+
+    /**
      * This method is used to set the status of the user.
      * @throws IOException If an I/O error occurs while sending the request.
      * @throws InterruptedException If the thread is interrupted while waiting for the response.
@@ -1269,6 +1284,7 @@ public class Client {
             if(choice > 5 || choice < 1)
                 System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
             else if(choice != 5){
+                user.setStatus(findStatus(String.valueOf(choice)));
                 request.writeObject(new StringRequest(String.valueOf(choice), RequestType.CHANGE_STATUS));
                 wait();
             }
