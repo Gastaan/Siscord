@@ -1,4 +1,4 @@
-//Ya Ali
+//Ya Ali ii
 package client;
 
 import shared.requests.*;
@@ -399,23 +399,25 @@ public class Client {
         int blockedUserIndex, choice;
         System.out.println(ANSI_WHITE + "Select a blocked user: " + ANSI_RESET);
         blockedUserIndex = selectFromList();
-        do {
-            System.out.println(ANSI_PURPLE + "1-unblock\n2-back" + ANSI_RESET);
-            try {
-                choice = scanner.nextInt();
-            } catch (InputMismatchException e) {
-                scanner.nextLine();
-                choice = -1;
-            }
-            switch (choice) {
-                case 1 ->  {
-                    request.writeObject(new StringRequest(list.getList().get(blockedUserIndex - 1) , RequestType.UNBLOCK_USER));
-                    wait();
+        if(blockedUserIndex != -1) {
+            do {
+                System.out.println(ANSI_PURPLE + "1-unblock\n2-back" + ANSI_RESET);
+                try {
+                    choice = scanner.nextInt();
+                } catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
                 }
-                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
-                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
-            }
-        } while (choice > 2 || choice < 1);
+                switch (choice) {
+                    case 1 -> {
+                        request.writeObject(new StringRequest(list.getList().get(blockedUserIndex - 1), RequestType.UNBLOCK_USER));
+                        wait();
+                    }
+                    case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                    default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+                }
+            } while (choice > 2 || choice < 1);
+        }
     }
 
     /**
@@ -478,21 +480,23 @@ public class Client {
         Boolean accepted = null;
         System.out.println(ANSI_WHITE + "Select a request: " + ANSI_RESET);
         requestIndex = selectFromList();
-        do {
-            System.out.println(ANSI_PURPLE + "1-accept\n2-decline\n3-back" + ANSI_RESET);
-            try {
-                choice = scanner.nextInt();
-            } catch (InputMismatchException e) {
-                scanner.nextLine();
-                choice = -1;
-            }
-            switch (choice) {
-                case 1 -> accepted = true;
-                case 2 -> accepted = false;
-                case 3 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
-                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
-            }
-        } while (choice > 3 || choice < 1);
+        if(requestIndex != -1) {
+            do {
+                System.out.println(ANSI_PURPLE + "1-accept\n2-decline\n3-back" + ANSI_RESET);
+                try {
+                    choice = scanner.nextInt();
+                } catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
+                }
+                switch (choice) {
+                    case 1 -> accepted = true;
+                    case 2 -> accepted = false;
+                    case 3 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                    default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+                }
+            } while (choice > 3 || choice < 1);
+        }
         if(accepted != null)
             request.writeObject(new FriendRequestAnswerRequest(list.getList().get(requestIndex - 1), accepted));
     }
@@ -505,14 +509,14 @@ public class Client {
     private synchronized void privateChatPage() throws IOException, InterruptedException {
         int choice, chatIndex;
         chatIndex = selectFromList();
+        if(chatIndex != -1) {
             do {
                 request.writeObject(new PlaceholderRequest(RequestType.CHAT_REQUEST, list.getList().get(chatIndex - 1)));
                 wait();
-                System.out.println(ANSI_YELLOW + "1-sendMessage\n2-React\n3-pin\n4-voice call\n5-pinned messages\n6-back to home page"+ ANSI_RESET);
+                System.out.println(ANSI_YELLOW + "1-sendMessage\n2-React\n3-pin\n4-voice call\n5-pinned messages\n6-back to home page" + ANSI_RESET);
                 try {
                     choice = scanner.nextInt();
-                }
-                catch (InputMismatchException e) {
+                } catch (InputMismatchException e) {
                     scanner.nextLine();
                     choice = -1;
                 }
@@ -526,6 +530,7 @@ public class Client {
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
             } while (choice != 6);
+        }
         }
 
     /**
@@ -797,7 +802,8 @@ public class Client {
      * @return The index of the selected element.
      */
     private int selectFromList() {
-        int  index;
+        int  index = -1;
+        if(list.getList().size() != 0)
         do {
             list.printList();
             System.out.println(ANSI_WHITE + "Enter index: " + ANSI_RESET);
@@ -808,7 +814,9 @@ public class Client {
                 scanner.nextLine();
                 index = -1;
             }
-        } while ((index > list.getList().size() || index < 1) && list.getList().size() != 0);
+        } while ((index > list.getList().size() || index < 1));
+        else
+            System.out.println(ANSI_BLACK + "The list is empty!" + ANSI_RESET);
         return index;
     }
     private void voiceChanel(int chatIndex) {} //TODO : play music _ At last
@@ -1004,8 +1012,10 @@ public class Client {
                     wait(15000);
                     System.out.println("Friends :");
                     int index = selectFromList();
-                    request.writeObject(new ServerMemberRequest(RequestType.ADD_FRIEND_TO_SERVER, serverID, list.getList().get(index - 1)));
-                    wait();
+                    if(index != -1) {
+                        request.writeObject(new ServerMemberRequest(RequestType.ADD_FRIEND_TO_SERVER, serverID, list.getList().get(index - 1)));
+                        wait();
+                    }
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                 default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
@@ -1230,8 +1240,10 @@ public class Client {
                 case 1 -> {
                     System.out.println("Enter friend index: ");
                     friendIndex = selectFromList();
-                    String friend = list.getList().get(friendIndex - 1).substring(0, list.getList().get(friendIndex - 1).indexOf(" "));
-                    request.writeObject(new StringRequest(friend, RequestType.REMOVE_FRIEND));
+                    if(friendIndex != -1) {
+                        String friend = list.getList().get(friendIndex - 1).substring(0, list.getList().get(friendIndex - 1).indexOf(" "));
+                        request.writeObject(new StringRequest(friend, RequestType.REMOVE_FRIEND));
+                    }
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                 default -> System.out.println( ANSI_RED + "Invalid" + ANSI_RESET);
