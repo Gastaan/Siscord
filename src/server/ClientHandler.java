@@ -386,8 +386,9 @@ public class ClientHandler implements Runnable{
         }
         response.writeObject(new BooleanResponse(ResponseType.BLOCK_USER ,success));
     }
-    private void unblockUser(StringRequest requested) { //TODO : Failed to unblock user
+    private void unblockUser(StringRequest requested) throws IOException {
         userData.get(servingUser).unblockUser(requested.getValue());
+        response.writeObject(new Response(ResponseType.UNBLOCK_USER));
     }
     private void getBlockedUsers() throws IOException {
         response.writeObject(new ListResponse(userData.get(servingUser).getBlockedUsers()));

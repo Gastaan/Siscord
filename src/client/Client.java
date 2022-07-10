@@ -647,7 +647,7 @@ public class Client {
             switch (choice) {
                 case 1 -> {
                     request.writeObject(new PlaceholderRequest(RequestType.NEW_MESSAGE, chat.getPlaceholder()));
-
+                    wait();
                     System.out.println(ANSI_WHITE + "Enter your message: " + ANSI_RESET);
                     scanner.nextLine();
                     String message = scanner.nextLine();
