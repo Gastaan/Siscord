@@ -934,11 +934,22 @@ public class Client {
                 }
             } while (choice != 6 && choice != 5);
     }
+
+    /**
+     * Server setting page.
+     * @throws IOException if an I/O error occurs while sending a request to the server
+     * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
+     */
     private void serverSetting() throws IOException, InterruptedException {
         int choice;
         do {
-            System.out.println("1-change name\n2-back");
-            choice = scanner.nextInt();
+            System.out.println(ANSI_WHITE + "1-change name\n2-back" + ANSI_RESET);
+            try {
+                choice = scanner.nextInt();
+            } catch (InputMismatchException e) {
+                scanner.nextLine();
+                choice = -1;
+            }
             switch (choice) {
                 case 1 ->  {
                     System.out.println(ANSI_WHITE + "Enter new name: " + ANSI_RESET);
@@ -953,6 +964,19 @@ public class Client {
         } while(choice < 1 || choice > 2);
     }
     private void leaveServer() throws InterruptedException, IOException {
+        int choice;
+        do {
+            System.out.println("Are you sure?\n1-yes\n2-no");
+            choice = scanner.nextInt();
+            switch (choice) {
+                case 1 -> {
+                    request.writeObject(new ServerIDRequest(RequestType.LEAVE_SERVER ,chanels.getServerID()));
+                    wait();
+                }
+                case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+            }
+        } while (choice < 1 || choice > 2);
     }
     private void members() throws InterruptedException, IOException {
         int choice;
