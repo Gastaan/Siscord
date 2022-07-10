@@ -314,7 +314,13 @@ public class Client {
         } while (choice != 10);
         logOut();
     }
-    private void logOut() throws IOException { //TODO : clear all the data
+
+    /**
+     * This method is used to log out.
+     * @throws IOException If an I/O error occurs while sending the request.
+     * @throws InterruptedException If interrupted while waiting for the response.
+     */
+    private void logOut() throws IOException, InterruptedException {
         user = null;
          ListResponse list = null;
          ChatResponse chat = null;
@@ -322,6 +328,7 @@ public class Client {
          ServerMembersResponse serverMembers = null;
          ChanelListResponse chanels = null;
          request.writeObject(new Request(RequestType.LOGOUT));
+         wait(10000);
     }
 
     /**

@@ -88,11 +88,17 @@ public class ClientHandler implements Runnable{
                 giveResponse(requested);
             }
         }
-        catch (IOException | ClassNotFoundException e) {
+        catch (Exception e) {
             System.out.println("Client disconnected!");
+            e.printStackTrace();
+            try {
+                logOut();
+            } catch (IOException ex) {
+                System.out.println("Could not log out!");
+            }
             close();
         }
-    } //Done
+    }
 
     /**
      * This method gives the response to the client.
@@ -166,6 +172,8 @@ public class ClientHandler implements Runnable{
             giveRole((ServerMemberRequest) requested);
         else if(requestType == RequestType.CHANGE_STATUS)
             changeStatus((StringRequest) requested);
+        else if(requestType == RequestType.LOGOUT)
+            logOut();
     }
     private UserStatus findStatus(String status) {
         return switch (status) {
@@ -426,7 +434,7 @@ public class ClientHandler implements Runnable{
                 for(ClientHandler ch : onlineUsers.get(requestedFriend.getUsername()))
                     ch.getNotification("Friend request from " + requesting.getUsername());
         }
-        response.writeObject(new AddFriendResponse(status, requesting.getUsername()));
+        response.writeObject(new AddFriendResponse(status, requestedFriend.getUsername()));
     }
 
     /**
@@ -548,7 +556,17 @@ public class ClientHandler implements Runnable{
         }
         response.writeObject(new Response(ResponseType.REACTED_TO_MESSAGE));
     }
-    private void logOut() {} //TODO : log out
+    private void logOut() throws IOException {
+        synchronized (onlineUsers) {
+            onlineUsers.get(servingUser.getUsername()).remove(this);
+            if(onlineUsers.get(servingUser.getUsername()).isEmpty()) {
+                onlineUsers.remove(servingUser.getUsername());
+                servingUser.setStatus(UserStatus.OFFLINE);
+            }
+            servingUser = null;
+        }
+        response.writeObject(new Response(ResponseType.LOGGED_OUT));
+    }
     private void login(LoginRequest info) throws IOException {
         String username, password;
         username = info.getUsername();
