@@ -75,6 +75,9 @@ public class SocialServer { //TODO : welcome message , delete server
     public String getServerName() {
         return serverName;
     }
+    public void setServerName(String serverName) {
+        this.serverName = serverName;
+    }
     public int getServerID() {
         return serverID;
     }

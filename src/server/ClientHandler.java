@@ -177,6 +177,17 @@ public class ClientHandler implements Runnable{
             logOut();
         else if(requestType == RequestType.VOICE)
             sendVoiceCall((Voice) requested);
+        else if(requestType == RequestType.CHANGE_SERVER_NAME)
+               changeServerName((ChangeServerNameRequest) requested);
+    }
+    private void changeServerName(ChangeServerNameRequest request) throws IOException {
+        SocialServer server = servers.get(searchServerByID(request.getServerID()));
+        boolean success = false;
+        if(server.checkPermission(servingUser.getUsername(), Roles.CHANGE_SERVERNAME)) {
+            success = true;
+            server.setServerName(request.getNewName());
+        }
+        response.writeObject(new BooleanResponse(ResponseType.CHANGE_SERVER_NAME, success));
     }
     private void sendVoiceCall(Voice requested) throws IOException {
         String receiver = requested.getUsername();

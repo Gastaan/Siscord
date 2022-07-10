@@ -944,7 +944,7 @@ public class Client {
                     System.out.println(ANSI_WHITE + "Enter new name: " + ANSI_RESET);
                     scanner.nextLine();
                     String name = scanner.nextLine();
-                    request.writeObject(new StringRequest(name, RequestType.CHANGE_SERVER_NAME));
+                    request.writeObject(new  ChangeServerNameRequest(chanels.getServerID(), name));
                     wait();
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
