@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SocialServer { //TODO : welcome message , delete server
+public class SocialServer {//TODO : delete server
     private String serverName;
     private final Integer serverID;
     private final String serverOwner;
@@ -56,12 +56,6 @@ public class SocialServer { //TODO : welcome message , delete server
             return new HashSet<>(roles.get(role));
         }
     }
-    private void changeName(String newName) {
-        serverName = newName;
-    }
-    private void blockUser(String username) {
-        blockedUsers.add(username);
-    }
     public boolean addMember(String username) {
         if(members.containsKey(username) || blockedUsers.contains(username))
             return false;
@@ -81,7 +75,7 @@ public class SocialServer { //TODO : welcome message , delete server
     public int getServerID() {
         return serverID;
     }
-    public HashMap<String, Boolean> getChanels() {
+    public HashMap<String, Boolean> getChanels(String requestedUser) {
         HashMap<String, Boolean> list = new HashMap<>();
         synchronized (chanels) {
             for (String chanelName : chanels.keySet()) {

@@ -181,6 +181,48 @@ public class ClientHandler implements Runnable{
                changeServerName((ChangeServerNameRequest) requested);
         else if(requestType == RequestType.LEAVE_SERVER)
                 leaveServer((ServerIDRequest) requested);
+        else if(requestType == RequestType.SET_LIMIT)
+            setLimit((PlaceholderRequest) requested);
+        else if(requestType == RequestType.REMOVE_LIMIT)
+            removeLimit((PlaceholderRequest) requested);
+        else if(requestType == RequestType.ADD_ACCESS)
+            addAccess((StringChanelRequest) requested);
+    }
+    private void addAccess(StringChanelRequest requested) throws IOException {
+        StringChanelRequest request = (StringChanelRequest) requested;
+        int serverID = Integer.parseInt(request.getPlaceHolder()[0]);
+        SocialServer server = servers.get(searchServerByID(serverID));
+        String chanel = request.getPlaceHolder()[1];
+        boolean success = false;
+        if(server.checkPermission(servingUser.getUsername(), Roles.LIMIT_MEMBERS)) {
+            server.getTextChanel(chanel).addAccess(request.getValue());
+            success = true;
+        }
+        response.writeObject(new BooleanResponse(ResponseType.SET_LIMIT, success));
+    }
+    private void removeLimit(PlaceholderRequest requested) throws IOException {
+        PlaceholderRequest request = (PlaceholderRequest) requested;
+        int serverID = Integer.parseInt(request.getPlaceholder()[0]);
+        SocialServer server = servers.get(searchServerByID(serverID));
+        String chanel = request.getPlaceholder()[1];
+        boolean success = false;
+        if(server.checkPermission(servingUser.getUsername(), Roles.LIMIT_MEMBERS)) {
+            server.getTextChanel(chanel).setIsLimited(false);
+            success = true;
+        }
+        response.writeObject(new BooleanResponse(ResponseType.REMOVE_LIMIT, success));
+    }
+    private void setLimit(PlaceholderRequest requested) throws IOException {
+        PlaceholderRequest request = (PlaceholderRequest) requested;
+        int serverID = Integer.parseInt(request.getPlaceholder()[0]);
+        SocialServer server = servers.get(searchServerByID(serverID));
+        String chanel = request.getPlaceholder()[1];
+        boolean success = false;
+        if(server.checkPermission(servingUser.getUsername(), Roles.LIMIT_MEMBERS)) {
+            server.getTextChanel(chanel).setIsLimited(true);
+            success = true;
+        }
+        response.writeObject(new BooleanResponse(ResponseType.SET_LIMIT, success));
     }
     private void leaveServer(ServerIDRequest requested) throws IOException {
         SocialServer server = servers.get(searchServerByID(requested.getServerID()));
@@ -397,7 +439,7 @@ public class ClientHandler implements Runnable{
     }
     private void serverChanels(ServerIDRequest requested) throws IOException {
         SocialServer server = servers.get(searchServerByID(requested.getServerID()));
-        HashMap<String, Boolean> chanels = server.getChanels();
+        HashMap<String, Boolean> chanels = server.getChanels(servingUser.getUsername());
         response.writeObject(new ChanelListResponse(requested.getServerID(), chanels));
     }
     private void serverList() {

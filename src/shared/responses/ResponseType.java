@@ -41,5 +41,7 @@ public enum ResponseType implements Serializable {
     IS_TYPING,
     VOICE,
     CHANGE_SERVER_NAME,
-    LEAVE_SERVER
+    LEAVE_SERVER,
+    SET_LIMIT,
+    REMOVE_LIMIT,
 }

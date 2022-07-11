@@ -11,7 +11,11 @@ abstract public class Chanel {
         accessList = new HashSet<>();
     }
    public boolean getIsLimited() {
+
         return isLimited;
+    }
+    public void setIsLimited(boolean isLimited) {
+        this.isLimited = isLimited;
     }
     public void addAccess(String username) {
         accessList.add(username);
