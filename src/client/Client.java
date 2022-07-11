@@ -643,6 +643,8 @@ public class Client {
     }
     /**
      * This method is used to limit access to a chanel.
+     * @throws IOException If an I/O error occurs while sending a request.
+     * @throws InterruptedException If interrupted while waiting for a response.
      */
      private void limitMembers() throws IOException, InterruptedException {
          int choice;
@@ -998,6 +1000,12 @@ public class Client {
             }
         } while(choice < 1 || choice > 2);
     }
+
+    /**
+     * This method is used to leave a server.
+     * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
+     * @throws IOException if an I/O error occurs while sending a request to the server
+     */
     private void leaveServer() throws InterruptedException, IOException {
         int choice;
         do {
@@ -1013,6 +1021,12 @@ public class Client {
             }
         } while (choice < 1 || choice > 2);
     }
+
+    /**
+     * The members page.
+     * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
+     * @throws IOException if an I/O error occurs while sending a request to the server
+     */
     private void members() throws InterruptedException, IOException {
         int choice;
         do {
@@ -1179,6 +1193,12 @@ public class Client {
             }
         } while(choice != 2);
     }
+
+    /**
+     * Chanels menu.
+     * @throws IOException if an I/O error occurs while sending a request to the server
+     * @throws InterruptedException if the thread is interrupted while waiting for a response from the server
+     */
     private synchronized void chanels() throws IOException, InterruptedException {
         int choice;
             do {

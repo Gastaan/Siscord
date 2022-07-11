@@ -79,7 +79,9 @@ public class SocialServer {//TODO : delete server
         HashMap<String, Boolean> list = new HashMap<>();
         synchronized (chanels) {
             for (String chanelName : chanels.keySet()) {
-                list.put(chanelName, chanels.get(chanelName) instanceof TextChanel);
+                Chanel chanel = chanels.get(chanelName);
+                if(chanel.hasAccess(requestedUser) || roles.get(Roles.LIMIT_MEMBERS).contains(requestedUser))
+                     list.put(chanelName, chanel instanceof TextChanel);
             }
         }
         return list;
@@ -89,11 +91,6 @@ public class SocialServer {//TODO : delete server
             return (TextChanel)chanels.get(chanelName);
         }
         return null;
-    }
-    public HashMap<String, HashSet<Roles>> getMembers() {
-        synchronized (members) {
-            return  new HashMap<>(members);
-        }
     }
     public HashSet<String> getMembersUsername() {
         return new HashSet<>(members.keySet());

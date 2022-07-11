@@ -4,7 +4,7 @@ import java.util.HashSet;
 
 abstract public class Chanel {
     private boolean isLimited;
-    private HashSet<String> accessList;
+    private final HashSet<String> accessList;
     //constructor
     public Chanel() {
         isLimited = false;
@@ -16,6 +16,14 @@ abstract public class Chanel {
     }
     public void setIsLimited(boolean isLimited) {
         this.isLimited = isLimited;
+    }
+    public boolean hasAccess(String username) {
+        if(isLimited) {
+            synchronized (accessList) {
+                return accessList.contains(username);
+            }
+        }
+        else return true;
     }
     public void addAccess(String username) {
         accessList.add(username);
