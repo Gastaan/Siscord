@@ -44,4 +44,5 @@ public enum ResponseType implements Serializable {
     LEAVE_SERVER,
     SET_LIMIT,
     REMOVE_LIMIT,
+    MUSIC
 }

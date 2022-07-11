@@ -19,17 +19,19 @@ import shared.responses.signup.SignUpResponse;
 import shared.responses.signup.SignUpStatus;
 import shared.user.User;
 import shared.user.UserStatus;
+import shared.user.data.message.FileMessage;
 import shared.user.data.message.Message;
 import shared.user.data.message.TextMessage;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Vector;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -187,6 +189,32 @@ public class ClientHandler implements Runnable{
             removeLimit((PlaceholderRequest) requested);
         else if(requestType == RequestType.ADD_ACCESS)
             addAccess((StringChanelRequest) requested);
+        else if(requestType == RequestType.MUSIC_LIST)
+            musicList();
+        else if(requestType == RequestType.MUSIC_PLAY)
+            musicPlay((StringRequest) requested);
+    }
+    private void musicPlay(StringRequest request) throws IOException {
+        String musicName = request.getValue();
+        FileMessage music = new FileMessage("server", Files.readAllBytes(Paths.get("./server/musics/" + musicName)), musicName);
+        response.writeObject(new MusicResponse(music));
+    }
+
+    private void musicList() {
+        Path path = Paths.get("./server/musics");
+        if(Files.exists(path)) {
+            try {
+                File[] files = path.toFile().listFiles();
+                ArrayList<String> list = new ArrayList<>();
+                for (File file : files)
+                    if (file.isFile())
+                        list.add(file.getName());
+                response.writeObject(new ListResponse(list));
+            } catch (IOException e) {
+                System.out.println("Could not send music list!");
+                e.printStackTrace();
+            }
+        }
     }
     private void addAccess(StringChanelRequest requested) throws IOException {
         StringChanelRequest request = (StringChanelRequest) requested;
@@ -253,7 +281,6 @@ public class ClientHandler implements Runnable{
     private void getVoiceCall(VoiceResponse voice) throws IOException {
         synchronized (response) {
             response.writeObject(voice);
-            reset();
         }
     }
     private UserStatus findStatus(String status) {

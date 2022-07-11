@@ -31,7 +31,7 @@ import java.util.Scanner;
  */
 public class Client {
     //fields
-    private static final Scanner scanner = new Scanner(System.in);
+    public static Scanner scanner = new Scanner(System.in);
     private  Socket serverConnection;
     private User user;
     private ObjectInputStream response;
@@ -43,6 +43,7 @@ public class Client {
     private ServerMembersResponse serverMembers;
     private ChanelListResponse chanels;
     private SourceDataLine speaker;
+    private MusicResponse music;
     private String inVoiceCall = null;
     //colors
     public static final String ANSI_RESET = "\u001B[0m";
@@ -109,7 +110,6 @@ public class Client {
         }
         else if(type == ResponseType.LIST) {
             list = (ListResponse) response;
-            list.printList();
             notify();
         }
         else if(type == ResponseType.CHAT) {
@@ -181,13 +181,15 @@ public class Client {
         }
         else if(type == ResponseType.VOICE) {
             VoiceResponse voice = (VoiceResponse) response;
-            if(inVoiceCall != null) {
-                byte[] buffer = voice.getBufferedVoice();
-                speaker.write(buffer, 0, voice.getBytesRead());
-            }
+            if(voice.getUsername().equals(inVoiceCall))
+                speaker.write(voice.getBufferedVoice(), 0, voice.getBytesRead());
         }
         else if(response instanceof BooleanResponse) {
             System.out.println(response);
+            notify();
+        }
+        else if(type == ResponseType.MUSIC) {
+            music = (MusicResponse) response;
             notify();
         }
         else  {
@@ -778,7 +780,6 @@ public class Client {
          @Override
          public void run() {
              try {
-                 Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
                  TargetDataLine microphone;
                  DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
                  microphone = (TargetDataLine) AudioSystem.getLine(info);
@@ -789,9 +790,7 @@ public class Client {
                  int bytesRead = 0, count;
                  while ((count = microphone.read(data, 0, CHUNK_SIZE)) > 0 && inVoiceCall != null) {
                      bytesRead += count;
-                     synchronized (request) {
-                         request.writeObject(new Voice(data, bytesRead, chat.getPlaceholder()[0]));
-                     }
+                     request.writeObject(new Voice(data, bytesRead, chat.getPlaceholder()[0]));
                  }
                  System.out.println("Closed!");
                  microphone.close();
@@ -923,7 +922,7 @@ public class Client {
             System.out.println(ANSI_BLACK + "The list is empty!" + ANSI_RESET);
         return index;
     }
-    private void musicChanel(String chanelName) throws InterruptedException {
+    private void musicChanel(String chanelName) throws InterruptedException, IOException {
         int choice;
         do {
             System.out.println("1-select music\n2-back");
@@ -933,11 +932,18 @@ public class Client {
                     request.writeObject(new Request(RequestType.MUSIC_LIST));
                     wait();
                     int musicIndex = selectFromList();
+                    if (musicIndex != -1) {
+                        request.writeObject(new StringRequest(list.getList().get(musicIndex - 1), RequestType.MUSIC_PLAY));
+                        wait();
+                        Thread musicPlayer = new Thread(music);
+                        musicPlayer.start();
+                        musicPlayer.join();
+                    }
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "Ok" + ANSI_RESET);
                 default -> System.out.println(ANSI_RED + "Invalid Choice!" + ANSI_RESET);
             }
-        } while(choice != 2);
+        } while (choice != 2);
     }
 
     /**

@@ -45,5 +45,7 @@ public enum RequestType implements Serializable {
     LEAVE_SERVER,
     SET_LIMIT,
     REMOVE_LIMIT,
-    ADD_ACCESS
+    ADD_ACCESS,
+    MUSIC_LIST,
+    MUSIC_PLAY
 }

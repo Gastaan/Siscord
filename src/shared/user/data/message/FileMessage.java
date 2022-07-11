@@ -39,6 +39,9 @@ public class FileMessage extends Message{
             e.printStackTrace();
         }
     }
+    public String getFilename() {
+        return filename;
+    }
     //toString
     @Override
     public String toString() {
