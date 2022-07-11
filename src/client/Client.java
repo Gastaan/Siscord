@@ -923,7 +923,22 @@ public class Client {
             System.out.println(ANSI_BLACK + "The list is empty!" + ANSI_RESET);
         return index;
     }
-    private void voiceChanel(String chanelName) {} //TODO : play music _ At last
+    private void musicChanel(String chanelName) throws InterruptedException {
+        int choice;
+        do {
+            System.out.println("1-select music\n2-back");
+            choice = scanner.nextInt();
+            switch (choice) {
+                case 1 -> {
+                    request.writeObject(new Request(RequestType.MUSIC_LIST));
+                    wait();
+                    int musicIndex = selectFromList();
+                }
+                case 2 -> System.out.println(ANSI_BLUE + "Ok" + ANSI_RESET);
+                default -> System.out.println(ANSI_RED + "Invalid Choice!" + ANSI_RESET);
+            }
+        } while(choice != 2);
+    }
 
     /**
      * Servers page.
@@ -1224,7 +1239,7 @@ public class Client {
                             } while (chanelIndex > chanelNames.size() || chanelIndex < 1);
                             String chanelName = chanelNames.get(chanelIndex - 1);
                             if (!chanels.getChanelType(chanelName))
-                                voiceChanel(chanelName);
+                                musicChanel(chanelName);
                             else
                                 textChanelPage(chanelName);
                         }
