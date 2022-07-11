@@ -114,8 +114,12 @@ public class Client {
         }
         else if(type == ResponseType.CHAT) {
             chat = (ChatResponse)response;
-            responseHandler.chatResponse(chat);
-            downLoadFileMessages();
+            if(chat != null) {
+                responseHandler.chatResponse(chat);
+                downLoadFileMessages();
+            }
+            else
+                System.out.println(ANSI_BLACK + "No chat found!" + ANSI_RESET);
             notify();
         }
         else if(type == ResponseType.NOTIFICATION) {
@@ -572,7 +576,7 @@ public class Client {
                             } while(chat.getMessages().get(messageIndex - 1).isPinned() && messageIndex != -1);
                             if(messageIndex != -1) {
                                 chat.getMessages().get(messageIndex - 1).setPinned();
-                                request.writeObject(new PinRequest(chat.getMessages().get(messageIndex - 1).getTime(), chat.getPlaceholder()));
+                                request.writeObject(new StringChanelRequest(RequestType.PIN_MESSAGE, chat.getMessages().get(messageIndex - 1).getTime(), chat.getPlaceholder()));
                                 wait();
                             }
                         }
@@ -612,7 +616,7 @@ public class Client {
                     case 7 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
-            } while (choice != 7);
+            } while (choice != 7 && choice != 5);
         }
     /**
      * This method is used to delete a chanel.
@@ -641,11 +645,37 @@ public class Client {
      * This method is used to limit access to a chanel.
      */
      private void limitMembers() throws IOException, InterruptedException {
+         int choice;
          do {
-             request.writeObject(new ServerIDRequest(RequestType.SERVER_MEMBERS, chanels.getServerID()));
-             wait(10000);
-
-         } while(true);
+             System.out.println(ANSI_WHITE + "1-set limit\n2-remove limit\n3-add access\n4-back" + ANSI_RESET);
+             try {
+                    choice = scanner.nextInt();
+                } catch (InputMismatchException e) {
+                    scanner.nextLine();
+                    choice = -1;
+             }
+             switch (choice) {
+                    case 1 -> {
+                        request.writeObject(new PlaceholderRequest(RequestType.SET_LIMIT, String.valueOf(chanels.getServerID()), chat.getPlaceholder()[1]));
+                        wait(30000);
+                    }
+                    case 2 -> {
+                        request.writeObject(new PlaceholderRequest(RequestType.REMOVE_LIMIT, String.valueOf(chanels.getServerID()), chat.getPlaceholder()[1]));
+                        wait(30000);
+                    }
+                    case 3 -> {
+                        request.writeObject(new ServerIDRequest(RequestType.SERVER_MEMBERS, chanels.getServerID()));
+                        wait();
+                        String member = selectMember();
+                        if(member != null) {
+                            request.writeObject(new StringChanelRequest(RequestType.ADD_ACCESS, member,  String.valueOf(chanels.getServerID()), chat.getPlaceholder()[1]));
+                            wait(30000);
+                        }
+                    }
+                    case 4 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
+                    default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
+             }
+         } while (choice != 4);
     }
 
     /**

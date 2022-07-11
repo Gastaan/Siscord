@@ -42,5 +42,8 @@ public enum RequestType implements Serializable {
     LOGOUT,
     VOICE,
     CHANGE_SERVER_NAME,
-    LEAVE_SERVER
+    LEAVE_SERVER,
+    SET_LIMIT,
+    REMOVE_LIMIT,
+    ADD_ACCESS
 }

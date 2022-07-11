@@ -150,7 +150,7 @@ public class ClientHandler implements Runnable{
         else if(requestType == RequestType.CHANGE_PASSWORD)
             changePassword((StringRequest) requested);
         else if(requestType == RequestType.PIN_MESSAGE)
-            pin((PinRequest) requested);
+            pin((StringChanelRequest) requested);
         else if(requestType == RequestType.CANCEL_FRIEND_REQUEST)
             cancelFriendRequest((StringRequest) requested);
         else if(requestType == RequestType.CHANGE_EMAIL)
@@ -336,13 +336,13 @@ public class ClientHandler implements Runnable{
         userData.get(servingUser).deleteOutgoingFriendRequest(requested.getValue());
         userData.get(searchUser(requested.getValue())).deleteIncomingFriendRequest(servingUser.getUsername());
     }
-    private void pin(PinRequest request) throws IOException {
+    private void pin(StringChanelRequest request) throws IOException {
         String[] placeholders = request.getPlaceHolder();
         boolean success = false;
         if(placeholders.length == 1) {
             User user =  searchUser(placeholders[0]);
-            userData.get(servingUser).getPrivateChat(user.getUsername()).pinMessage(request.getTime());
-            userData.get(user).getPrivateChat(servingUser.getUsername()).pinMessage(request.getTime());
+            userData.get(servingUser).getPrivateChat(user.getUsername()).pinMessage(request.getValue());
+            userData.get(user).getPrivateChat(servingUser.getUsername()).pinMessage(request.getValue());
             success = true;
         }
         else {
@@ -351,7 +351,7 @@ public class ClientHandler implements Runnable{
             if(socialServer.checkPermission(servingUser.getUsername(), Roles.PIN_MESSAGE)) {
                 success = true;
                 TextChanel chanel = socialServer.getTextChanel(placeholders[1]);
-                chanel.getChat().pinMessage(request.getTime());
+                chanel.getChat().pinMessage(request.getValue());
             }
         }
         response.writeObject(new BooleanResponse(ResponseType.PIN_MESSAGE, success));
@@ -546,11 +546,8 @@ public class ClientHandler implements Runnable{
         Chat chat = null;
         if(placeholder.length == 1)
             chat = userData.get(servingUser).getPrivateChat(placeholder[0]);
-        else {
-            TextChanel chanel = servers.get(searchServerByID(Integer.parseInt(placeholder[0]))).getTextChanel(placeholder[1]);
-            if(chanel != null)
-                chat = chanel.getChat();
-        }
+        else
+           chat = servers.get(searchServerByID(Integer.parseInt(placeholder[0]))).getTextChanel(placeholder[1]).getChat();
         return chat;
     }
     private int  searchServerByID(int id) {
@@ -588,7 +585,7 @@ public class ClientHandler implements Runnable{
                 HashSet<String> qualifiedUsers = qualifyServerMembersToGetNotification(socialServer, chanel);
                 for(String user : mentionedUsers)
                     if(qualifiedUsers.contains(user))
-                        sendNotification(servingUser.getUsername() + "mentioned you : " + socialServer.getServerName(), user);
+                        sendNotification(servingUser.getUsername() + " mentioned you : " + socialServer.getServerName(), user);
             }
         }
         response.writeObject(new Response(ResponseType.MESSAGE_DELIVERED));
