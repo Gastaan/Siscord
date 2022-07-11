@@ -20,6 +20,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
@@ -589,36 +590,37 @@ public class Client {
         }
 
     /**
-     * Text chat page.
-     * @param chatIndex The index of the chat.
+     * The text chat page.
+     * @param chanelName The name of the channel.
+     * @throws IOException If an I/O error occurs while sending a request.
+     * @throws InterruptedException If interrupted while waiting for a response.
      */
-    private void textChanelPage(int chatIndex) throws IOException, InterruptedException {
+    private void textChanelPage(String chanelName) throws IOException, InterruptedException {
         int choice;
             do {
-                request.writeObject(new PlaceholderRequest(RequestType.CHAT_REQUEST, String.valueOf(chanels.getServerID()) ,  chanels.getChanelNames().get(chatIndex - 1)));
+                request.writeObject(new PlaceholderRequest(RequestType.CHAT_REQUEST, String.valueOf(chanels.getServerID()) ,  chanelName));
                 wait(30000);
-                System.out.println("1-sendMessage\n2-React\n3-pin\n4-see pinned messages\n5-delete chanel\n6-limit members\n7-back to home page");
+                System.out.println("1-sendMessage\n2-React\n3-pin\n4-see pinned messages\n5-delete chanel\n6-limit members\n7-back");
                 choice = scanner.nextInt();
                 switch (choice) {
                     case 1 -> sendMessage();
                     case 2 -> react();
                     case 3 -> pin();
                     case 4 -> showPinnedMessages();
-                    case 5 -> deleteChanel(chatIndex);
-                    case 6 -> limitMembers(5);
+                    case 5 -> deleteChanel();
+                    case 6 -> limitMembers();
                     case 7 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                     default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
                 }
-            } while (choice != 3);
+            } while (choice != 7);
         }
-
     /**
      * This method is used to delete a chanel.
      */
-    private void deleteChanel(int chatIndex) throws IOException, InterruptedException {
-        System.out.println(ANSI_WHITE + "Are you sure you want to delete this chanel?\n1-yes\n2-no" + ANSI_RESET);
+    private void deleteChanel() throws IOException, InterruptedException {
         int choice;
         do {
+            System.out.println(ANSI_WHITE + "Are you sure you want to delete this chanel?\n1-yes\n2-no" + ANSI_RESET);
             try {
                 choice = scanner.nextInt();
             } catch (InputMismatchException e) {
@@ -627,20 +629,23 @@ public class Client {
             }
             switch (choice) {
                 case 1 -> {
-                    request.writeObject(new PlaceholderRequest(RequestType.DELETE_CHANEL, String.valueOf(chanels.getServerID()), chanels.getChanelNames().get(chatIndex - 1)));
+                    request.writeObject(new PlaceholderRequest(RequestType.DELETE_CHANEL, String.valueOf(chanels.getServerID()), chat.getPlaceholder()[1]));
                     wait(30000);
                 }
                 case 2 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
                 default -> System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
             }
-        } while (choice != 2);
+        } while (choice < 1 || choice > 2);
     }
     /**
      * This method is used to limit access to a chanel.
      */
-     private void limitMembers(int serverID) throws IOException, InterruptedException {
-         request.writeObject(new ServerIDRequest(RequestType.SERVER_MEMBERS, serverID));
-         wait();
+     private void limitMembers() throws IOException, InterruptedException {
+         do {
+             request.writeObject(new ServerIDRequest(RequestType.SERVER_MEMBERS, chanels.getServerID()));
+             wait(10000);
+
+         } while(true);
     }
 
     /**
@@ -886,7 +891,7 @@ public class Client {
             System.out.println(ANSI_BLACK + "The list is empty!" + ANSI_RESET);
         return index;
     }
-    private void voiceChanel(int chatIndex) {} //TODO : play music _ At last
+    private void voiceChanel(String chanelName) {} //TODO : play music _ At last
 
     /**
      * Servers page.
@@ -1159,14 +1164,20 @@ public class Client {
                 switch (choice) {
                     case 1 -> {
                         int chanelIndex;
-                        do {
-                            System.out.println("Enter chanel index: ");
-                            chanelIndex = scanner.nextInt();
-                        } while (chanelIndex > chanels.getChanelNames().size() || chanelIndex < 1);
-                        if(!chanels.getChanelType(chanels.getChanelNames().get(chanelIndex - 1)))
-                            voiceChanel(chanelIndex);
-                        else
-                            textChanelPage(chanelIndex);
+                        if(chanels.getChanelNames().size() == 0)
+                            System.out.println(ANSI_BLACK + "No chanels" + ANSI_RESET);
+                        else {
+                            ArrayList<String> chanelNames = chanels.getChanelNames();
+                            do {
+                                System.out.println("Enter chanel index: ");
+                                chanelIndex = scanner.nextInt();
+                            } while (chanelIndex > chanelNames.size() || chanelIndex < 1);
+                            String chanelName = chanelNames.get(chanelIndex - 1);
+                            if (!chanels.getChanelType(chanelName))
+                                voiceChanel(chanelName);
+                            else
+                                textChanelPage(chanelName);
+                        }
                     }
                     case 2 -> createChanel();
                     case 3 -> System.out.println(ANSI_BLUE + "OK" + ANSI_RESET);
@@ -1195,7 +1206,7 @@ public class Client {
             if(choice < 1 || choice > 2)
                 System.out.println(ANSI_RED + "Invalid" + ANSI_RESET);
         } while(choice < 1 || choice > 2);
-        request.writeObject(new CreateChanelRequest(chanels.getServerID(), chanelName, choice == 1));
+        request.writeObject(new CreateChanelRequest(chanels.getServerID(), chanelName, choice == 2));
         wait(10000);
     }
     /**

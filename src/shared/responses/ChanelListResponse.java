@@ -29,9 +29,9 @@ public class ChanelListResponse extends Response{
     @Override
     public String toString() {
         int index = 1;
-        String value = "Chanels: \n";
+        StringBuilder value = new StringBuilder("Chanels: \n");
         for(String chanelName : chanelNames.keySet())
-            value += index++ + "- " + chanelName + " : " + chanelNames.get(chanelName) + "\n";
-        return value;
+            value.append(index++).append("- ").append(chanelName).append(" : ").append(chanelNames.get(chanelName) ? "text" : "music").append("\n");
+        return value.toString();
     }
 }

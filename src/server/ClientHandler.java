@@ -280,8 +280,10 @@ public class ClientHandler implements Runnable{
         SocialServer socialServer = servers.get(searchServerByID(requested.getServerID()));
         String friendName = requested.getName();
         boolean success = socialServer.addMember(friendName);
-        if(success)
+        if(success) {
             userData.get(searchUser(friendName)).addServer(socialServer.getServerID());
+            sendNotification("Welcome to " + socialServer.getServerName() + "!", friendName);
+        }
         response.writeObject(new BooleanResponse(ResponseType.ADD_FRIEND_TO_SERVER, success));
 
     }
@@ -389,7 +391,7 @@ public class ClientHandler implements Runnable{
           SocialServer notifyingServer = servers.get(searchServerByID(Integer.parseInt(placeholder[0])));
           Chanel textChanel = notifyingServer.getTextChanel(placeholder[1]);
           for(String username : qualifyServerMembersToGetNotification(notifyingServer, textChanel))
-              sendNotification(servingUser.getUsername() + "is typing...", username);
+              sendNotification(servingUser.getUsername() + " is typing...", username);
       }
       response.writeObject(new Response(ResponseType.IS_TYPING));
     }
@@ -541,11 +543,14 @@ public class ClientHandler implements Runnable{
         response.writeObject(new ChatResponse(chat.getMessages(), chat.getPinnedMessages(), request.getPlaceholder()));
     }
     public Chat getChat(String[] placeholder) {
-        Chat chat;
+        Chat chat = null;
         if(placeholder.length == 1)
             chat = userData.get(servingUser).getPrivateChat(placeholder[0]);
-        else
-            chat = servers.get(searchServerByID(Integer.parseInt(placeholder[0]))).getTextChanel(placeholder[1]).getChat();
+        else {
+            TextChanel chanel = servers.get(searchServerByID(Integer.parseInt(placeholder[0]))).getTextChanel(placeholder[1]);
+            if(chanel != null)
+                chat = chanel.getChat();
+        }
         return chat;
     }
     private int  searchServerByID(int id) {
